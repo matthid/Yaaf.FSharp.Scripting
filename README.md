@@ -1,5 +1,20 @@
 # Yaaf.FSharp.Scripting
 
+## [Documentation](https://matthid.github.io/Yaaf.FSharp.Scripting/)
+
+## Build status
+
+**Development Branch**
+
+[![Build Status](https://travis-ci.org/matthid/Yaaf.FSharp.Scripting.svg?branch=develop)](https://travis-ci.org/matthid/Yaaf.FSharp.Scripting)
+[![Build status](https://ci.appveyor.com/api/projects/status/od970xa4gvkh4tea/branch/develop?svg=true)](https://ci.appveyor.com/project/matthid/yaaf-fsharp/branch/develop)
+
+**Master Branch**
+
+[![Build Status](https://travis-ci.org/matthid/Yaaf.FSharp.Scripting.svg?branch=master)](https://travis-ci.org/matthid/Yaaf.FSharp.Scripting)
+[![Build status](https://ci.appveyor.com/api/projects/status/od970xa4gvkh4tea/branch/master?svg=true)](https://ci.appveyor.com/project/matthid/yaaf-fsharp/branch/master)
+
+
 This library tries to improve the scripting capabilities of FSharp.
 
 It builds on top of FSharp.Compiler.Service but provides a nice an clean API:
