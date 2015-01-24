@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>Yaaf.FSharp.Scripting implementation documentation
+</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="A helper library to easily add F# scripts to your application.">
+    <meta name="author" content="Matthias Dittrich">
+
+    <script src="https://code.jquery.com/jquery-1.8.0.js"></script>
+    <script src="https://code.jquery.com/ui/1.8.23/jquery-ui.js"></script>
+    <script src="https://netdna.bootstrapcdn.com/twitter-bootstrap/2.2.1/js/bootstrap.min.js"></script>
+    <script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link href="https://netdna.bootstrapcdn.com/twitter-bootstrap/2.2.1/css/bootstrap-combined.min.css" rel="stylesheet">
+
+    <link type="text/css" rel="stylesheet" href="https://matthid.github.io/Yaaf.FSharp.Scripting/content/style.css" />
+    <link type="text/css" rel="stylesheet" href="https://matthid.github.io/Yaaf.FSharp.Scripting/content/prism.css" />
+    <script type="text/javascript" src="https://matthid.github.io/Yaaf.FSharp.Scripting/content/tips.js"></script>
+	<script type="text/javascript" src="https://matthid.github.io/Yaaf.FSharp.Scripting/content/prism.js"></script>
+    <!-- HTML5 shim, for IE6-8 support of HTML5 elements -->
+    <!--[if lt IE 9]>
+      <script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+  </head>
+  <body>
+    <div class="container">
+      <div class="masthead">
+        <ul class="nav nav-pills pull-right">
+          <li><a href="http://fsharp.org">fsharp.org</a></li>
+          <li><a href="http://tpetricek.github.io/FSharp.Formatting/"><img height="16" width="16" src="http://fsharp.org/images/thumbs/FSharp.Formatting.png" /> F# Formatting</a></li>
+        </ul>
+        <h3 class="muted"><a href="https://matthid.github.io/Yaaf.FSharp.Scripting/index.html">Yaaf.FSharp.Scripting</a></h3>
+      </div>
+      <hr />
+      <div class="row">
+        <div class="span9" id="main">
+          
+<h1><a name="Yaaf-FSharp-Scripting-implementation-documentation" class="anchor" href="#Yaaf-FSharp-Scripting-implementation-documentation">Yaaf.FSharp.Scripting implementation documentation</a></h1>
+
+<h2><a name="Building" class="anchor" href="#Building">Building</a></h2>
+
+<p>Open the <code>.sln</code> file or run <code>./build</code>.</p>
+
+<blockquote>
+  <p>NOTE: It is possible that you can only build the <code>.sln</code> file AFTER doing an initial <code>./build</code> (because nuget dependencies have to be resolved).</p>
+</blockquote>
+
+<h2><a name="General-overview" class="anchor" href="#General-overview">General overview:</a></h2>
+
+<p>This project aims to be a very flexible, extendable and good performing IRC implementation in C#.</p>
+
+<h3><a name="Issues-Features-TODOs" class="anchor" href="#Issues-Features-TODOs">Issues / Features / TODOs</a></h3>
+
+<p>New features are accepted via github pull requests (so just fork away right now!):  <a href="https://github.com/matthid/Yaaf.FSharp.Scripting">https://github.com/matthid/Yaaf.FSharp.Scripting</a></p>
+
+<p>Issues and TODOs are tracked on github, see: <a href="https://github.com/matthid/Yaaf.FSharp.Scripting/issues">https://github.com/matthid/Yaaf.FSharp.Scripting/issues</a></p>
+
+<p>Discussions/Forums are on IRC.</p>
+
+<h3><a name="Versioning" class="anchor" href="#Versioning">Versioning:</a></h3>
+
+<p><a href="http://semver.org/">http://semver.org/</a></p>
+
+<h3><a name="High-level-documentation-ordered-by-project" class="anchor" href="#High-level-documentation-ordered-by-project">High level documentation ordered by project.</a></h3>
+
+<ul>
+<li><code>Yaaf.FSharp.Scripting</code>: For one a project to test the building infrastructure, in the future a helper to generate fsproj and csproj files.</li>
+</ul>
+
+<h3><a name="The-Project-structure" class="anchor" href="#The-Project-structure">The Project structure:</a></h3>
+
+<ul>
+<li><p>/.nuget/</p>
+<p>Nuget dependencies will be downloaded into this folder. 
+  This folder can safely be deleted without affecting the build.</p></li>
+<li><p>/build/</p>
+<p>The project assemblies will be build into this folder. This folder can safely be deleted without affecting the build.</p></li>
+<li><p>/lib/</p>
+<p>library dependencies (currently not used). Most dependencies are automatically managed by nuget and not in this folder. 
+  Only some internal dependencies and packages not in nuget. The git repository should always be "complete".</p></li>
+<li><p>/doc/</p>
+<p>Project documentation files. This folder contains both development and user documentation.</p></li>
+<li><p>/src/</p>
+<p>The Solution directory for all projects</p>
+<ul>
+<li><p>/src/source/</p>
+<p>The root for all projects (not including unit test projects).</p></li>
+<li><p>/src/samples/</p>
+<p>The root for all sample projects.</p></li>
+<li><p>/src/test/</p>
+<p>The root for all unit test projects.</p></li>
+</ul></li>
+<li><p>/test/</p>
+<p>The unit test assemblies will be build into this folder. This folder can safely be deleted without affecting the build.</p></li>
+<li><p>/tmp/</p>
+<p>This folder is ignored by git.</p></li>
+<li><p>/build.cmd, /build.sh, /build.fsx</p>
+<p>Files to directly start a build including unit tests via console (windows &amp; linux).</p></li>
+<li><p>/packages.config</p>
+<p>Nuget packages required by the build process.</p></li>
+</ul>
+
+<p>Each project should have has a corresponding project with the name <code>Test.${ProjectName}</code> in the test folder.
+This test project provides unit tests for the project <code>${ProjectName}</code>.</p>
+
+<h2><a name="Advanced-Building" class="anchor" href="#Advanced-Building">Advanced Building</a></h2>
+
+<p>The build is done in different steps and you can execute the build until a given step or a single step:</p>
+
+<p>First <code>build.sh</code> and <code>build.cmd</code> restore build dependencies and <code>nuget.exe</code>, then build.fsx is invoked:</p>
+
+<ul>
+<li><code>Clean</code>: cleans the directories (previous builds)</li>
+<li><code>RestorePackages</code>: restores nuget packages</li>
+<li><code>SetVersions</code>: sets the current version</li>
+<li><code>Build_</code>: build/test for net40</li>
+<li><code>CopyToRelease</code>: copy the generated .dlls to release/lib</li>
+<li><code>LocalDoc</code>: create the local documentation you can view that locally</li>
+<li><code>All</code>: this does nothing itself but is used as a marker (executed by default when no parameter is given to ./build)</li>
+<li><code>VersionBump</code>: commits all current changes (when you change the version before you start the build you will have some files changed)</li>
+<li><code>NuGet</code>: generates the nuget packages</li>
+<li><code>GithubDoc</code>: generates the documentation for github</li>
+<li><code>ReleaseGithubDoc</code>: pushes the documentation to github</li>
+<li><code>Release</code>: a marker like "All"</li>
+</ul>
+
+<p>You can execute all steps until a given point with <code>./build #Step#</code> (replace #Step# with <code>Build_</code> to execute <code>Clean</code>, <code>RestorePackages</code>, <code>SetVersions</code>, <code>Build_</code>)</p>
+
+<p>You can execute a single step with <code>build #Step#_single</code>: For example to build the nuget packages you can just invoke <code>./build NuGet_single</code></p>
+
+<blockquote>
+  <p>Of course you need to have the appropriate dlls in place (otherwise the Nuget package creation will fail); ie have build IRC.Net before.</p>
+</blockquote>
+
+<p>There is another (hidden) step <code>CleanAll</code> which will clean everything up (even build dependencies and the downloaded Nuget.exe), 
+this step is only needed when build dependencies change. <code>git clean -d -x -f</code> is also a good way to do that</p>
+
+<h2><a name="Visual-Studio-Monodevelop" class="anchor" href="#Visual-Studio-Monodevelop">Visual Studio / Monodevelop</a></h2>
+
+<p>As mentioned above you need to <code>build</code> at least once before you can open the 
+solution files (<code>src/${ProjectName}.*.sln</code>) with Visual Studio / Monodevelop.</p>
+
+<p>Just open the solution file for the build you want to edit.</p>
+
+<ul>
+<li>Note that files/references are managed through special <code>includes.targets</code> (eg: <code>src/source/${ProjectName}/includes.targets</code>) files.</li>
+<li>The build configuration is managed through <code>src/buildConfig.targets</code></li>
+</ul>
+
+
+        </div>
+        <div class="span3">
+          <a href="https://matthid.github.io/Yaaf.FSharp.Scripting/index.html">
+            <img src="https://matthid.github.io/Yaaf.FSharp.Scripting/content/img/logo.png" style="width:140px;height:140px;margin:10px 0px 0px 35px;border-style:none;" />
+          </a>
+
+          <ul class="nav nav-list" id="menu">
+
+            <li class="nav-header">Yaaf.FSharp.Scripting</li>
+
+            <li class="divider"></li>
+            <li><a href="https://www.nuget.org/packages/Yaaf.FSharp.Scripting/">Get Yaaf.FSharp.Scripting package via NuGet</a></li>
+            <li><a href="https://github.com/matthid/Yaaf.FSharp.Scripting">Source Code</a></li>
+            <li><a href="https://github.com/matthid/Yaaf.FSharp.Scripting/issues">Open bugs and feature requests</a></li>
+            <li><a href="https://github.com/matthid/Yaaf.FSharp.Scripting/issues/new">Report Issue or Request Feature</a></li>
+            <li><a href="https://github.com/matthid/Yaaf.FSharp.Scripting/blob/develop/LICENSE.md">License (Apache 2)</a></li>
+            <li><a href="https://matthid.github.io/Yaaf.FSharp.Scripting/Contributing.html">Contributing</a></li>
+            
+            <li class="nav-header">Documentation</li>
+              
+            <li><a href="https://matthid.github.io/Yaaf.FSharp.Scripting/index.html">Quick Intro</a></li>
+            <li><a href="https://matthid.github.io/Yaaf.FSharp.Scripting/ReleaseNotes.html">Release Notes</a></li>
+            <li><a href="https://matthid.github.io/Yaaf.FSharp.Scripting/DevelopReadme.html">Development Intro</a></li>
+
+            <li class="nav-header">Reference</li>
+              
+            <li><a href="https://matthid.github.io/Yaaf.FSharp.Scripting/references/index.html">API Reference</a></li>
+
+          </ul>
+        </div>
+      </div>
+    </div>
+      <a href="https://github.com/matthid/Yaaf.FSharp.Scripting"><img style="position: absolute; top: 0; right: 0; border: 0;" src="https://s3.amazonaws.com/github/ribbons/forkme_right_gray_6d6d6d.png" alt="Fork me on GitHub"></a>
+    </body>
+  </html>
