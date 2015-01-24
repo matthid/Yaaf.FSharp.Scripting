@@ -5,19 +5,19 @@
     <version>@build.number@</version>
     <authors>@authors@</authors>
     <owners>@authors@</owners>
-    <licenseUrl>http://github.com/fsprojects/Yaaf.FSharp.Scripting/blob/master/LICENSE.txt</licenseUrl>
-    <projectUrl>http://fsprojects.github.com/Yaaf.FSharp.Scripting</projectUrl>
-    <iconUrl>https://raw.githubusercontent.com/fsprojects/ProjectScaffold/master/docs/files/img/logo.png</iconUrl>
+    <licenseUrl>http://github.com/matthid/Yaaf.FSharp.Scripting/blob/develop/LICENSE.md</licenseUrl>
+    <projectUrl>http://matthid.github.com/Yaaf.FSharp.Scripting</projectUrl>
+    <iconUrl>https://raw.githubusercontent.com/matthid/Yaaf.FSharp.Scripting/develop/doc/content/img/logo.png</iconUrl>
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
     <summary>@summary@</summary>
     <description>@description@</description>
     <releaseNotes>@releaseNotes@</releaseNotes>
-    <copyright>Copyright 2013</copyright>
+    <copyright>Copyright 2015</copyright>
     <tags>@tags@</tags>
-    <dependencies />
+    @dependencies@
   </metadata>
   <files>
-    <file src="bin/Yaaf.FSharp.Scripting.dll" target="lib/net40" />
-    <file src="bin/Yaaf.FSharp.Scripting.xml" target="lib/net40" />
+    <file src="release/lib/Yaaf.FSharp.Scripting.dll" target="lib/net40" />
+    <file src="release/lib/Yaaf.FSharp.Scripting.xml" target="lib/net40" />
   </files>
 </package>

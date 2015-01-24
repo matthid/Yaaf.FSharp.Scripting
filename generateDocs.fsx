@@ -4,4 +4,4 @@
 // ----------------------------------------------------------------------------
 
 #load @"buildConfig.fsx"
-#load "packages/Yaaf.AdvancedBuilding/content/buildInclude.fsx"
+#load "packages/Yaaf.AdvancedBuilding/content/generateDocsInclude.fsx"
