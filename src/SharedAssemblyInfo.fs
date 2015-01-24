@@ -4,10 +4,10 @@ open System.Reflection
 [<assembly: AssemblyCompanyAttribute("Yaaf.FSharp.Scripting")>]
 [<assembly: AssemblyProductAttribute("Yaaf.FSharp.Scripting")>]
 [<assembly: AssemblyCopyrightAttribute("Yaaf.FSharp.Scripting Copyright © Matthias Dittrich 2015")>]
-[<assembly: AssemblyVersionAttribute("0.1.2")>]
-[<assembly: AssemblyFileVersionAttribute("0.1.2")>]
-[<assembly: AssemblyInformationalVersionAttribute("0.1.2")>]
+[<assembly: AssemblyVersionAttribute("1.0.1")>]
+[<assembly: AssemblyFileVersionAttribute("1.0.1")>]
+[<assembly: AssemblyInformationalVersionAttribute("1.0.1")>]
 do ()
 
 module internal AssemblyVersionInformation =
-    let [<Literal>] Version = "0.1.2"
+    let [<Literal>] Version = "1.0.1"
