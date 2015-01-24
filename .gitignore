@@ -162,13 +162,22 @@ $RECYCLE.BIN/
 # ===================================================
 
 # NuGet Packages Directory
-packages/
+packages/*
+!packages/Yaaf.AdvancedBuilding
+packages/Yaaf.AdvancedBuilding/*
+!packages/Yaaf.AdvancedBuilding/content
+
+gh-pages/
 
 # Generated documentation folder
 docs/output/
 
 # Temp folder used for publishing docs
 temp/
+# Where binaries get build into
+build/
+# Where test binaries get build into
+/test
 
 # Test results produced by build
 TestResults.xml
@@ -183,3 +192,4 @@ paket-files
 .paket/paket.exe
 docs/content/license.md
 docs/content/release-notes.md
+
