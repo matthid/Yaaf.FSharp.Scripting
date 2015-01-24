@@ -14,7 +14,7 @@
     <releaseNotes>@releaseNotes@</releaseNotes>
     <copyright>Copyright 2015</copyright>
     <tags>@tags@</tags>
-    <dependencies />
+    @dependencies@
   </metadata>
   <files>
     <file src="release/lib/Yaaf.FSharp.Scripting.dll" target="lib/net40" />
