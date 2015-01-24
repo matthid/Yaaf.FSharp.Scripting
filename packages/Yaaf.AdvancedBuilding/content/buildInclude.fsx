@@ -96,7 +96,7 @@ let MyTarget name body =
 
 // Targets
 MyTarget "Clean" (fun _ ->
-    CleanDirs [ buildDir; testDir; releaseDir ]
+    CleanDirs [ buildDir; testDir; outLibDir; outDocDir; outNugetDir ]
 )
 
 MyTarget "CleanAll" (fun _ ->
@@ -154,7 +154,7 @@ MyTarget "CopyToRelease" (fun _ ->
 )
 
 MyTarget "NuGet" (fun _ ->
-    let outDir = releaseDir @@ "nuget"
+    let outDir = outNugetDir
     ensureDirectory outDir
     for (nuspecFile, settingsFunc) in nugetPackages do
       NuGet (fun p ->

@@ -4,12 +4,12 @@
 // ----------------------------------------------------------------------------
 
 (*
-    This file handles the complete build process of RazorEngine
+    This file handles the configuration of the Yaaf.AdvancedBuilding build script.
 
-    The first step is handled in build.sh and build.cmd by bootstrapping a NuGet.exe and 
-    executing NuGet to resolve all build dependencies (dependencies required for the build to work, for example FAKE)
+    The first step is handled in build.sh and build.cmd by restoring either paket dependencies or bootstrapping a NuGet.exe and 
+    executing NuGet to resolve all build dependencies (dependencies required for the build to work, for example FAKE).
 
-    The secound step is executing this file which resolves all dependencies, builds the solution and executes all unit tests
+    The secound step is executing build.fsx which loads this file (for configuration), builds the solution and executes all unit tests.
 *)
 
 
@@ -65,6 +65,7 @@ let use_nuget = false
 
 let buildDir = "./build/"
 let releaseDir = "./release/"
+let outNugetDir = "./release/nuget/"
 let outLibDir = "./release/lib/"
 let outDocDir = "./release/documentation/"
 let docTemplatesDir = "./doc/templates/"

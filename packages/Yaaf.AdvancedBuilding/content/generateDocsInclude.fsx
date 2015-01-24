@@ -173,7 +173,6 @@ let buildAllDocumentation outDocDir website_root =
       processFile indexTemplate "./README.md" (outDir @@ indexName)
       processFile template "./CONTRIBUTING.md" (outDir @@ "Contributing" + extension)
       processFile template "./LICENSE.md" (outDir @@ "License" + extension)
-  
 
     // Build API reference from XML comments
     let referenceBinaries =

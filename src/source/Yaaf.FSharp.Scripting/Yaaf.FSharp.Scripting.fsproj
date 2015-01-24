@@ -45,6 +45,9 @@
     <Reference Include="System.Numerics" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="..\..\SharedAssemblyInfo.fs">
+      <Link>SharedAssemblyInfo.fs</Link>
+    </Compile>
     <Compile Include="CompilerServiceExtensions.fs" />
     <Compile Include="Interfaces.fs" />
     <Compile Include="Extensions.fs" />

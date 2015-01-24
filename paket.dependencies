@@ -1,11 +1,7 @@
 source https://nuget.org/api/v2
 
-nuget FAKE
-nuget FSharp.Formatting
 nuget FSharp.Compiler.Service
-nuget Nuget.CommandLine
 nuget NUnit
 nuget NUnit.Runners
-nuget FSharp.Compiler.Service
 nuget Unquote
 nuget Yaaf.AdvancedBuilding
