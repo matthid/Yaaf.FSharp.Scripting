@@ -53,7 +53,7 @@ type InteractiveSettings()  =
 
 
     
-let getSession () =
+let getSession (defines) =
     // Intialize output and input streams
     let sbOut = new StringBuilder()
     let sbErr = new StringBuilder()
@@ -63,11 +63,14 @@ let getSession () =
     let errStream = new StringWriter(sbErr)
 
     // Build command line arguments & start FSI session
-    let argv = [| "C:\\fsi.exe" |]
-    let allArgs = Array.append argv [|"--noninteractive"|]
+    let args =
+        [ yield "C:\\fsi.exe"
+          yield "--noninteractive"
+          for define in defines do
+            yield sprintf "--define:%s" define ]
 
     let fsiConfig = FsiEvaluationSession.GetDefaultConfiguration(new InteractiveSettings(), false)
-    let fsiSession = FsiEvaluationSession.Create(fsiConfig, allArgs, inStream, outStream, errStream) 
+    let fsiSession = FsiEvaluationSession.Create(fsiConfig, args |> List.toArray, inStream, outStream, errStream)
   
     let save_ f text =
       try
