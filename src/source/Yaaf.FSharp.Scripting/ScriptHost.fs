@@ -1,5 +1,5 @@
-﻿module Yaaf.FSharp.Scripting.ScriptHost
+﻿namespace Yaaf.FSharp.Scripting
 open Yaaf.FSharp.Scripting
-
-let CreateNew () = Helper.getSession()
-
+type ScriptHost private() =
+    static member CreateNew (?defines : string list) =
+        Helper.getSession(defaultArg defines [])
