@@ -79,5 +79,5 @@ then
 fi
 
 echo "start FAKE for the rest of the build procedure..."
-$MONO $fake $@ --fsiargs -d:$DEFINE build.fsx
+$MONO $fake $@ --fsiargs -d:$DEFINE -d:FAKE build.fsx
 

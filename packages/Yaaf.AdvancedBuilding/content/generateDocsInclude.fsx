@@ -7,11 +7,11 @@
     This file handles the generation of the docs (it is called by the build automatically). 
 *)
 
-#I @"../../FAKE/tools/"
+open BuildConfigDef
+let config = BuildConfig.buildConfig.FillDefaults()
+
 #I @"../../FSharp.Compiler.Service/lib/net40/"
 #I @"../../FSharp.Formatting/lib/net40/"
-#r @"FakeLib.dll"
-open BuildConfig
 
 // Documentation
 #r "FSharp.Compiler.Service.dll"
@@ -46,7 +46,7 @@ let commitHash = lazy Information.getCurrentSHA1(".")
 /// (*.fsx) and Markdown documents (*.md) and it specifies additional 
 /// replacements for the template file
 
-//let website_root = "file://" + Path.GetFullPath (outDocDir @@ "html")
+//let website_root = "file://" + Path.GetFullPath (config.OutDocDir @@ "html")
 
 let formattingContext templateFile format generateAnchors replacements layoutRoots =
     { TemplateFile = templateFile 
@@ -98,17 +98,17 @@ let buildAllDocumentation outDocDir website_root =
     
     let projInfo =
         [ "root", website_root
-          "page-description", projectDescription
-          "page-author", page_author
-          "github-link", github_url
-          "project-name", projectName
-          "project-summary", projectSummary 
+          "page-description", config.ProjectDescription
+          "page-author", config.PageAuthor
+          "github-link", config.GithubUrl
+          "project-name", config.ProjectName
+          "project-summary", config.ProjectSummary
           "project-commit", commitHash.Value
-          "project-author", authors |> Seq.head
-          "project-github", github_url
-          "project-issues", sprintf "%s/issues" github_url
-          "project-new-issue", sprintf "%s/issues/new" github_url
-          "project-nuget", nuget_url]
+          "project-author", config.ProjectAuthors |> Seq.head
+          "project-github", config.GithubUrl
+          "project-issues", config.IssuesUrl
+          "project-new-issue", config.FileNewIssueUrl
+          "project-nuget", config.NugetUrl]
 
       
     // Copy static files and CSS + JS from F# Formatting
@@ -122,12 +122,12 @@ let buildAllDocumentation outDocDir website_root =
     let processDocumentationFiles(outputKind) =
       let indexTemplate, template, outDirName, indexName, extension =
         match outputKind with
-        | OutputKind.Html -> docTemplatesDir @@ "docpage-index.cshtml", docTemplatesDir @@ "docpage.cshtml", "html", "index.html", ".html"
-        | OutputKind.Latex -> docTemplatesDir @@ "template-color.tex", docTemplatesDir @@ "template-color.tex", "latex", "Readme.tex", ".tex"
+        | OutputKind.Html -> config.DocTemplatesDir @@ "docpage-index.cshtml", config.DocTemplatesDir @@ "docpage.cshtml", "html", "index.html", ".html"
+        | OutputKind.Latex -> config.DocTemplatesDir @@ "template-color.tex", config.DocTemplatesDir @@ "template-color.tex", "latex", "Readme.tex", ".tex"
       let outDir = outDocDir @@ outDirName
       let handleDoc template (doc:LiterateDocument) outfile =
         // prismjs support
-        let ctx = formattingContext (Some template) (Some outputKind) (Some true) (Some projInfo) (Some layoutRoots)
+        let ctx = formattingContext (Some template) (Some outputKind) (Some true) (Some projInfo) (Some config.LayoutRoots)
         let newParagraphs = List.choose (replaceCodeBlocks ctx) doc.Paragraphs
         Templating.processFile references (doc.With(paragraphs = newParagraphs)) outfile ctx 
         
@@ -176,23 +176,23 @@ let buildAllDocumentation outDocDir website_root =
 
     // Build API reference from XML comments
     let referenceBinaries =
-        generated_file_list |> List.filter (fun f -> f.EndsWith(".dll") || f.EndsWith(".exe"))
+        config.GeneratedFileList |> List.filter (fun f -> f.EndsWith(".dll") || f.EndsWith(".exe"))
 
     let buildReference () =
         let referenceDir = outDocDir @@ "html"
         let outDir = referenceDir @@ "references"
         ensureDirectory referenceDir
         ensureDirectory outDir
-        let libDir = buildDir @@ (allParams |> Seq.last).CustomBuildName
+        let libDir = config.BuildDir @@ (config.BuildTargets |> Seq.last).SimpleBuildName
         let binaries =
             referenceBinaries
             |> List.map (fun lib -> Path.GetFullPath( libDir @@ lib ))
         MetadataFormat.Generate
-           (binaries, Path.GetFullPath outDir, layoutRoots,
+           (binaries, Path.GetFullPath outDir, config.LayoutRoots,
             parameters = projInfo,
             libDirs = [ Path.GetFullPath (libDir) ],
             otherFlags = [ "-r:System";"-r:System.Core";"-r:System.Xml";"-r:System.Xml.Linq"],
-            sourceRepo = github_url + "/blob/master/",
+            sourceRepo = config.SourceReproUrl,
             sourceFolder = "./",
             publicOnly = true, 
             markDownComments = false, // <see cref=""/> support 
@@ -209,11 +209,9 @@ let MyTarget name body =
     let single = (sprintf "%s_single" name)
     Target single (fun _ -> body true)
 
-MyTarget "GithubDoc" (fun _ -> buildAllDocumentation (outDocDir @@ sprintf "%s.github.io" github_user) (sprintf "https://%s.github.io/%s" github_user github_project))
+MyTarget "GithubDoc" (fun _ -> buildAllDocumentation (config.OutDocDir @@ sprintf "%s.github.io" config.GithubUser) (sprintf "https://%s.github.io/%s" config.GithubUser config.GithubProject))
 
 MyTarget "LocalDoc" (fun _ -> 
-    buildAllDocumentation (outDocDir @@ "local") ("file://" + Path.GetFullPath (outDocDir @@ "local" @@ "html"))
-    trace (sprintf "Local documentation has been finished, you can view it by opening %s in your browser!" (Path.GetFullPath (outDocDir @@ "local" @@ "html" @@ "index.html")))
+    buildAllDocumentation (config.OutDocDir @@ "local") ("file://" + Path.GetFullPath (config.OutDocDir @@ "local" @@ "html"))
+    trace (sprintf "Local documentation has been finished, you can view it by opening %s in your browser!" (Path.GetFullPath (config.OutDocDir @@ "local" @@ "html" @@ "index.html")))
 )
-
-RunTargetOrDefault "LocalDoc"

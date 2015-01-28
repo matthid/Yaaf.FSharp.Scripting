@@ -53,5 +53,5 @@ if not exist %fake% (
 )
 
 echo start FAKE for the rest of the build procedure...
-"%fake%" %* --fsiargs -d:WIN64 build.fsx
+"%fake%" %* --fsiargs -d:WIN64 -d:FAKE build.fsx
 
