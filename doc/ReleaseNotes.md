@@ -1,4 +1,8 @@
-﻿### 1.0.2
+﻿### 1.0.3
+
+ * Includes a net45 build.
+
+### 1.0.2
 
  * You can now set custom defined symbols.
 

@@ -12,50 +12,57 @@
     The secound step is executing this file which resolves all dependencies, builds the solution and executes all unit tests
 *)
 
+#if FAKE
+#else
+// Support when file is opened in Visual Studio
+#load "buildConfigDef.fsx"
+#endif
 
-// Supended until FAKE supports custom mono parameters
-#I @"../../FAKE/tools/"
-#r @"FakeLib.dll"
-open BuildConfig
+open BuildConfigDef
+let config = BuildConfig.buildConfig.FillDefaults ()
 
+// NOTE: We want to add that to buildConfigDef.fsx sometimes in the future
+#I @"../../FSharp.Compiler.Service/lib/net40/"
+#I @"../../Yaaf.FSharp.Scripting/lib/net40/"
+#I "../tools/"
+#r "Yaaf.AdvancedBuilding.dll"
+
+open Yaaf.AdvancedBuilding
 open System.Collections.Generic
 open System.IO
+open System
 
 open Fake
 open Fake.Git
 open Fake.FSharpFormatting
 open AssemblyInfoFile
 
-let globalPackagesDir = "./packages"
-let nugetDir  = "./packages/.nuget/"
-let packageDir  = "./packages/.nuget/packages"
-
-if use_nuget then
+if config.UseNuget then
     // Ensure the ./src/.nuget/NuGet.exe file exists (required by xbuild)
-    let nuget = findToolInSubPath "NuGet.exe" "./packages/NuGet.CommandLine/tools/NuGet.exe"
+    let nuget = findToolInSubPath "NuGet.exe" (config.GlobalPackagesDir @@ "NuGet.CommandLine/tools/NuGet.exe")
     if Directory.Exists "./src/.nuget" then
       File.Copy(nuget, "./src/.nuget/NuGet.exe", true)
     else
-      failwith "you set use_nuget to true but there is no \"./src/.nuget/NuGet.targets\" or \"./src/.nuget/NuGet.Config\"! Please copy them from ./packages/Yaaf.AdvancedBuilding/scaffold/nuget"
+      failwith "you set UseNuget to true but there is no \"./src/.nuget/NuGet.targets\" or \"./src/.nuget/NuGet.Config\"! Please copy them from ./packages/Yaaf.AdvancedBuilding/scaffold/nuget"
 
 let buildWithFiles msg dir projectFileFinder (buildParams:BuildParams) =
-    let buildDir = dir @@ buildParams.CustomBuildName
+    let buildDir = dir @@ buildParams.SimpleBuildName
     CleanDirs [ buildDir ]
     // build app
     projectFileFinder buildParams
         |> MSBuild buildDir "Build"
-            [   "Configuration", buildMode
+            [   "Configuration", buildParams.BuildMode
                 "CustomBuildName", buildParams.CustomBuildName ]
         |> Log msg
 
-let buildApp = buildWithFiles "AppBuild-Output: " buildDir findProjectFiles
-let buildTests = buildWithFiles "TestBuild-Output: " testDir findTestFiles
+let buildApp = buildWithFiles "AppBuild-Output: " config.BuildDir (fun buildParams -> buildParams.FindProjectFiles buildParams)
+let buildTests = buildWithFiles "TestBuild-Output: " config.TestDir (fun buildParams -> buildParams.FindTestFiles buildParams)
 
 let runTests (buildParams:BuildParams) =
-    let testDir = testDir @@ buildParams.CustomBuildName
+    let testDir = config.TestDir @@ buildParams.SimpleBuildName
     let logs = System.IO.Path.Combine(testDir, "logs")
     System.IO.Directory.CreateDirectory(logs) |> ignore
-    let files = unitTestDlls testDir buildParams
+    let files = buildParams.FindUnitTestDlls (testDir, buildParams)
     if files |> Seq.isEmpty then
       traceError (sprintf "NO test found in %s" testDir)
     else
@@ -72,7 +79,7 @@ let runTests (buildParams:BuildParams) =
                 TimeOut = System.TimeSpan.FromMinutes 30.0
                 Framework = "4.0"
                 DisableShadowCopy = true;
-                OutputFile = "logs/TestResults.xml" })
+                OutputFile = "logs/TestResults.xml" } |> config.SetupNUnit)
 
 let buildAll (buildParams:BuildParams) =
     buildApp buildParams
@@ -96,12 +103,12 @@ let MyTarget name body =
 
 // Targets
 MyTarget "Clean" (fun _ ->
-    CleanDirs [ buildDir; testDir; outLibDir; outDocDir; outNugetDir ]
+    CleanDirs [ config.BuildDir; config.TestDir; config.OutLibDir; config.OutDocDir; config.OutNugetDir ]
 )
 
 MyTarget "CleanAll" (fun _ ->
     // Only done when we want to redownload all.
-    Directory.EnumerateDirectories globalPackagesDir
+    Directory.EnumerateDirectories config.GlobalPackagesDir
     |> Seq.filter (fun buildDepDir ->
         let buildDepName = Path.GetFileName buildDepDir
         // We can't delete the FAKE directory (as it is used currently)
@@ -114,38 +121,73 @@ MyTarget "CleanAll" (fun _ ->
 )
 
 MyTarget "RestorePackages" (fun _ ->
-  if use_nuget then
+  if config.UseNuget then
     // will catch src/targetsDependencies
     !! "./src/**/packages.config"
     |> Seq.iter 
         (RestorePackage (fun param ->
             { param with    
                 // ToolPath = ""
-                OutputPath = packageDir }))
+                OutputPath = config.NugetPackageDir }))
 )
 
 MyTarget "SetVersions" (fun _ -> 
-    setVersion()
+    config.SetAssemblyFileVersions config
 )
 
-allParams
+MyTarget "CreateProjectFiles" (fun _ ->
+  if config.EnableProjectFileCreation then
+    let generator = new ProjectGenerator("./src/templates")
+    let createdFile = ref false
+    let projectGenFiles =
+      !! "./src/**/*._proj"
+      ++ "./src/**/*._proj.fsx"
+      |> Seq.cache
+    projectGenFiles
+    |> Seq.iter (fun file ->
+      trace (sprintf "Starting project file generation for: %s" file)
+      generator.GenerateProjectFiles(GlobalProjectInfo.Empty, file))
+
+    if projectGenFiles |> Seq.isEmpty |> not then
+      config.BuildTargets
+        |> Seq.filter (fun buildParam -> not (String.IsNullOrEmpty(buildParam.CustomBuildName)))
+        |> Seq.iter (fun buildParam ->
+          let solutionDir = sprintf "src/%s" buildParam.SimpleBuildName
+          let projectFiles =
+            buildParam.FindProjectFiles buildParam
+            |> Seq.append (buildParam.FindTestFiles buildParam)
+            |> Seq.map (fun file ->
+              { PathInSolution = ""
+                Project = SolutionGenerator.getSolutionProject solutionDir file })
+            |> Seq.toList
+          let solution = SolutionGenerator.generateSolution projectFiles []
+          let solutionFile = Path.Combine (solutionDir, config.ProjectName + ".sln")
+          use writer = new StreamWriter(File.OpenWrite (solutionFile))
+          SolutionModule.write solution writer
+          writer.Flush()
+        )
+      let exitCode = Shell.Exec(".paket/paket.exe", "install")
+      if exitCode <> 0 then failwithf "paket.exe update failed with exit code: %d" exitCode
+)
+config.BuildTargets
     |> Seq.iter (fun buildParam -> 
         MyTarget (sprintf "Build_%s" buildParam.SimpleBuildName) (fun _ -> buildAll buildParam))
 
 MyTarget "CopyToRelease" (fun _ ->
     trace "Copying to release because test was OK."
+    let outLibDir = config.OutLibDir
     CleanDirs [ outLibDir ]
-    System.IO.Directory.CreateDirectory(outLibDir) |> ignore
+    Directory.CreateDirectory(outLibDir) |> ignore
 
     // Copy files to release directory
-    allParams 
-        |> Seq.map (fun buildParam -> buildParam.CustomBuildName)
-        |> Seq.map (fun t -> buildDir @@ t, t)
+    config.BuildTargets
+        |> Seq.map (fun buildParam -> buildParam.SimpleBuildName)
+        |> Seq.map (fun t -> config.BuildDir @@ t, t)
         |> Seq.filter (fun (p, t) -> Directory.Exists p)
-        |> Seq.iter (fun (source, target) ->
-            let outDir = outLibDir @@ target 
+        |> Seq.iter (fun (source, buildName) ->
+            let outDir = outLibDir @@ buildName
             ensureDirectory outDir
-            generated_file_list
+            config.GeneratedFileList
             |> Seq.filter (fun (file) -> File.Exists (source @@ file))
             |> Seq.iter (fun (file) ->
                 let newfile = outDir @@ Path.GetFileName file
@@ -154,16 +196,21 @@ MyTarget "CopyToRelease" (fun _ ->
 )
 
 MyTarget "NuGet" (fun _ ->
-    let outDir = outNugetDir
+    let outDir = config.OutNugetDir
     ensureDirectory outDir
-    for (nuspecFile, settingsFunc) in nugetPackages do
+    for (nuspecFile, settingsFunc) in config.NugetPackages do
       NuGet (fun p ->
-        { p with   
+        { p with
+            Authors = config.ProjectAuthors
+            Project = config.ProjectName
+            Summary = config.ProjectSummary
+            Description = config.ProjectDescription
+            Tags = config.NugetTags
             WorkingDir = "."
             OutputPath = outDir
             AccessKey = getBuildParamOrDefault "nugetkey" ""
             Publish = hasBuildParam "nugetkey"
-            Dependencies = [ ] } |> settingsFunc)
+            Dependencies = [ ] } |> settingsFunc config)
         (sprintf "nuget/%s" nuspecFile)
 )
 
@@ -173,12 +220,12 @@ MyTarget "GithubDoc" (fun _ -> buildDocumentationTarget "GithubDoc")
 
 MyTarget "LocalDoc" (fun _ -> 
     buildDocumentationTarget "LocalDoc"
-    trace (sprintf "Local documentation has been finished, you can view it by opening %s in your browser!" (Path.GetFullPath (outDocDir @@ "local" @@ "html" @@ "index.html")))
+    trace (sprintf "Local documentation has been finished, you can view it by opening %s in your browser!" (Path.GetFullPath (config.OutDocDir @@ "local" @@ "html" @@ "index.html")))
 )
 
 
 MyTarget "ReleaseGithubDoc" (fun isSingle ->
-    let repro = (sprintf "git@github.com:%s/%s.git" github_user github_project)  
+    let repro = (sprintf "git@github.com:%s/%s.git" config.GithubUser config.GithubProject)
     let doAction =
         if isSingle then true
         else
@@ -189,9 +236,9 @@ MyTarget "ReleaseGithubDoc" (fun isSingle ->
         CleanDir "gh-pages"
         cloneSingleBranch "" repro "gh-pages" "gh-pages"
         fullclean "gh-pages"
-        CopyRecursive ("release"@@"documentation"@@(sprintf "%s.github.io" github_user)@@"html") "gh-pages" true |> printfn "%A"
+        CopyRecursive ("release"@@"documentation"@@(sprintf "%s.github.io" config.GithubUser)@@"html") "gh-pages" true |> printfn "%A"
         StageAll "gh-pages"
-        Commit "gh-pages" (sprintf "Update generated documentation %s" release.NugetVersion)
+        Commit "gh-pages" (sprintf "Update generated documentation %s" config.Version)
         printf "gh-pages branch updated in the gh-pages directory, push that branch to %s now? (y,n): " repro
         let line = System.Console.ReadLine()
         if line = "y" then
@@ -213,7 +260,7 @@ MyTarget "VersionBump" (fun _ ->
         let line = System.Console.ReadLine()
         if line = "y" then
             StageAll ""
-            Commit "" (sprintf "Bump version to %s" release.NugetVersion)
+            Commit "" (sprintf "Bump version to %s" config.Version)
 )
 
 Target "Release" (fun _ ->
@@ -228,12 +275,13 @@ Target "Release" (fun _ ->
 
 "Clean"
   ==> "RestorePackages"
-  ==> "SetVersions" 
-  
-allParams
+  ==> "SetVersions"
+  ==> "CreateProjectFiles"
+
+config.BuildTargets
     |> Seq.iter (fun buildParam ->
-        let buildName = sprintf "Build_%s" buildParam.SimpleBuildName 
-        "SetVersions"
+        let buildName = sprintf "Build_%s" buildParam.SimpleBuildName
+        "CreateProjectFiles"
           ==> buildName
           |> ignore
         buildName
@@ -254,5 +302,3 @@ allParams
   ==> "ReleaseGithubDoc"
   ==> "Release"
 
-// start build
-RunTargetOrDefault "All"
