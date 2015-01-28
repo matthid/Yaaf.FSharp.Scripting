@@ -41,6 +41,7 @@ let buildConfig =
     NugetPackages =
       [ "Yaaf.FSharp.Scripting.nuspec", (fun config p ->
           { p with
+              Version = config.Version
               ReleaseNotes = toLines release.Notes
               Dependencies = 
                 [ "FSharp.Compiler.Service", "0.0.82" ] }) ]
@@ -54,4 +55,14 @@ let buildConfig =
           Attribute.FileVersion config.Version
           Attribute.InformationalVersion config.Version]
       CreateFSharpAssemblyInfo "./src/SharedAssemblyInfo.fs" info)
+    EnableProjectFileCreation = true
+    BuildTargets =
+     [ { BuildParams.Empty with
+          // The default build
+          CustomBuildName = ""
+          SimpleBuildName = "net40" }
+       { BuildParams.Empty with
+          // The generated templates
+          CustomBuildName = "net45"
+          SimpleBuildName = "net45" } ]
   }
