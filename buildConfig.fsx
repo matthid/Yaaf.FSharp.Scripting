@@ -23,7 +23,6 @@ open AssemblyInfoFile
 
 if isMono then
     monoArguments <- "--runtime=v4.0 --debug"
-    //monoArguments <- "--runtime=v4.0"
 
 let buildConfig =
  // Read release notes document
