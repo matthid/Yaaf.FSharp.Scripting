@@ -47,15 +47,27 @@ if config.UseNuget then
       failwith "you set UseNuget to true but there is no \"./src/.nuget/NuGet.targets\" or \"./src/.nuget/NuGet.Config\"! Please copy them from ./packages/Yaaf.AdvancedBuilding/scaffold/nuget"
 
 let buildWithFiles msg dir projectFileFinder (buildParams:BuildParams) =
-    let buildDir = dir @@ buildParams.SimpleBuildName
-    CleanDirs [ buildDir ]
+    let files = projectFileFinder buildParams |> Seq.toList
+    let buildDir = 
+        if not buildParams.UseProjectOutDir then
+            let buildDir = dir @@ buildParams.SimpleBuildName
+            CleanDirs [ buildDir ]
+            buildDir
+        else 
+            files
+                |> MSBuild null "clean"
+                    [ "Configuration", buildParams.BuildMode
+                      "Platform", buildParams.PlatformName ] 
+                |> Log "Cleaning: "
+            null
     // build app
-    projectFileFinder buildParams
+    files
         |> MSBuild buildDir "Build"
-            [   "Configuration", buildParams.BuildMode
-                "CustomBuildName", buildParams.CustomBuildName ]
+            [ "Configuration", buildParams.BuildMode
+              "Platform", buildParams.PlatformName ]
         |> Log msg
-
+        
+let buildSolution = buildWithFiles "BuildSolution-Output: " config.BuildDir (fun buildParams -> buildParams.FindSolutionFiles buildParams)
 let buildApp = buildWithFiles "AppBuild-Output: " config.BuildDir (fun buildParams -> buildParams.FindProjectFiles buildParams)
 let buildTests = buildWithFiles "TestBuild-Output: " config.TestDir (fun buildParams -> buildParams.FindTestFiles buildParams)
 
@@ -83,9 +95,13 @@ let runTests (buildParams:BuildParams) =
                 OutputFile = "logs/TestResults.xml" } |> config.SetupNUnit)
 
 let buildAll (buildParams:BuildParams) =
+    buildParams.BeforeBuild ()
+    buildSolution buildParams
     buildApp buildParams
     buildTests buildParams
+    buildParams.AfterBuild ()
     runTests buildParams
+    buildParams.AfterTest ()
 
 // Documentation
 let buildDocumentationTarget target =
@@ -151,7 +167,7 @@ MyTarget "CreateProjectFiles" (fun _ ->
 
     if projectGenFiles |> Seq.isEmpty |> not then
       config.BuildTargets
-        |> Seq.filter (fun buildParam -> not (String.IsNullOrEmpty(buildParam.CustomBuildName)))
+        |> Seq.filter (fun buildParam -> not (buildParam.DisableProjectFileCreation))
         |> Seq.iter (fun buildParam ->
           let solutionDir = sprintf "src/%s" buildParam.SimpleBuildName
           let projectFiles =

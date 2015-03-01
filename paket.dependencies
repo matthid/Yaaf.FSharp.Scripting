@@ -4,4 +4,6 @@ nuget FSharp.Compiler.Service
 nuget NUnit
 nuget NUnit.Runners
 nuget Unquote
+nuget FSharp.Core
+nuget FSharp.Formatting == 2.6.3
 nuget Yaaf.AdvancedBuilding

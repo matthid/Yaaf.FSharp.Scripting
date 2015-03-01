@@ -191,7 +191,7 @@ let buildAllDocumentation outDocDir website_root =
            (binaries, Path.GetFullPath outDir, config.LayoutRoots,
             parameters = projInfo,
             libDirs = [ Path.GetFullPath (libDir) ],
-            otherFlags = [ "-r:System";"-r:System.Core";"-r:System.Xml";"-r:System.Xml.Linq"],
+            otherFlags = [ "-r:System";"-r:System.Core";"-r:System.Xml";"-r:System.Xml.Linq" ],
             sourceRepo = config.SourceReproUrl,
             sourceFolder = "./",
             publicOnly = true, 

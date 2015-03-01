@@ -12,6 +12,12 @@
     The secound step is executing build.fsx which loads this file (for configuration), builds the solution and executes all unit tests.
 *)
 
+#if FAKE
+#else
+// Support when file is opened in Visual Studio
+#load "packages/Yaaf.AdvancedBuilding/content/buildConfigDef.fsx"
+#endif
+
 open BuildConfigDef
 open System.Collections.Generic
 open System.IO
@@ -43,7 +49,8 @@ let buildConfig =
               Version = config.Version
               ReleaseNotes = toLines release.Notes
               Dependencies = 
-                [ "FSharp.Compiler.Service", "0.0.82" ] }) ]
+                [ "FSharp.Compiler.Service", "0.0.84"
+                  "FSharp.Core", "3.1.2.1" ] }) ]
     UseNuget = false
     SetAssemblyFileVersions = (fun config ->
       let info =
@@ -56,12 +63,16 @@ let buildConfig =
       CreateFSharpAssemblyInfo "./src/SharedAssemblyInfo.fs" info)
     EnableProjectFileCreation = true
     BuildTargets =
-     [ { BuildParams.Empty with
+     [ { BuildParams.WithSolution with
           // The default build
-          CustomBuildName = ""
+          PlatformName = "Net40"
+          // Workaround FSharp.Compiler.Service not liking to have a FSharp.Core here: https://github.com/fsprojects/FSharpx.Reflection/issues/1
+          AfterBuild = fun _ -> File.Delete "build/net40/FSharp.Core.dll"
           SimpleBuildName = "net40" }
-       { BuildParams.Empty with
+       { BuildParams.WithSolution with
           // The generated templates
-          CustomBuildName = "net45"
+          PlatformName = "Net45"
+          // Workaround FSharp.Compiler.Service not liking to have a FSharp.Core here: https://github.com/fsprojects/FSharpx.Reflection/issues/1
+          AfterBuild = fun _ -> File.Delete "build/net45/FSharp.Core.dll"
           SimpleBuildName = "net45" } ]
   }

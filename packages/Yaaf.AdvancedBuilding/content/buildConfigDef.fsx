@@ -29,30 +29,52 @@ The `CustomBuildName` is used as a parameter for msbuild/xbuild and can be used 
 (IE. custom defines / targets and so on).
 The `CustomBuildName` property is also used as the name of the sub-directory within the `buildDir` (see below).
 *)
+
 type BuildParams =
-  { SimpleBuildName : string
-    CustomBuildName : string
+  { /// The name of the output folder and the build target
+    SimpleBuildName : string
+    /// The name of the platform to build
+    PlatformName : string
     BuildMode : string
+    DisableProjectFileCreation : bool
+    UseProjectOutDir : bool
+    BeforeBuild : unit -> unit
+    AfterBuild : unit -> unit
+    AfterTest : unit -> unit
+    FindSolutionFiles : BuildParams -> string seq 
     FindProjectFiles : BuildParams -> string seq
     FindTestFiles : BuildParams -> string seq
     FindUnitTestDlls : (string * BuildParams) -> string seq }
-  static member Empty =
+  static member Empty = 
     { SimpleBuildName = ""
       BuildMode = "Release"
-      CustomBuildName = ""
-      FindProjectFiles = (fun (buildParams:BuildParams) ->
-        let buildName = if System.String.IsNullOrEmpty buildParams.CustomBuildName then "" else (buildParams.CustomBuildName + "/")
-        !! (sprintf "src/%ssource/**/*.fsproj" buildName)
-        ++ (sprintf "src/%ssource/**/*.csproj" buildName)
-        :> _)
-      FindTestFiles = (fun (buildParams:BuildParams) ->
-        let buildName = if System.String.IsNullOrEmpty buildParams.CustomBuildName then "" else (buildParams.CustomBuildName + "/")
-        !! (sprintf "src/%stest/**/Test.*.fsproj" buildName)
-        ++ (sprintf "src/%stest/**/Test.*.csproj" buildName)
-        :> _)
-      FindUnitTestDlls = (fun (testDir, (buildParams:BuildParams)) ->
+      BeforeBuild = fun _ -> ()
+      AfterBuild = fun _ -> ()
+      AfterTest = fun _ -> ()
+      PlatformName = "AnyCPU"
+      DisableProjectFileCreation = false
+      UseProjectOutDir = false
+      FindSolutionFiles = fun _ -> Seq.empty
+      FindProjectFiles = fun (buildParams:BuildParams) ->
+        !! (sprintf "src/source/**/*.fsproj")
+        ++ (sprintf "src/source/**/*.csproj")
+        :> _
+      FindTestFiles = fun (buildParams:BuildParams) ->
+        !! (sprintf "src/test/**/Test.*.fsproj")
+        ++ (sprintf "src/test/**/Test.*.csproj")
+        :> _
+      FindUnitTestDlls = fun (testDir, (buildParams:BuildParams)) ->
         !! (testDir + "/Test.*.dll")
-        :> _) }
+        :> _ }
+  static member WithSolution =
+   { BuildParams.Empty with
+      BuildMode = "Release"
+      PlatformName = "Any CPU"
+      UseProjectOutDir = true
+      FindSolutionFiles = fun _ -> !! "**/*.sln" :> _
+      FindProjectFiles = fun _ -> Seq.empty
+      FindTestFiles = fun _ -> Seq.empty }
+
 
 type BuildConfiguration =
   { // Metadata
@@ -147,7 +169,7 @@ type BuildConfiguration =
       OutNugetDir = "./release/nuget/"
       DocTemplatesDir = "./doc/templates/"
       LayoutRoots = [ ]
-      TestDir  = "./test/"
+      TestDir  = "./build/test/"
       GlobalPackagesDir = "./packages"
       NugetPackageDir = "./packages/.nuget" }
   member x.GithubUrl = sprintf "https://github.com/%s/%s" x.GithubUser x.GithubProject

@@ -1,4 +1,8 @@
-﻿### 1.0.3
+﻿### 1.0.4
+
+ * Add FSharp.Core nuget package.
+
+### 1.0.3
 
  * Includes a net45 build.
 
