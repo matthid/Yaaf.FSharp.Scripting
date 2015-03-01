@@ -17,7 +17,9 @@
     @dependencies@
   </metadata>
   <files>
-    <file src="release/lib/Yaaf.FSharp.Scripting.dll" target="lib/net40" />
-    <file src="release/lib/Yaaf.FSharp.Scripting.xml" target="lib/net40" />
+    <file src="release/lib/net40/Yaaf.FSharp.Scripting.dll" target="lib/net40" />
+    <file src="release/lib/net40/Yaaf.FSharp.Scripting.xml" target="lib/net40" />
+    <file src="release/lib/net45/Yaaf.FSharp.Scripting.dll" target="lib/net45" />
+    <file src="release/lib/net45/Yaaf.FSharp.Scripting.xml" target="lib/net45" />
   </files>
 </package>
