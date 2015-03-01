@@ -68,11 +68,13 @@ let buildConfig =
           PlatformName = "Net40"
           // Workaround FSharp.Compiler.Service not liking to have a FSharp.Core here: https://github.com/fsprojects/FSharpx.Reflection/issues/1
           AfterBuild = fun _ -> File.Delete "build/net40/FSharp.Core.dll"
+                                File.Delete "build/test/net40/FSharp.Core.dll"
           SimpleBuildName = "net40" }
        { BuildParams.WithSolution with
           // The generated templates
           PlatformName = "Net45"
           // Workaround FSharp.Compiler.Service not liking to have a FSharp.Core here: https://github.com/fsprojects/FSharpx.Reflection/issues/1
           AfterBuild = fun _ -> File.Delete "build/net45/FSharp.Core.dll"
+                                File.Delete "build/test/net45/FSharp.Core.dll"
           SimpleBuildName = "net45" } ]
   }
