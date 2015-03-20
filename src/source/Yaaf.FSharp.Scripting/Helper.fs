@@ -69,8 +69,12 @@ let getSession (defines) =
           for define in defines do
             yield sprintf "--define:%s" define ]
 
-    let fsiConfig = FsiEvaluationSession.GetDefaultConfiguration(new InteractiveSettings(), false)
-    let fsiSession = FsiEvaluationSession.Create(fsiConfig, args |> List.toArray, inStream, outStream, errStream)
+    let fsiSession =
+      try
+        let fsiConfig = FsiEvaluationSession.GetDefaultConfiguration(new InteractiveSettings(), false)
+        FsiEvaluationSession.Create(fsiConfig, args |> List.toArray, inStream, outStream, errStream)
+      with e ->
+        failwithf "Error in creating a fsi session: %s\nConcrete exn: %A\nOutput: %s\nInput: %s" (sbErr.ToString()) e (sbOut.ToString()) (sbInput.ToString())
   
     let save_ f text =
       try
