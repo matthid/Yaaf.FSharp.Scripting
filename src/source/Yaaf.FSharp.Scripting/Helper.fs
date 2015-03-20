@@ -74,13 +74,17 @@ let getSession (defines) =
         let fsiConfig = FsiEvaluationSession.GetDefaultConfiguration(new InteractiveSettings(), false)
         FsiEvaluationSession.Create(fsiConfig, args |> List.toArray, inStream, outStream, errStream)
       with e ->
-        failwithf "Error in creating a fsi session: %s\nConcrete exn: %A\nOutput: %s\nInput: %s" (sbErr.ToString()) e (sbOut.ToString()) (sbInput.ToString())
+        raise <| new Exception(
+          sprintf "Error in creating a fsi session: %s\nConcrete exn: %A\nOutput: %s\nInput: %s" (sbErr.ToString()) e (sbOut.ToString()) (sbInput.ToString()),
+          e)
   
     let save_ f text =
       try
         f text
       with e ->
-        failwithf "Evaluation of (\n%s\n) failed: %s\nConcrete exn: %A\nOutput: %s\nInput: %s" text (sbErr.ToString()) e (sbOut.ToString()) (sbInput.ToString())
+        raise <| new Exception(
+          sprintf "Evaluation of (\n%s\n) failed: %s\nConcrete exn: %A\nOutput: %s\nInput: %s" text (sbErr.ToString()) e (sbOut.ToString()) (sbInput.ToString()),
+          e)
     
     let save f = 
         save_ (fun text ->
