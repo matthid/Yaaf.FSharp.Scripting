@@ -1,4 +1,9 @@
-﻿### 1.0.4
+﻿### 1.0.5
+
+ * Add workaround to make scripting work on a clean gentoo install.
+ * Improve error messages when session creation fails.
+
+### 1.0.4
 
  * Add FSharp.Core nuget package.
 

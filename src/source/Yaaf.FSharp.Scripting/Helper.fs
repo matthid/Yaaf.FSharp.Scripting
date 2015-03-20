@@ -52,7 +52,7 @@ type InteractiveSettings()  =
     addedPrinters <- Choice2Of2 (typeof<'T>, (fun (x:obj) -> printer (unbox x))) :: addedPrinters
 
 
-    
+let isMono = try Type.GetType("Mono.Runtime") <> null with _ -> false 
 let getSession (defines) =
     // Intialize output and input streams
     let sbOut = new StringBuilder()
@@ -63,20 +63,40 @@ let getSession (defines) =
     let errStream = new StringWriter(sbErr)
 
     // Build command line arguments & start FSI session
+
     let args =
+        let includes =
+          if isMono then
+            // Workaround that FSC doesn't find a FSharp.Core.dll
+            let runtimeDir = System.Runtime.InteropServices.RuntimeEnvironment.GetRuntimeDirectory()
+            let monoDir = Path.GetDirectoryName runtimeDir
+            // prefer current runtime (which FSC would find anyway, but fallback to 4.0 if nothing is found in 4.5 or higher)
+            // See also https://github.com/fsharp/fsharp/pull/389, https://github.com/fsharp/fsharp/pull/388
+            [ runtimeDir; Path.Combine (monoDir, "4.0") ]
+          else []
         [ yield "C:\\fsi.exe"
           yield "--noninteractive"
+          for i in includes do
+            yield sprintf "-I:%s" i
           for define in defines do
             yield sprintf "--define:%s" define ]
 
-    let fsiConfig = FsiEvaluationSession.GetDefaultConfiguration(new InteractiveSettings(), false)
-    let fsiSession = FsiEvaluationSession.Create(fsiConfig, args |> List.toArray, inStream, outStream, errStream)
+    let fsiSession =
+      try
+        let fsiConfig = FsiEvaluationSession.GetDefaultConfiguration(new InteractiveSettings(), false)
+        FsiEvaluationSession.Create(fsiConfig, args |> List.toArray, inStream, outStream, errStream)
+      with e ->
+        raise <| new Exception(
+          sprintf "Error in creating a fsi session: %s\nConcrete exn: %A\nOutput: %s\nInput: %s" (sbErr.ToString()) e (sbOut.ToString()) (sbInput.ToString()),
+          e)
   
     let save_ f text =
       try
         f text
       with e ->
-        failwithf "Evaluation of (\n%s\n) failed: %s\nConcrete exn: %A\nOutput: %s\nInput: %s" text (sbErr.ToString()) e (sbOut.ToString()) (sbInput.ToString())
+        raise <| new Exception(
+          sprintf "Evaluation of (\n%s\n) failed: %s\nConcrete exn: %A\nOutput: %s\nInput: %s" text (sbErr.ToString()) e (sbOut.ToString()) (sbInput.ToString()),
+          e)
     
     let save f = 
         save_ (fun text ->
