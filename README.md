@@ -2,6 +2,8 @@
 
 ## [Documentation](https://matthid.github.io/Yaaf.FSharp.Scripting/)
 
+[![Join the chat at https://gitter.im/matthid/Yaaf](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/matthid/Yaaf?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+
 ## Build status
 
 **Development Branch**
