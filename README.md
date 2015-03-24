@@ -16,6 +16,20 @@
 [![Build Status](https://travis-ci.org/matthid/Yaaf.FSharp.Scripting.svg?branch=master)](https://travis-ci.org/matthid/Yaaf.FSharp.Scripting)
 [![Build status](https://ci.appveyor.com/api/projects/status/od970xa4gvkh4tea/branch/master?svg=true)](https://ci.appveyor.com/project/matthid/yaaf-fsharp/branch/master)
 
+## NuGet
+
+<div class="row">
+  <div class="span1"></div>
+  <div class="span6">
+    <div class="well well-small" id="nuget">
+      The Yaaf.FSharp.Scripting library can be <a href="https://nuget.org/packages/Yaaf.FSharp.Scripting">installed from NuGet</a>:
+      <pre>PM> Install-Package Yaaf.FSharp.Scripting</pre>
+    </div>
+  </div>
+  <div class="span1"></div>
+</div>
+
+## Quick intro
 
 This library tries to improve the scripting capabilities of FSharp.
 
