@@ -11,16 +11,27 @@ module internal CompilerServiceExtensions =
   open Microsoft.FSharp.Compiler
   open Microsoft.FSharp.Compiler.Interactive.Shell
   open Microsoft.FSharp.Compiler.SourceCodeServices
+  open System.IO
 
   module internal FSharpAssemblyHelper =
       open System.IO
       let checker = FSharpChecker.Create()
           
       let getProjectReferences otherFlags libDirs dllFiles = 
-          let otherFlags = defaultArg otherFlags []
-          let libDirs = defaultArg libDirs []
+          let dllFiles, hasCoreLib =
+            dllFiles
+            |> Seq.fold (fun (files, hasCoreLib) dllFile -> 
+               dllFile :: files, 
+               hasCoreLib || 
+               let name = Path.GetFileName dllFile
+               name = "FSharp.Core.dll" || name = "mscorlib.dll" 
+            ) ([], false)
+
+          let otherFlags = defaultArg otherFlags Seq.empty
+          let libDirs = defaultArg libDirs Seq.empty
           let base1 = Path.GetTempFileName()
           let dllName = Path.ChangeExtension(base1, ".dll")
+          let xmlName = Path.ChangeExtension(base1, ".xml")
           let fileName1 = Path.ChangeExtension(base1, ".fs")
           let projFileName = Path.ChangeExtension(base1, ".fsproj")
           File.WriteAllText(fileName1, """module M""")
@@ -30,9 +41,10 @@ module internal CompilerServiceExtensions =
                       yield "--define:DEBUG" 
                       //yield "--optimize-" 
                       yield "--nooptimizationdata"
-                      yield "--noframework"
+                      if hasCoreLib then
+                        yield "--noframework"
                       yield "--out:" + dllName
-                      yield "--doc:test.xml" 
+                      yield "--doc:" + xmlName
                       yield "--warn:3" 
                       yield "--fullpaths" 
                       yield "--flaterrors" 
@@ -53,16 +65,24 @@ module internal CompilerServiceExtensions =
 
           let references = results.ProjectContext.GetReferencedAssemblies()
           references
-          
+      let referenceMap references =
+          references
+          |> Seq.choose (fun (r:FSharpAssembly) -> r.FileName |> Option.map (fun f -> f, r))
+      let resolve dllFiles references =
+          let referenceMap = 
+            referenceMap references
+            |> dict
+          dllFiles |> Seq.map (fun file -> file, if referenceMap.ContainsKey file then Some referenceMap.[file] else None)
+        
       let getProjectReferencesSimple dllFiles = 
-          let references =
-              getProjectReferences None None dllFiles
-              |> Seq.choose (fun r -> r.FileName |> Option.map (fun f -> f, r))
-              |> dict
-          dllFiles |> List.map (fun file -> references.[file])
+        let dllFiles = dllFiles |> Seq.toList
+        getProjectReferences None None dllFiles
+        |> resolve dllFiles
+        
       let getProjectReferenceFromFile dllFile = 
           getProjectReferencesSimple [ dllFile ]
           |> Seq.exactlyOne
+          |> snd
 
       let rec enumerateEntities (e:FSharpEntity) =
           [
@@ -76,6 +96,32 @@ module internal CompilerServiceExtensions =
           x.FullName.Substring(0, match x.FullName.IndexOf("[") with | -1 -> x.FullName.Length | _ as i -> i)
 
   type FSharpAssembly with
+      static member LoadFiles (dllFiles, ?libDirs, ?otherFlags, ?manualResolve) =
+        let resolveDirs = defaultArg manualResolve true
+        let libDirs = defaultArg libDirs Seq.empty
+        let dllFiles = dllFiles |> Seq.toList
+        let findReferences libDir =
+          Directory.EnumerateFiles(libDir, "*.dll")
+          |> Seq.map Path.GetFullPath
+          |> Seq.filter (fun file -> dllFiles |> List.exists (fun binary -> binary = file) |> not)
+        
+        // See https://github.com/tpetricek/FSharp.Formatting/commit/22ffb8ec3c743ceaf069893a46a7521667c6fc9d
+        let blacklist =
+          [ "FSharp.Core.dll"; "mscorlib.dll" ]
+
+        // See https://github.com/tpetricek/FSharp.Formatting/commit/5d14f45cd7e70c2164a7448ea50a6b9995166489
+        let _dllFiles, _libDirs =
+          if resolveDirs then
+            libDirs
+            |> Seq.collect findReferences
+            |> Seq.append dllFiles
+            |> Seq.filter (fun file -> blacklist |> List.exists (fun black -> black = Path.GetFileName file) |> not),
+            Seq.empty
+          else dllFiles |> List.toSeq, libDirs
+        FSharpAssemblyHelper.getProjectReferences otherFlags (Some _libDirs) _dllFiles
+        |> FSharpAssemblyHelper.resolve dllFiles
+            
+
       static member FromAssembly (assembly:Assembly) =
           let isWindows = System.Environment.OSVersion.Platform = System.PlatformID.Win32NT
           let loc =
@@ -88,7 +134,7 @@ module internal CompilerServiceExtensions =
               else
                   assembly.Location
           if loc = null then None
-          else Some (FSharpAssemblyHelper.getProjectReferenceFromFile loc)
+          else FSharpAssemblyHelper.getProjectReferenceFromFile loc
 
       member x.FindType (t:Type) =
           x.Contents.Entities 
