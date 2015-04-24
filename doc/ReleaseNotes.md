@@ -1,4 +1,8 @@
-﻿### 1.0.5
+﻿### 1.0.6
+
+ * Add support for using the source code files directly (via paket and nuget).
+
+### 1.0.5
 
  * Add workaround to make scripting work on a clean gentoo install.
  * Improve error messages when session creation fails.
