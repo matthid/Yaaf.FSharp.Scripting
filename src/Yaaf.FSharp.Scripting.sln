@@ -20,6 +20,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "project", "project", "{BF60
 	ProjectSection(SolutionItems) = preProject
 		..\buildConfig.fsx = ..\buildConfig.fsx
 		..\paket.dependencies = ..\paket.dependencies
+		..\nuget\Yaaf.FSharp.Scripting.nuspec = ..\nuget\Yaaf.FSharp.Scripting.nuspec
 	EndProjectSection
 EndProject
 Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Yaaf.FSharp.Scripting", "source\Yaaf.FSharp.Scripting\Yaaf.FSharp.Scripting.fsproj", "{2D4E0476-7D33-449B-B895-FF1CAF9DD712}"

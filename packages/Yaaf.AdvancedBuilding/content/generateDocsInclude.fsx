@@ -10,18 +10,9 @@
 open BuildConfigDef
 let config = BuildConfig.buildConfig.FillDefaults()
 
-#I @"../../FSharp.Compiler.Service/lib/net40/"
-#I @"../../FSharp.Formatting/lib/net40/"
-
-// Documentation
-#r "FSharp.Compiler.Service.dll"
-#r "System.Web.dll"
-#r "System.Web.Razor.dll"
+#load @"../../FSharp.Formatting/FSharp.Formatting.fsx"
+// see https://github.com/tpetricek/FSharp.Formatting/pull/302
 #r "RazorEngine.dll"
-#r "FSharp.Markdown.dll"
-#r "FSharp.Literate.dll"
-#r "FSharp.CodeFormat.dll"
-#r "FSharp.MetadataFormat.dll"
 
 open System.Collections.Generic
 open System.IO
@@ -78,23 +69,7 @@ let rec replaceCodeBlocks ctx = function
     | par -> Some par
     
 let buildAllDocumentation outDocDir website_root =
-    let references =
-        if isMono then
-            // Workaround compiler errors in Razor-ViewEngine
-            let d = RazorEngine.Compilation.ReferenceResolver.UseCurrentAssembliesReferenceResolver()
-            let loadedList = d.GetReferences() |> Seq.map (fun c -> c.GetFile()) |> Seq.cache
-            //// We replace the list and add required items manually as mcs doesn't like duplicates...
-            let getItem name =
-                loadedList |> Seq.find (fun l -> l.Contains name)
-            [ (getItem "FSharp.Core").Replace("4.3.0.0", "4.3.1.0")  // (if isMono then "/usr/lib64/mono/gac/FSharp.Core/4.3.1.0__b03f5f7f11d50a3a/FSharp.Core.dll" else "FSharp.Core") 
-              Path.GetFullPath "./packages/FSharp.Compiler.Service/lib/net40/FSharp.Compiler.Service.dll"
-              Path.GetFullPath "./packages/FSharp.Formatting/lib/net40/System.Web.Razor.dll"
-              Path.GetFullPath "./packages/FSharp.Formatting/lib/net40/RazorEngine.dll"
-              Path.GetFullPath "./packages/FSharp.Formatting/lib/net40/FSharp.Literate.dll"
-              Path.GetFullPath "./packages/FSharp.Formatting/lib/net40/FSharp.CodeFormat.dll"
-              Path.GetFullPath "./packages/FSharp.Formatting/lib/net40/FSharp.MetadataFormat.dll" ] 
-            |> Some
-        else None
+    let references = config.DocRazorReferences
     
     let projInfo =
         [ "root", website_root
@@ -122,7 +97,7 @@ let buildAllDocumentation outDocDir website_root =
     let processDocumentationFiles(outputKind) =
       let indexTemplate, template, outDirName, indexName, extension =
         match outputKind with
-        | OutputKind.Html -> config.DocTemplatesDir @@ "docpage-index.cshtml", config.DocTemplatesDir @@ "docpage.cshtml", "html", "index.html", ".html"
+        | OutputKind.Html -> "docpage-index.cshtml", "docpage.cshtml", "html", "index.html", ".html"
         | OutputKind.Latex -> config.DocTemplatesDir @@ "template-color.tex", config.DocTemplatesDir @@ "template-color.tex", "latex", "Readme.tex", ".tex"
       let outDir = outDocDir @@ outDirName
       let handleDoc template (doc:LiterateDocument) outfile =
@@ -176,7 +151,16 @@ let buildAllDocumentation outDocDir website_root =
 
     // Build API reference from XML comments
     let referenceBinaries =
-        config.GeneratedFileList |> List.filter (fun f -> f.EndsWith(".dll") || f.EndsWith(".exe"))
+        let xmlFiles = config.GeneratedFileList |> List.filter (fun f -> f.EndsWith(".xml"))
+        config.GeneratedFileList
+          |> List.filter (fun f -> f.EndsWith(".dll") || f.EndsWith(".exe"))
+          |> List.filter (fun f ->
+              let exists =
+                xmlFiles |> List.exists (fun xml ->
+                    Path.GetFileNameWithoutExtension xml = Path.GetFileNameWithoutExtension f)
+              if not exists then
+                  trace (sprintf "No .xml file is given in GeneratedFileList for %s" f)
+              exists)
 
     let buildReference () =
         let referenceDir = outDocDir @@ "html"
@@ -187,11 +171,25 @@ let buildAllDocumentation outDocDir website_root =
         let binaries =
             referenceBinaries
             |> List.map (fun lib -> Path.GetFullPath( libDir @@ lib ))
+        let blacklist = [ "FSharp.Core.dll"; "mscorlib.dll" ]
+        let libraries =
+            Directory.EnumerateFiles(libDir, "*.dll")
+            |> Seq.map Path.GetFullPath
+            |> Seq.filter (fun file -> binaries |> List.exists (fun binary -> binary = file) |> not)
+            |> Seq.append [ "System";"System.Core";"System.Xml";"System.Xml.Linq" ]
+            |> Seq.filter (fun file ->
+                let name = Path.GetFileName file
+                let isBlacklisted = blacklist |> List.exists (fun b -> b = name)
+                if isBlacklisted then
+                  trace (sprintf "WARNING: Reference to \"%s\" is ignored because it is blacklisted!" file)
+                not isBlacklisted)
+            |> Seq.map (sprintf "-r:%s")
+            |> Seq.toList
         MetadataFormat.Generate
            (binaries, Path.GetFullPath outDir, config.LayoutRoots,
             parameters = projInfo,
-            libDirs = [ Path.GetFullPath (libDir) ],
-            otherFlags = [ "-r:System";"-r:System.Core";"-r:System.Xml";"-r:System.Xml.Linq" ],
+            libDirs = [ ],
+            otherFlags = libraries,
             sourceRepo = config.SourceReproUrl,
             sourceFolder = "./",
             publicOnly = true, 
@@ -209,9 +207,18 @@ let MyTarget name body =
     let single = (sprintf "%s_single" name)
     Target single (fun _ -> body true)
 
-MyTarget "GithubDoc" (fun _ -> buildAllDocumentation (config.OutDocDir @@ sprintf "%s.github.io" config.GithubUser) (sprintf "https://%s.github.io/%s" config.GithubUser config.GithubProject))
+let doGithub () =
+    buildAllDocumentation (config.OutDocDir @@ sprintf "%s.github.io" config.GithubUser) (sprintf "https://%s.github.io/%s" config.GithubUser config.GithubProject)
 
-MyTarget "LocalDoc" (fun _ -> 
+let doLocal () =
     buildAllDocumentation (config.OutDocDir @@ "local") ("file://" + Path.GetFullPath (config.OutDocDir @@ "local" @@ "html"))
     trace (sprintf "Local documentation has been finished, you can view it by opening %s in your browser!" (Path.GetFullPath (config.OutDocDir @@ "local" @@ "html" @@ "index.html")))
+
+MyTarget "GithubDoc" (fun _ -> doGithub())
+
+MyTarget "LocalDoc" (fun _ -> doLocal())
+
+MyTarget "AllDocs" (fun _ ->
+    doGithub()
+    doLocal()
 )

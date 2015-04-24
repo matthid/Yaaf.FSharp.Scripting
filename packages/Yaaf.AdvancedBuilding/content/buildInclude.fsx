@@ -16,6 +16,7 @@
 #else
 // Support when file is opened in Visual Studio
 #load "buildConfigDef.fsx"
+#load "../../../buildConfig.fsx"
 #endif
 
 open BuildConfigDef
@@ -37,6 +38,14 @@ open Fake
 open Fake.Git
 open Fake.FSharpFormatting
 open AssemblyInfoFile
+
+let readLine msg def =
+  if isLocalBuild then
+    printf "%s" msg
+    System.Console.ReadLine()
+  else
+    printf "%s%s" msg def
+    def
 
 if config.UseNuget then
     // Ensure the ./src/.nuget/NuGet.exe file exists (required by xbuild)
@@ -103,13 +112,20 @@ let buildAll (buildParams:BuildParams) =
     runTests buildParams
     buildParams.AfterTest ()
 
+/// Run the given buildscript with fsi.exe
+let executeFSIWithOutput workingDirectory script args =
+    let exitCode =
+        ExecProcessWithLambdas
+            (fsiStartInfo script workingDirectory args)
+            TimeSpan.MaxValue false ignore ignore
+    System.Threading.Thread.Sleep 1000
+    exitCode
+
 // Documentation
 let buildDocumentationTarget target =
     trace (sprintf "Building documentation (%s), this could take some time, please wait..." target)
-    let b, s = executeFSI "." "generateDocs.fsx" ["target", target]
-    for l in s do
-        (if l.IsError then traceError else trace) (sprintf "DOCS: %s" l.Message)
-    if not b then
+    let exit = executeFSIWithOutput "." "generateDocs.fsx" ["target", target]
+    if exit <> 0 then
         failwith "documentation failed"
     ()
 
@@ -138,7 +154,6 @@ MyTarget "CleanAll" (fun _ ->
 )
 
 MyTarget "RestorePackages" (fun _ ->
-  if config.UseNuget then
     // will catch src/targetsDependencies
     !! "./src/**/packages.config"
     |> Seq.iter 
@@ -148,12 +163,33 @@ MyTarget "RestorePackages" (fun _ ->
                 OutputPath = config.NugetPackageDir }))
 )
 
+MyTarget "CreateDebugFiles" (fun _ ->
+    // creates .mdb from .pdb files
+    !! (config.GlobalPackagesDir + "/**/*.exe")
+    ++ (config.GlobalPackagesDir + "/**/*.dll")
+    |> Seq.iter (fun assembly ->
+        try
+          match File.Exists (Path.ChangeExtension(assembly, "pdb")), File.Exists (Path.ChangeExtension (assembly, "mdb")) with
+          | true, false ->
+            // create mdb
+            trace (sprintf "Creating mdb for %s" assembly)
+            Yaaf.AdvancedBuilding.DebugSymbolHelper.writeMdbFromPdb assembly
+          | false, true ->
+            // create pdb
+            trace (sprintf "Creating pdb for %s" assembly)
+            Yaaf.AdvancedBuilding.DebugSymbolHelper.writePdbFromMdb assembly
+          | _, _ -> 
+            // either no debug symbols available or already both.
+            ()
+        with exn -> traceError (sprintf "Error creating symbols: %s" exn.Message)
+    ) 
+)
+
 MyTarget "SetVersions" (fun _ -> 
     config.SetAssemblyFileVersions config
 )
 
 MyTarget "CreateProjectFiles" (fun _ ->
-  if config.EnableProjectFileCreation then
     let generator = new ProjectGenerator("./src/templates")
     let createdFile = ref false
     let projectGenFiles =
@@ -207,29 +243,75 @@ MyTarget "CopyToRelease" (fun _ ->
             config.GeneratedFileList
             |> Seq.filter (fun (file) -> File.Exists (source @@ file))
             |> Seq.iter (fun (file) ->
+                let sourceFile = source @@ file
                 let newfile = outDir @@ Path.GetFileName file
-                File.Copy(source @@ file, newfile))
+                trace (sprintf "Copying %s to %s" sourceFile newfile)
+                File.Copy(sourceFile, newfile))
         )
 )
 
-MyTarget "NuGet" (fun _ ->
-    let outDir = config.OutNugetDir
-    ensureDirectory outDir
+
+/// push package (and try again if something fails), FAKE Version doesn't work on mono
+/// From https://raw.githubusercontent.com/fsharp/FAKE/master/src/app/FakeLib/NuGet/NugetHelper.fs
+let rec private publish parameters =
+    let replaceAccessKey key (text : string) =
+        if isNullOrEmpty key then text
+        else text.Replace(key, "PRIVATEKEY")
+    let nuspec = sprintf "%s.%s.nupkg" parameters.Project parameters.Version
+    traceStartTask "MyNuGetPublish" nuspec
+    let tracing = enableProcessTracing
+    enableProcessTracing <- false
+    let source =
+        if isNullOrEmpty parameters.PublishUrl then ""
+        else sprintf "-s %s" parameters.PublishUrl
+
+    let args = sprintf "push \"%s\" %s %s" (parameters.OutputPath @@ nuspec) parameters.AccessKey source
+    tracefn "%s %s in WorkingDir: %s Trials left: %d" parameters.ToolPath (replaceAccessKey parameters.AccessKey args)
+        (FullName parameters.WorkingDir) parameters.PublishTrials
+    try
+        let result =
+            ExecProcess (fun info ->
+                info.FileName <- parameters.ToolPath
+                info.WorkingDirectory <- FullName parameters.WorkingDir
+                info.Arguments <- args) parameters.TimeOut
+        enableProcessTracing <- tracing
+        if result <> 0 then failwithf "Error during NuGet push. %s %s" parameters.ToolPath args
+    with exn ->
+        if parameters.PublishTrials > 0 then publish { parameters with PublishTrials = parameters.PublishTrials - 1 }
+        else
+          (if exn.InnerException <> null then exn.Message + "\r\n" + exn.InnerException.Message
+           else exn.Message)
+          |> replaceAccessKey parameters.AccessKey
+          |> failwith
+    traceEndTask "MyNuGetPublish" nuspec
+
+let packSetup config p =
+  { p with
+      Authors = config.ProjectAuthors
+      Project = config.ProjectName
+      Summary = config.ProjectSummary
+      Version = config.Version
+      Description = config.ProjectDescription
+      Tags = config.NugetTags
+      WorkingDir = "."
+      OutputPath = config.OutNugetDir
+      AccessKey = getBuildParamOrDefault "nugetkey" ""
+      Publish = false
+      Dependencies = [ ] }
+
+MyTarget "NuGetPack" (fun _ ->
+    ensureDirectory config.OutNugetDir
     for (nuspecFile, settingsFunc) in config.NugetPackages do
-      NuGet (fun p ->
-        { p with
-            Authors = config.ProjectAuthors
-            Project = config.ProjectName
-            Summary = config.ProjectSummary
-            Version = config.Version
-            Description = config.ProjectDescription
-            Tags = config.NugetTags
-            WorkingDir = "."
-            OutputPath = outDir
-            AccessKey = getBuildParamOrDefault "nugetkey" ""
-            Publish = hasBuildParam "nugetkey"
-            Dependencies = [ ] } |> settingsFunc config)
-        (sprintf "nuget/%s" nuspecFile)
+      let packSetup = packSetup config
+      NuGet (fun p -> { (packSetup >> settingsFunc config) p with Publish = false }) (sprintf "nuget/%s" nuspecFile)
+)
+
+MyTarget "NuGetPush" (fun _ ->
+    for (nuspecFile, settingsFunc) in config.NugetPackages do
+      let packSetup = packSetup config
+      let parameters = NuGetDefaults() |> (fun p -> { packSetup p with Publish = true }) |> settingsFunc config
+      // This allows us to specify packages which we do not want to push...
+      if hasBuildParam "nugetkey" && parameters.Publish then publish parameters
 )
 
 // Documentation 
@@ -241,14 +323,17 @@ MyTarget "LocalDoc" (fun _ ->
     trace (sprintf "Local documentation has been finished, you can view it by opening %s in your browser!" (Path.GetFullPath (config.OutDocDir @@ "local" @@ "html" @@ "index.html")))
 )
 
+MyTarget "AllDocs" (fun _ ->
+    buildDocumentationTarget "AllDocs"
+)
 
 MyTarget "ReleaseGithubDoc" (fun isSingle ->
     let repro = (sprintf "git@github.com:%s/%s.git" config.GithubUser config.GithubProject)
     let doAction =
         if isSingle then true
         else
-            printf "update github docs to %s? (y,n): " repro
-            let line = System.Console.ReadLine()
+            let msg = sprintf "update github docs to %s? (y,n): " repro
+            let line = readLine msg "y"
             line = "y"
     if doAction then
         CleanDir "gh-pages"
@@ -257,8 +342,8 @@ MyTarget "ReleaseGithubDoc" (fun isSingle ->
         CopyRecursive ("release"@@"documentation"@@(sprintf "%s.github.io" config.GithubUser)@@"html") "gh-pages" true |> printfn "%A"
         StageAll "gh-pages"
         Commit "gh-pages" (sprintf "Update generated documentation %s" config.Version)
-        printf "gh-pages branch updated in the gh-pages directory, push that branch to %s now? (y,n): " repro
-        let line = System.Console.ReadLine()
+        let msg = sprintf "gh-pages branch updated in the gh-pages directory, push that branch to %s now? (y,n): " repro
+        let line = readLine msg "y"
         if line = "y" then
             Branches.pushBranch "gh-pages" "origin" "gh-pages"
 )
@@ -268,22 +353,52 @@ Target "All" (fun _ ->
 )
 
 MyTarget "VersionBump" (fun _ ->
+    let doBranchUpdates = not isLocalBuild && (getBuildParamOrDefault "yaaf_merge_master" "false") = "true"
+    if doBranchUpdates then
+      // Make sure we are on develop (commit will fail otherwise)
+      Stash.push "" ""
+      try Branches.deleteBranch "" true "develop"
+      with e -> trace (sprintf "deletion of develop branch failed %O" e)
+      Branches.checkout "" true "develop"
+      try Stash.pop ""
+      with e -> trace (sprintf "stash pop failed %O" e)
+
     // Commit updates the SharedAssemblyInfo.cs files.
     let changedFiles = Fake.Git.FileStatus.getChangedFilesInWorkingCopy "" "HEAD" |> Seq.toList
     if changedFiles |> Seq.isEmpty |> not then
         for (status, file) in changedFiles do
             printfn "File %s changed (%A)" file status
 
-        printf "version bump commit? (y,n): "
-        let line = System.Console.ReadLine()
+        let line = readLine "version bump commit? (y,n): " "y"
         if line = "y" then
             StageAll ""
             Commit "" (sprintf "Bump version to %s" config.Version)
+
+    if doBranchUpdates then
+      try Branches.deleteBranch "" true "master"
+      with e -> trace (sprintf "deletion of master branch failed %O" e)
+      Branches.checkout "" false "origin/master"
+      Branches.checkout "" true "master"
+      Merge.merge "" NoFastForwardFlag "develop"
+
+      Branches.pushBranch "" "origin" "master"
+      //try Branches.deleteTag "" config.Version
+      //with e -> trace (sprintf "deletion of tag %s failed %O" config.Version e)
+      Branches.tag "" config.Version
+      Branches.pushTag "" "origin" config.Version
+      try Branches.deleteBranch "" true "develop"
+      with e -> trace (sprintf "deletion of develop branch failed %O" e)
+      Branches.checkout "" false "origin/develop"
+      Branches.checkout "" true "develop"
+      Merge.merge "" NoFastForwardFlag "master"
+      Branches.pushBranch "" "origin" "develop"
 )
 
 Target "Release" (fun _ ->
     trace "All released!"
 )
+
+Target "ReadyForBuild" ignore
 
 // Clean all
 "Clean" 
@@ -292,14 +407,15 @@ Target "Release" (fun _ ->
   ==> "CleanAll_single"
 
 "Clean"
-  ==> "RestorePackages"
+  =?> ("RestorePackages", config.UseNuget)
   ==> "SetVersions"
-  ==> "CreateProjectFiles"
+  =?> ("CreateProjectFiles", config.EnableProjectFileCreation)
+  ==> "ReadyForBuild"
 
 config.BuildTargets
     |> Seq.iter (fun buildParam ->
         let buildName = sprintf "Build_%s" buildParam.SimpleBuildName
-        "CreateProjectFiles"
+        "ReadyForBuild"
           ==> buildName
           |> ignore
         buildName
@@ -310,13 +426,14 @@ config.BuildTargets
 // Dependencies
 "Clean" 
   ==> "CopyToRelease"
-  ==> "NuGet"
+  ==> "NuGetPack"
   ==> "LocalDoc"
   ==> "All"
  
 "All" 
   ==> "VersionBump"
-  ==> "GithubDoc"
-  ==> "ReleaseGithubDoc"
+  =?> ("GithubDoc", config.EnableGithub)
+  =?> ("ReleaseGithubDoc", config.EnableGithub)
+  ==> "NuGetPush"
   ==> "Release"
 

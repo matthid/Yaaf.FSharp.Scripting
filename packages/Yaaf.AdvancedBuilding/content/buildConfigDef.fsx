@@ -83,6 +83,8 @@ type BuildConfiguration =
     CopyrightNotice : string
     ProjectDescription : string
     ProjectAuthors : string list
+    /// Enable all github integrations (pushing documentation)
+    EnableGithub : bool
     GithubUser : string
     /// Defaults to ProjectName
     GithubProject : string
@@ -131,13 +133,16 @@ type BuildConfiguration =
     OutDocDir : string
     /// Defaults to "./doc/templates/"
     DocTemplatesDir : string
-    LayoutRoots : string list }
+    LayoutRoots : string list
+    /// Specify the list of references used for (razor) documentation generation.
+    DocRazorReferences : string list option }
   static member Defaults =
     { ProjectName = ""
       ProjectSummary = ""
       CopyrightNotice = ""
       ProjectDescription = ""
       UseNuget = false
+      EnableGithub = true
       EnableProjectFileCreation = false
       ProjectAuthors = []
       BuildTargets = [ BuildParams.Empty ]
@@ -171,21 +176,40 @@ type BuildConfiguration =
       LayoutRoots = [ ]
       TestDir  = "./build/test/"
       GlobalPackagesDir = "./packages"
-      NugetPackageDir = "./packages/.nuget" }
+      NugetPackageDir = "./packages/.nuget"
+      DocRazorReferences =
+        if isMono then
+          let loadedList =
+            System.AppDomain.CurrentDomain.GetAssemblies()
+            |> Seq.choose (fun a -> try Some (a.Location) with _ -> None)
+            |> Seq.cache
+          let getItem name = loadedList |> Seq.find (fun l -> l.Contains name)
+          [ (getItem "FSharp.Core").Replace("4.3.0.0", "4.3.1.0")  // (if isMono then "/usr/lib64/mono/gac/FSharp.Core/4.3.1.0__b03f5f7f11d50a3a/FSharp.Core.dll" else "FSharp.Core") 
+            Path.GetFullPath "./packages/FSharp.Compiler.Service/lib/net40/FSharp.Compiler.Service.dll"
+            Path.GetFullPath "./packages/FSharp.Formatting/lib/net40/System.Web.Razor.dll"
+            Path.GetFullPath "./packages/FSharp.Formatting/lib/net40/RazorEngine.dll"
+            Path.GetFullPath "./packages/FSharp.Formatting/lib/net40/FSharp.Literate.dll"
+            Path.GetFullPath "./packages/FSharp.Formatting/lib/net40/FSharp.CodeFormat.dll"
+            Path.GetFullPath "./packages/FSharp.Formatting/lib/net40/FSharp.MetadataFormat.dll" ]
+          |> Some
+        else None}
   member x.GithubUrl = sprintf "https://github.com/%s/%s" x.GithubUser x.GithubProject
   member x.FillDefaults () =
+    let x =
+      { x with
+          NugetUrl =
+            if String.IsNullOrEmpty x.NugetUrl then sprintf "https://www.nuget.org/packages/%s/" x.ProjectName else x.NugetUrl
+          GithubProject = if String.IsNullOrEmpty x.GithubProject then x.ProjectName else x.GithubProject
+          GeneratedFileList =
+            if x.GeneratedFileList |> List.isEmpty |> not then x.GeneratedFileList
+            else [ x.ProjectName + ".dll"; x.ProjectName + ".xml" ]
+          LayoutRoots =
+            if not x.LayoutRoots.IsEmpty then x.LayoutRoots
+            else [ x.DocTemplatesDir; x.DocTemplatesDir @@ "reference" ] }
+    // GithubUrl is now available
     { x with
-        NugetUrl =
-          if String.IsNullOrEmpty x.NugetUrl then sprintf "https://www.nuget.org/packages/%s/" x.ProjectName else x.NugetUrl
-        GithubProject = if String.IsNullOrEmpty x.GithubProject then x.ProjectName else x.GithubProject
-        IssuesUrl = if String.IsNullOrEmpty x.IssuesUrl then sprintf "%s/issues" x.GithubUrl else x.IssuesUrl
-        FileNewIssueUrl =
-          if String.IsNullOrEmpty x.FileNewIssueUrl then sprintf "%s/issues/new" x.GithubUrl else x.FileNewIssueUrl
-        SourceReproUrl =
-          if String.IsNullOrEmpty x.SourceReproUrl then x.GithubUrl + "/blob/master/" else x.SourceReproUrl
-        GeneratedFileList =
-          if x.GeneratedFileList |> List.isEmpty |> not then x.GeneratedFileList
-          else [ x.ProjectName + ".dll"; x.ProjectName + ".xml" ]
-        LayoutRoots =
-          if not x.LayoutRoots.IsEmpty then x.LayoutRoots
-          else [ x.DocTemplatesDir; x.DocTemplatesDir @@ "reference" ]}
+          SourceReproUrl =
+            if String.IsNullOrEmpty x.SourceReproUrl then x.GithubUrl + "/blob/master/" else x.SourceReproUrl
+          IssuesUrl = if String.IsNullOrEmpty x.IssuesUrl then sprintf "%s/issues" x.GithubUrl else x.IssuesUrl
+          FileNewIssueUrl =
+            if String.IsNullOrEmpty x.FileNewIssueUrl then sprintf "%s/issues/new" x.GithubUrl else x.FileNewIssueUrl }
