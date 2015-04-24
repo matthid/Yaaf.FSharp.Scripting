@@ -11,6 +11,8 @@ open BuildConfigDef
 let config = BuildConfig.buildConfig.FillDefaults()
 
 #load @"../../FSharp.Formatting/FSharp.Formatting.fsx"
+// see https://github.com/tpetricek/FSharp.Formatting/pull/302
+#r "RazorEngine.dll"
 
 open System.Collections.Generic
 open System.IO
@@ -67,23 +69,7 @@ let rec replaceCodeBlocks ctx = function
     | par -> Some par
     
 let buildAllDocumentation outDocDir website_root =
-    let references =
-        if isMono then
-            // Workaround compiler errors in Razor-ViewEngine
-            let d = RazorEngine.Compilation.ReferenceResolver.UseCurrentAssembliesReferenceResolver()
-            let loadedList = d.GetReferences() |> Seq.map (fun c -> c.GetFile()) |> Seq.cache
-            //// We replace the list and add required items manually as mcs doesn't like duplicates...
-            let getItem name =
-                loadedList |> Seq.find (fun l -> l.Contains name)
-            [ (getItem "FSharp.Core").Replace("4.3.0.0", "4.3.1.0")  // (if isMono then "/usr/lib64/mono/gac/FSharp.Core/4.3.1.0__b03f5f7f11d50a3a/FSharp.Core.dll" else "FSharp.Core") 
-              Path.GetFullPath "./packages/FSharp.Compiler.Service/lib/net40/FSharp.Compiler.Service.dll"
-              Path.GetFullPath "./packages/FSharp.Formatting/lib/net40/System.Web.Razor.dll"
-              Path.GetFullPath "./packages/FSharp.Formatting/lib/net40/RazorEngine.dll"
-              Path.GetFullPath "./packages/FSharp.Formatting/lib/net40/FSharp.Literate.dll"
-              Path.GetFullPath "./packages/FSharp.Formatting/lib/net40/FSharp.CodeFormat.dll"
-              Path.GetFullPath "./packages/FSharp.Formatting/lib/net40/FSharp.MetadataFormat.dll" ] 
-            |> Some
-        else None
+    let references = config.DocRazorReferences
     
     let projInfo =
         [ "root", website_root
@@ -111,7 +97,7 @@ let buildAllDocumentation outDocDir website_root =
     let processDocumentationFiles(outputKind) =
       let indexTemplate, template, outDirName, indexName, extension =
         match outputKind with
-        | OutputKind.Html -> config.DocTemplatesDir @@ "docpage-index.cshtml", config.DocTemplatesDir @@ "docpage.cshtml", "html", "index.html", ".html"
+        | OutputKind.Html -> "docpage-index.cshtml", "docpage.cshtml", "html", "index.html", ".html"
         | OutputKind.Latex -> config.DocTemplatesDir @@ "template-color.tex", config.DocTemplatesDir @@ "template-color.tex", "latex", "Readme.tex", ".tex"
       let outDir = outDocDir @@ outDirName
       let handleDoc template (doc:LiterateDocument) outfile =
@@ -213,8 +199,7 @@ let buildAllDocumentation outDocDir website_root =
     CleanDirs [ outDocDir ]
     copyDocContentFiles()
     processDocumentationFiles OutputKind.Html
-    // enable when working again...
-    //processDocumentationFiles OutputKind.Latex
+    processDocumentationFiles OutputKind.Latex
     buildReference()
     
 let MyTarget name body =
