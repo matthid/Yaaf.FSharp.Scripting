@@ -1,4 +1,8 @@
-﻿### 1.0.6
+﻿### 1.0.7
+
+ * Add TryEvalExpression to get the type of the expression (not the runtime type).
+
+### 1.0.6
 
  * Add support for using the source code files directly (via paket and nuget).
 
