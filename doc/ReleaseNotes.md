@@ -1,4 +1,8 @@
-﻿### 1.0.8
+﻿### 1.0.9
+
+ * added FSharpAssembly.LoadFiles API.
+
+### 1.0.8
 
  * Support for custom fsi settings object ("fsi")
 
