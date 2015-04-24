@@ -150,8 +150,8 @@ type internal IFsiSession =
 #endif
     /// Evaluate the given interaction.
     abstract member EvalInteraction : string -> unit
-    /// Evaluate the given expression and return its result.
-    abstract member EvalExpression<'a> : string -> 'a
+    /// Try to evaluate the given expression and return its result.
+    abstract member TryEvalExpression : string -> (obj * System.Type) option
     /// Evaluate the given script.
     abstract member EvalScript : string -> unit
 
@@ -162,6 +162,14 @@ module Extensions =
 module internal Extensions =
 #endif
   type IFsiSession with
+      /// Evaluate the given expression and return its result.
+      member x.EvalExpression<'a> text = 
+        match x.TryEvalExpression text with
+        | Some (value, _) ->
+          match value with
+          | :? 'a as v -> v
+          | o -> failwithf "the returned value (%O) doesn't match the expected type (%A) but has type %A" o (typeof<'a>) (o.GetType())
+        | _ -> failwith "no value was returned by expression: %s" text 
       /// Assigns the given object to the given name (ie "let varName = obj") 
       member x.Let<'a> varName obj =
           let typeName = typeof<'a>.FSharpFullNameWithTypeArgs
@@ -291,13 +299,8 @@ module internal Helper =
       { new IFsiSession with
           member x.EvalInteraction text = evalInteraction text
           member x.EvalScript path = evalScript path
-          member x.EvalExpression<'a> text = 
-            match evalExpression text with
-            | Some value ->
-              match value.ReflectionValue with
-              | :? 'a as v -> v
-              | o -> failwithf "the returned value (%O) doesn't match the expected type (%A) but has type %A" o (typeof<'a>) (o.GetType())
-            | _ -> failwith "no value was returned by expression: %s" text 
+          member x.TryEvalExpression text = 
+            evalExpression text |> Option.map (fun r -> r.ReflectionValue, r.ReflectionType)
       }
 
 #if YAAF_FSHARP_SCRIPTING_PUBLIC
