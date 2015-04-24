@@ -36,10 +36,12 @@
       <div class="row">
         <div class="span9" id="main">
           
-<!-- GENERATED FROM COMMIT: d1813a003d195748773d76c35e2d27a026b69f4b -->
+<!-- GENERATED FROM COMMIT: 980b5d119ca2b68b03d3f157a0290cecd733eaf5 -->
 <h1><a name="Yaaf-FSharp-Scripting" class="anchor" href="#Yaaf-FSharp-Scripting">Yaaf.FSharp.Scripting</a></h1>
 
 <h2><a name="Documentation" class="anchor" href="#Documentation"><a href="https://matthid.github.io/Yaaf.FSharp.Scripting/">Documentation</a></a></h2>
+
+<p><a href="https://gitter.im/matthid/Yaaf?utm_source=badge&amp;utm_medium=badge&amp;utm_campaign=pr-badge&amp;utm_content=badge"><img src="https://badges.gitter.im/Join%20Chat.svg" alt="Join the chat at https://gitter.im/matthid/Yaaf" /></a></p>
 
 <h2><a name="Build-status" class="anchor" href="#Build-status">Build status</a></h2>
 
@@ -52,6 +54,60 @@
 
 <p><a href="https://travis-ci.org/matthid/Yaaf.FSharp.Scripting"><img src="https://travis-ci.org/matthid/Yaaf.FSharp.Scripting.svg?branch=master" alt="Build Status" /></a>
 <a href="https://ci.appveyor.com/project/matthid/yaaf-fsharp/branch/master"><img src="https://ci.appveyor.com/api/projects/status/od970xa4gvkh4tea/branch/master?svg=true" alt="Build status" /></a></p>
+
+<h2><a name="NuGet" class="anchor" href="#NuGet">NuGet</a></h2>
+
+<div class="row">
+  <div class="span1"></div>
+  <div class="span6">
+    <div class="well well-small" id="nuget">
+      The Yaaf.FSharp.Scripting library can be <a href="https://nuget.org/packages/Yaaf.FSharp.Scripting">installed from NuGet</a>:
+      <pre>PM> Install-Package Yaaf.FSharp.Scripting</pre>
+    </div>
+  </div>
+  <div class="span1"></div>
+</div>
+
+<h2><a name="Include-as-source-file" class="anchor" href="#Include-as-source-file">Include as source file</a></h2>
+
+<h3><a name="Paket" class="anchor" href="#Paket">Paket</a></h3>
+
+<p>You can include the functionality directly into your application by using paket source files:</p>
+
+<p><code>paket.dependencies</code>:</p>
+
+<table class="pre"><tr><td class="lines"><pre class="fssnip">
+<span class="l">1: </span>
+</pre>
+</td>
+<td class="snippet"><pre class="fssnip">
+<span class="i">github</span> <span class="i">matthid</span><span class="o">/</span><span class="i">Yaaf</span><span class="o">.</span><span class="i">FSharp</span><span class="o">.</span><span class="i">Scripting</span> <span class="i">src</span><span class="o">/</span><span class="i">source</span><span class="o">/</span><span class="i">Yaaf</span><span class="o">.</span><span class="i">FSharp</span><span class="o">.</span><span class="i">Scripting</span><span class="o">/</span><span class="i">YaafFSharpScripting</span><span class="o">.</span><span class="i">fs</span>
+</pre>
+</td>
+</tr>
+</table>
+
+<p><code>paket.references</code>:</p>
+
+<table class="pre"><tr><td class="lines"><pre class="fssnip">
+<span class="l">1: </span>
+</pre>
+</td>
+<td class="snippet"><pre class="fssnip">
+<span class="i">File</span><span class="o">:</span> <span class="i">YaafFSharpScripting</span><span class="o">.</span><span class="i">fs</span> 
+</pre>
+</td>
+</tr>
+</table>
+
+<p>See <a href="http://fsprojects.github.io/Paket/github-dependencies.html">http://fsprojects.github.io/Paket/github-dependencies.html</a> for details.</p>
+
+<h3><a name="NuGet-1" class="anchor" href="#NuGet-1">NuGet</a></h3>
+
+<p>The <code>YaafFSharpScripting.fs</code> is included in the nuget package as well in <code>content/YaafFSharpScripting.fs</code>.
+In this case you don't need an additional reference to the Yaaf.FSharp.Scripting package.</p>
+
+<h2><a name="Quick-intro" class="anchor" href="#Quick-intro">Quick intro</a></h2>
 
 <p>This library tries to improve the scripting capabilities of FSharp.</p>
 
@@ -70,22 +126,21 @@
 <span class="l">10: </span>
 <span class="l">11: </span>
 <span class="l">12: </span>
-<span class="l">13: </span>
 </pre>
 </td>
 <td class="snippet"><pre class="fssnip">
 <span class="k">open</span> <span class="i">Yaaf</span><span class="o">.</span><span class="i">FSharp</span><span class="o">.</span><span class="i">Scripting</span>
-<span class="k">let</span> <span onmouseout="hideTip(event, 'fs1', 1)" onmouseover="showTip(event, 'fs1', 1)" class="i">fsiSession</span> <span class="o">=</span> <span class="i">ScriptHost</span><span class="o">.</span><span class="i">CreateNew</span>()
-<span onmouseout="hideTip(event, 'fs1', 2)" onmouseover="showTip(event, 'fs1', 2)" class="i">fsiSession</span><span class="o">.</span><span class="i">Reference</span> (<span class="s">@&quot;</span><span class="s">C</span><span class="s">:</span><span class="s">\</span><span class="s">MyAssembly</span><span class="s">.</span><span class="s">dll</span><span class="s">&quot;</span>)
-<span onmouseout="hideTip(event, 'fs1', 3)" onmouseover="showTip(event, 'fs1', 3)" class="i">fsiSession</span><span class="o">.</span><span class="i">Open</span> (<span class="s">&quot;</span><span class="s">MyAssembly</span><span class="s">&quot;</span>)
+<span class="k">let</span> <span class="i">fsiSession</span> <span class="o">=</span> <span class="i">ScriptHost</span><span class="o">.</span><span class="i">CreateNew</span>()
+<span class="i">fsiSession</span><span class="o">.</span><span class="i">Reference</span> (<span class="s">@&quot;C:\MyAssembly.dll&quot;</span>)
+<span class="i">fsiSession</span><span class="o">.</span><span class="i">Open</span> (<span class="s">&quot;MyAssembly&quot;</span>)
 
 <span class="c">// hook 25 into the session with name test (ie &quot;let test = 25&quot;)</span>
 <span class="c">// this works with any object</span>
-<span onmouseout="hideTip(event, 'fs1', 4)" onmouseover="showTip(event, 'fs1', 4)" class="i">fsiSession</span><span class="o">.</span><span class="i">Let</span> <span class="s">&quot;</span><span class="s">test</span><span class="s">&quot;</span> <span class="n">25</span>
+<span class="i">fsiSession</span><span class="o">.</span><span class="i">Let</span> <span class="s">&quot;test&quot;</span> <span class="n">25</span>
 
 <span class="c">// Get a value out of the evaluator</span>
-<span class="k">let</span> <span onmouseout="hideTip(event, 'fs2', 5)" onmouseover="showTip(event, 'fs2', 5)" class="i">v</span> <span class="o">=</span> <span onmouseout="hideTip(event, 'fs1', 6)" onmouseover="showTip(event, 'fs1', 6)" class="i">fsiSession</span><span class="o">.</span><span class="i">EvalExpression</span><span class="o">&lt;</span><span onmouseout="hideTip(event, 'fs3', 7)" onmouseover="showTip(event, 'fs3', 7)" class="i">int</span><span class="o">&gt;</span> <span class="s">&quot;</span><span class="s">test</span><span class="s">&quot;</span>
-<span class="k">assert</span> (<span onmouseout="hideTip(event, 'fs2', 8)" onmouseover="showTip(event, 'fs2', 8)" class="i">v</span> <span class="o">=</span> <span class="n">25</span>)
+<span class="k">let</span> <span class="i">v</span> <span class="o">=</span> <span class="i">fsiSession</span><span class="o">.</span><span class="i">EvalExpression</span><span class="o">&lt;</span><span onmouseout="hideTip(event, 'fs1', 1)" onmouseover="showTip(event, 'fs1', 1)" class="i">int</span><span class="o">&gt;</span> <span class="s">&quot;test&quot;</span>
+<span class="k">assert</span> (<span class="i">v</span> <span class="o">=</span> <span class="n">25</span>)
 </pre>
 </td>
 </tr>
@@ -102,18 +157,17 @@
 <span class="l">6: </span>
 <span class="l">7: </span>
 <span class="l">8: </span>
-<span class="l">9: </span>
 </pre>
 </td>
 <td class="snippet"><pre class="fssnip">
 <span class="k">open</span> <span class="i">Yaaf</span><span class="o">.</span><span class="i">FSharp</span><span class="o">.</span><span class="i">Scripting</span>
-<span class="k">open</span> <span onmouseout="hideTip(event, 'fs4', 9)" onmouseover="showTip(event, 'fs4', 9)" class="i">Microsoft</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs5', 10)" onmouseover="showTip(event, 'fs5', 10)" class="i">FSharp</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs6', 11)" onmouseover="showTip(event, 'fs6', 11)" class="i">Compiler</span><span class="o">.</span><span class="i">SourceCodeServices</span>
+<span class="k">open</span> <span onmouseout="hideTip(event, 'fs2', 2)" onmouseover="showTip(event, 'fs2', 2)" class="i">Microsoft</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs3', 3)" onmouseover="showTip(event, 'fs3', 3)" class="i">FSharp</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs4', 4)" onmouseover="showTip(event, 'fs4', 4)" class="i">Compiler</span><span class="o">.</span><span class="i">SourceCodeServices</span>
 
 <span class="c">// A Assembly -&gt; FSharpEntity mapping (extension) function</span>
-<span class="k">let</span> <span onmouseout="hideTip(event, 'fs7', 12)" onmouseover="showTip(event, 'fs7', 12)" class="i">fsAssembly</span> <span class="o">=</span> <span class="i">FSharpAssembly</span><span class="o">.</span><span class="i">FromAssembly</span> <span onmouseout="hideTip(event, 'fs8', 13)" onmouseover="showTip(event, 'fs8', 13)" class="i">typeof</span><span class="o">&lt;</span><span class="i">MyType</span><span class="o">&gt;</span><span class="o">.</span><span class="i">Assembly</span>
+<span class="k">let</span> <span class="i">fsAssembly</span> <span class="o">=</span> <span class="i">FSharpAssembly</span><span class="o">.</span><span class="i">FromAssembly</span> <span onmouseout="hideTip(event, 'fs5', 5)" onmouseover="showTip(event, 'fs5', 5)" class="i">typeof</span><span class="o">&lt;</span><span class="i">MyType</span><span class="o">&gt;</span><span class="o">.</span><span class="i">Assembly</span>
 
 <span class="c">// A extension method to find the entity type</span>
-<span class="k">let</span> <span onmouseout="hideTip(event, 'fs9', 14)" onmouseover="showTip(event, 'fs9', 14)" class="i">fsType</span> <span class="o">=</span> <span onmouseout="hideTip(event, 'fs7', 15)" onmouseover="showTip(event, 'fs7', 15)" class="i">fsAssembly</span><span class="o">.</span><span class="i">Value</span><span class="o">.</span><span class="i">FindType</span> <span onmouseout="hideTip(event, 'fs8', 16)" onmouseover="showTip(event, 'fs8', 16)" class="i">typeof</span><span class="o">&lt;</span><span class="i">MyType</span><span class="o">&gt;</span>
+<span class="k">let</span> <span class="i">fsType</span> <span class="o">=</span> <span class="i">fsAssembly</span><span class="o">.</span><span class="i">Value</span><span class="o">.</span><span class="i">FindType</span> <span onmouseout="hideTip(event, 'fs5', 6)" onmouseover="showTip(event, 'fs5', 6)" class="i">typeof</span><span class="o">&lt;</span><span class="i">MyType</span><span class="o">&gt;</span>
 </pre>
 </td>
 </tr>
@@ -141,51 +195,40 @@
 <span class="l">17: </span>
 <span class="l">18: </span>
 <span class="l">19: </span>
-<span class="l">20: </span>
-<span class="l">21: </span>
 </pre>
 </td>
 <td class="snippet"><pre class="fssnip">
 <span class="c">// with concrete types.</span>
-<span class="k">let</span> <span onmouseout="hideTip(event, 'fs10', 17)" onmouseover="showTip(event, 'fs10', 17)" class="i">def</span> <span class="o">=</span> <span onmouseout="hideTip(event, 'fs8', 18)" onmouseover="showTip(event, 'fs8', 18)" class="i">typeof</span><span class="o">&lt;</span><span onmouseout="hideTip(event, 'fs11', 19)" onmouseover="showTip(event, 'fs11', 19)" class="i">option</span><span class="o">&lt;</span><span onmouseout="hideTip(event, 'fs3', 20)" onmouseover="showTip(event, 'fs3', 20)" class="i">int</span><span class="o">&gt;</span><span class="o">&gt;</span>
-<span class="i">test</span> &lt;@ <span onmouseout="hideTip(event, 'fs10', 21)" onmouseover="showTip(event, 'fs10', 21)" class="i">def</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs12', 22)" onmouseover="showTip(event, 'fs12', 22)" class="i">Name</span> <span class="o">=</span> <span class="s">&quot;</span><span class="s">FSharpOption</span><span class="s">`</span><span class="s">1</span><span class="s">&quot;</span> @&gt;
-<span class="i">test</span> &lt;@ <span onmouseout="hideTip(event, 'fs10', 23)" onmouseover="showTip(event, 'fs10', 23)" class="i">def</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs13', 24)" onmouseover="showTip(event, 'fs13', 24)" class="i">Namespace</span> <span class="o">=</span> <span class="s">&quot;</span><span class="s">Microsoft</span><span class="s">.</span><span class="s">FSharp</span><span class="s">.</span><span class="s">Core</span><span class="s">&quot;</span> @&gt;
+<span class="k">let</span> <span class="i">def</span> <span class="o">=</span> <span onmouseout="hideTip(event, 'fs5', 7)" onmouseover="showTip(event, 'fs5', 7)" class="i">typeof</span><span class="o">&lt;</span><span onmouseout="hideTip(event, 'fs6', 8)" onmouseover="showTip(event, 'fs6', 8)" class="i">option</span><span class="o">&lt;</span><span onmouseout="hideTip(event, 'fs1', 9)" onmouseover="showTip(event, 'fs1', 9)" class="i">int</span><span class="o">&gt;</span><span class="o">&gt;</span>
+<span class="i">test</span> &lt;@ <span class="i">def</span><span class="o">.</span><span class="i">Name</span> <span class="o">=</span> <span class="s">&quot;FSharpOption`1&quot;</span> @&gt;
+<span class="i">test</span> &lt;@ <span class="i">def</span><span class="o">.</span><span class="i">Namespace</span> <span class="o">=</span> <span class="s">&quot;Microsoft.FSharp.Core&quot;</span> @&gt;
 
-<span class="i">test</span> &lt;@ <span onmouseout="hideTip(event, 'fs10', 25)" onmouseover="showTip(event, 'fs10', 25)" class="i">def</span><span class="o">.</span><span class="i">FSharpParamList</span> <span class="o">=</span> <span class="s">&quot;</span><span class="s">&lt;</span><span class="s">System</span><span class="s">.</span><span class="s">Int32</span><span class="s">&gt;</span><span class="s">&quot;</span> @&gt;
-<span class="i">test</span> &lt;@ <span onmouseout="hideTip(event, 'fs10', 26)" onmouseover="showTip(event, 'fs10', 26)" class="i">def</span><span class="o">.</span><span class="i">FSharpFullName</span> <span class="o">=</span> <span class="s">&quot;</span><span class="s">Microsoft</span><span class="s">.</span><span class="s">FSharp</span><span class="s">.</span><span class="s">Core</span><span class="s">.</span><span class="s">Option</span><span class="s">&quot;</span> @&gt;
-<span class="i">test</span> &lt;@ <span onmouseout="hideTip(event, 'fs10', 27)" onmouseover="showTip(event, 'fs10', 27)" class="i">def</span><span class="o">.</span><span class="i">FSharpFullNameWithTypeArgs</span> <span class="o">=</span> <span class="s">&quot;</span><span class="s">Microsoft</span><span class="s">.</span><span class="s">FSharp</span><span class="s">.</span><span class="s">Core</span><span class="s">.</span><span class="s">Option</span><span class="s">&lt;</span><span class="s">System</span><span class="s">.</span><span class="s">Int32</span><span class="s">&gt;</span><span class="s">&quot;</span> @&gt;
-<span class="i">test</span> &lt;@ <span onmouseout="hideTip(event, 'fs10', 28)" onmouseover="showTip(event, 'fs10', 28)" class="i">def</span><span class="o">.</span><span class="i">FSharpName</span> <span class="o">=</span> <span class="s">&quot;</span><span class="s">Option</span><span class="s">&quot;</span> @&gt;
+<span class="i">test</span> &lt;@ <span class="i">def</span><span class="o">.</span><span class="i">FSharpParamList</span> <span class="o">=</span> <span class="s">&quot;&lt;System.Int32&gt;&quot;</span> @&gt;
+<span class="i">test</span> &lt;@ <span class="i">def</span><span class="o">.</span><span class="i">FSharpFullName</span> <span class="o">=</span> <span class="s">&quot;Microsoft.FSharp.Core.Option&quot;</span> @&gt;
+<span class="i">test</span> &lt;@ <span class="i">def</span><span class="o">.</span><span class="i">FSharpFullNameWithTypeArgs</span> <span class="o">=</span> <span class="s">&quot;Microsoft.FSharp.Core.Option&lt;System.Int32&gt;&quot;</span> @&gt;
+<span class="i">test</span> &lt;@ <span class="i">def</span><span class="o">.</span><span class="i">FSharpName</span> <span class="o">=</span> <span class="s">&quot;Option&quot;</span> @&gt;
 
 <span class="c">// With typedefs.</span>
-<span class="k">let</span> <span onmouseout="hideTip(event, 'fs10', 29)" onmouseover="showTip(event, 'fs10', 29)" class="i">def</span> <span class="o">=</span> <span onmouseout="hideTip(event, 'fs14', 30)" onmouseover="showTip(event, 'fs14', 30)" class="i">typedefof</span><span class="o">&lt;</span><span onmouseout="hideTip(event, 'fs11', 31)" onmouseover="showTip(event, 'fs11', 31)" class="i">option</span><span class="o">&lt;</span><span onmouseout="hideTip(event, 'fs3', 32)" onmouseover="showTip(event, 'fs3', 32)" class="i">int</span><span class="o">&gt;</span><span class="o">&gt;</span>
-<span class="i">test</span> &lt;@ <span onmouseout="hideTip(event, 'fs10', 33)" onmouseover="showTip(event, 'fs10', 33)" class="i">def</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs12', 34)" onmouseover="showTip(event, 'fs12', 34)" class="i">Name</span> <span class="o">=</span> <span class="s">&quot;</span><span class="s">FSharpOption</span><span class="s">`</span><span class="s">1</span><span class="s">&quot;</span> @&gt;
-<span class="i">test</span> &lt;@ <span onmouseout="hideTip(event, 'fs10', 35)" onmouseover="showTip(event, 'fs10', 35)" class="i">def</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs15', 36)" onmouseover="showTip(event, 'fs15', 36)" class="i">FullName</span> <span class="o">=</span> <span class="s">&quot;</span><span class="s">Microsoft</span><span class="s">.</span><span class="s">FSharp</span><span class="s">.</span><span class="s">Core</span><span class="s">.</span><span class="s">FSharpOption</span><span class="s">`</span><span class="s">1</span><span class="s">&quot;</span> @&gt;
+<span class="k">let</span> <span class="i">def</span> <span class="o">=</span> <span onmouseout="hideTip(event, 'fs7', 10)" onmouseover="showTip(event, 'fs7', 10)" class="i">typedefof</span><span class="o">&lt;</span><span onmouseout="hideTip(event, 'fs6', 11)" onmouseover="showTip(event, 'fs6', 11)" class="i">option</span><span class="o">&lt;</span><span onmouseout="hideTip(event, 'fs1', 12)" onmouseover="showTip(event, 'fs1', 12)" class="i">int</span><span class="o">&gt;</span><span class="o">&gt;</span>
+<span class="i">test</span> &lt;@ <span class="i">def</span><span class="o">.</span><span class="i">Name</span> <span class="o">=</span> <span class="s">&quot;FSharpOption`1&quot;</span> @&gt;
+<span class="i">test</span> &lt;@ <span class="i">def</span><span class="o">.</span><span class="i">FullName</span> <span class="o">=</span> <span class="s">&quot;Microsoft.FSharp.Core.FSharpOption`1&quot;</span> @&gt;
 
-<span class="i">test</span> &lt;@ <span onmouseout="hideTip(event, 'fs10', 37)" onmouseover="showTip(event, 'fs10', 37)" class="i">def</span><span class="o">.</span><span class="i">FSharpParamList</span> <span class="o">=</span> <span class="s">&quot;</span><span class="s">&lt;</span><span class="s">_</span><span class="s">&gt;</span><span class="s">&quot;</span> @&gt;
-<span class="i">test</span> &lt;@ <span onmouseout="hideTip(event, 'fs10', 38)" onmouseover="showTip(event, 'fs10', 38)" class="i">def</span><span class="o">.</span><span class="i">FSharpFullName</span> <span class="o">=</span> <span class="s">&quot;</span><span class="s">Microsoft</span><span class="s">.</span><span class="s">FSharp</span><span class="s">.</span><span class="s">Core</span><span class="s">.</span><span class="s">Option</span><span class="s">&quot;</span> @&gt;
-<span class="i">test</span> &lt;@ <span onmouseout="hideTip(event, 'fs10', 39)" onmouseover="showTip(event, 'fs10', 39)" class="i">def</span><span class="o">.</span><span class="i">FSharpFullNameWithTypeArgs</span> <span class="o">=</span> <span class="s">&quot;</span><span class="s">Microsoft</span><span class="s">.</span><span class="s">FSharp</span><span class="s">.</span><span class="s">Core</span><span class="s">.</span><span class="s">Option</span><span class="s">&lt;</span><span class="s">_</span><span class="s">&gt;</span><span class="s">&quot;</span> @&gt;
-<span class="i">test</span> &lt;@ <span onmouseout="hideTip(event, 'fs10', 40)" onmouseover="showTip(event, 'fs10', 40)" class="i">def</span><span class="o">.</span><span class="i">FSharpName</span> <span class="o">=</span> <span class="s">&quot;</span><span class="s">Option</span><span class="s">&quot;</span> @&gt;
-
+<span class="i">test</span> &lt;@ <span class="i">def</span><span class="o">.</span><span class="i">FSharpParamList</span> <span class="o">=</span> <span class="s">&quot;&lt;_&gt;&quot;</span> @&gt;
+<span class="i">test</span> &lt;@ <span class="i">def</span><span class="o">.</span><span class="i">FSharpFullName</span> <span class="o">=</span> <span class="s">&quot;Microsoft.FSharp.Core.Option&quot;</span> @&gt;
+<span class="i">test</span> &lt;@ <span class="i">def</span><span class="o">.</span><span class="i">FSharpFullNameWithTypeArgs</span> <span class="o">=</span> <span class="s">&quot;Microsoft.FSharp.Core.Option&lt;_&gt;&quot;</span> @&gt;
+<span class="i">test</span> &lt;@ <span class="i">def</span><span class="o">.</span><span class="i">FSharpName</span> <span class="o">=</span> <span class="s">&quot;Option&quot;</span> @&gt;
 </pre>
 </td>
 </tr>
 </table>
 
-<div class="tip" id="fs1">val fsiSession : obj<br /><br />Full name: README.fsiSession</div>
-<div class="tip" id="fs2">val v : int<br /><br />Full name: README.v</div>
-<div class="tip" id="fs3">Multiple items<br />val int : value:&#39;T -&gt; int (requires member op_Explicit)<br /><br />Full name: Microsoft.FSharp.Core.Operators.int<br /><br />--------------------<br />type int = int32<br /><br />Full name: Microsoft.FSharp.Core.int<br /><br />--------------------<br />type int&lt;&#39;Measure&gt; = int<br /><br />Full name: Microsoft.FSharp.Core.int&lt;_&gt;</div>
-<div class="tip" id="fs4">namespace Microsoft</div>
-<div class="tip" id="fs5">namespace Microsoft.FSharp</div>
-<div class="tip" id="fs6">namespace Microsoft.FSharp.Compiler</div>
-<div class="tip" id="fs7">val fsAssembly : obj<br /><br />Full name: README.fsAssembly</div>
-<div class="tip" id="fs8">val typeof&lt;&#39;T&gt; : System.Type<br /><br />Full name: Microsoft.FSharp.Core.Operators.typeof</div>
-<div class="tip" id="fs9">val fsType : obj<br /><br />Full name: README.fsType</div>
-<div class="tip" id="fs10">val def : System.Type<br /><br />Full name: README.def</div>
-<div class="tip" id="fs11">type &#39;T option = Option&lt;&#39;T&gt;<br /><br />Full name: Microsoft.FSharp.Core.option&lt;_&gt;</div>
-<div class="tip" id="fs12">property System.Reflection.MemberInfo.Name: string</div>
-<div class="tip" id="fs13">property System.Type.Namespace: string</div>
-<div class="tip" id="fs14">val typedefof&lt;&#39;T&gt; : System.Type<br /><br />Full name: Microsoft.FSharp.Core.Operators.typedefof</div>
-<div class="tip" id="fs15">property System.Type.FullName: string</div>
+<div class="tip" id="fs1">Multiple items<br />val int : value:&#39;T -&gt; int (requires member op_Explicit)<br /><br />Full name: Microsoft.FSharp.Core.Operators.int<br /><br />--------------------<br />type int = int32<br /><br />Full name: Microsoft.FSharp.Core.int<br /><br />--------------------<br />type int&lt;&#39;Measure&gt; = int<br /><br />Full name: Microsoft.FSharp.Core.int&lt;_&gt;</div>
+<div class="tip" id="fs2">namespace Microsoft</div>
+<div class="tip" id="fs3">namespace Microsoft.FSharp</div>
+<div class="tip" id="fs4">namespace Microsoft.FSharp.Compiler</div>
+<div class="tip" id="fs5">val typeof&lt;&#39;T&gt; : System.Type<br /><br />Full name: Microsoft.FSharp.Core.Operators.typeof</div>
+<div class="tip" id="fs6">type &#39;T option = Option&lt;&#39;T&gt;<br /><br />Full name: Microsoft.FSharp.Core.option&lt;_&gt;</div>
+<div class="tip" id="fs7">val typedefof&lt;&#39;T&gt; : System.Type<br /><br />Full name: Microsoft.FSharp.Core.Operators.typedefof</div>
 
         </div>
         <div class="span3">
@@ -200,8 +243,8 @@
             <li class="divider"></li>
             <li><a href="https://www.nuget.org/packages/Yaaf.FSharp.Scripting/">Get Yaaf.FSharp.Scripting package via NuGet</a></li>
             <li><a href="https://github.com/matthid/Yaaf.FSharp.Scripting">Source Code</a></li>
-            <li><a href="https://github.com/matthid//issues">Open bugs and feature requests</a></li>
-            <li><a href="https://github.com/matthid//issues/new">Report Issue or Request Feature</a></li>
+            <li><a href="https://github.com/matthid/Yaaf.FSharp.Scripting/issues">Open bugs and feature requests</a></li>
+            <li><a href="https://github.com/matthid/Yaaf.FSharp.Scripting/issues/new">Report Issue or Request Feature</a></li>
             <li><a href="https://github.com/matthid/Yaaf.FSharp.Scripting/blob/develop/LICENSE.md">License (Apache 2)</a></li>
             <li><a href="https://matthid.github.io/Yaaf.FSharp.Scripting/Contributing.html">Contributing</a></li>
             
