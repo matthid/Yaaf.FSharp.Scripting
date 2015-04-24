@@ -27,7 +27,9 @@ module internal CompilerServiceExtensions =
                dllFile :: files, 
                hasCoreLib || 
                let name = (Path.GetFileName dllFile).ToLowerInvariant()
-               name = "fsharp.core.dll" || name = "mscorlib.dll" 
+               let iscorelib = name = "fsharp.core.dll" || name = "mscorlib.dll" 
+               printfn "%s is corlib: %b" dllFile iscorelib
+               iscorelib
             ) ([], false)
 
           let otherFlags = defaultArg otherFlags Seq.empty
