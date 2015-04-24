@@ -1,5 +1,8 @@
 ﻿namespace Yaaf.FSharp.Scripting
 
+module internal Env =
+  let isMono = try System.Type.GetType("Mono.Runtime") <> null with _ -> false 
+open Env
 [<AutoOpen>]
 #if YAAF_FSHARP_SCRIPTING_PUBLIC
 module CompilerServiceExtensions =
@@ -41,7 +44,7 @@ module internal CompilerServiceExtensions =
                       yield "--define:DEBUG" 
                       //yield "--optimize-" 
                       yield "--nooptimizationdata"
-                      if hasCoreLib then
+                      if hasCoreLib || isMono then
                         yield "--noframework"
                       yield "--out:" + dllName
                       yield "--doc:" + xmlName
@@ -287,7 +290,6 @@ module internal Helper =
   open System.Text
   open Microsoft.FSharp.Compiler.SourceCodeServices
 
-  let isMono = try Type.GetType("Mono.Runtime") <> null with _ -> false 
   let getSession (defines, fsi : obj) =
       // Intialize output and input streams
       let sbOut = new StringBuilder()
