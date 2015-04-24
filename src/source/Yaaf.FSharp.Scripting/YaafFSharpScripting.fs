@@ -26,8 +26,8 @@ module internal CompilerServiceExtensions =
             |> Seq.fold (fun (files, hasCoreLib) dllFile -> 
                dllFile :: files, 
                hasCoreLib || 
-               let name = Path.GetFileName dllFile
-               name = "FSharp.Core.dll" || name = "mscorlib.dll" 
+               let name = (Path.GetFileName dllFile).ToLowerInvariant()
+               name = "fsharp.core.dll" || name = "mscorlib.dll" 
             ) ([], false)
 
           let otherFlags = defaultArg otherFlags Seq.empty
@@ -44,7 +44,7 @@ module internal CompilerServiceExtensions =
                       yield "--define:DEBUG" 
                       //yield "--optimize-" 
                       yield "--nooptimizationdata"
-                      if hasCoreLib || isMono then
+                      if hasCoreLib then
                         yield "--noframework"
                       yield "--out:" + dllName
                       yield "--doc:" + xmlName
