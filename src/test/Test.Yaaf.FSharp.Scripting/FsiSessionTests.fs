@@ -24,3 +24,10 @@ let test = 125
 let test = 0
 #endif""")
     test <@ fsiSession.EvalExpression<int> "test" = 125 @>
+
+[<Test>]
+let ``check that fsi object works`` () =
+    fsiSession.EvalInteraction ("""
+fsi.AddPrinter(fun (n:int) -> "test" + n.ToString())
+printfn "%d" 4
+""")

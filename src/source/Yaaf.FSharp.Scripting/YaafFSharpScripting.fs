@@ -182,15 +182,12 @@ module internal Extensions =
           x.EvalInteraction (sprintf "open %s" ns)
       member x.Reference file = 
           x.EvalInteraction (sprintf "#r @\"%s\"" file)
-    
-module internal Helper =
-  open System
-  open System.Collections.Generic
-  open Microsoft.FSharp.Compiler.Interactive.Shell
-  open System.IO
-  open System.Text
-  open Microsoft.FSharp.Compiler.SourceCodeServices
 
+#if YAAF_FSHARP_SCRIPTING_PUBLIC
+module Shell =
+#else
+module internal Shell =
+#endif
   /// Represents a simple (fake) event loop for the 'fsi' object
   type SimpleEventLoop () = 
     member x.Run () = ()
@@ -203,7 +200,7 @@ module internal Helper =
     let mutable evLoop = (new SimpleEventLoop())
     let mutable showIDictionary = true
     let mutable showDeclarationValues = true
-    let mutable args = Environment.GetCommandLineArgs()
+    let mutable args = System.Environment.GetCommandLineArgs()
     let mutable fpfmt = "g10"
     let mutable fp = (System.Globalization.CultureInfo.InvariantCulture :> System.IFormatProvider)
     let mutable printWidth = 78
@@ -235,10 +232,17 @@ module internal Helper =
 
     member self.AddPrintTransformer(printer : 'T -> obj) =
       addedPrinters <- Choice2Of2 (typeof<'T>, (fun (x:obj) -> printer (unbox x))) :: addedPrinters
-
+    
+module internal Helper =
+  open System
+  open System.Collections.Generic
+  open Microsoft.FSharp.Compiler.Interactive.Shell
+  open System.IO
+  open System.Text
+  open Microsoft.FSharp.Compiler.SourceCodeServices
 
   let isMono = try Type.GetType("Mono.Runtime") <> null with _ -> false 
-  let getSession (defines) =
+  let getSession (defines, fsi : obj) =
       // Intialize output and input streams
       let sbOut = new StringBuilder()
       let sbErr = new StringBuilder()
@@ -265,10 +269,10 @@ module internal Helper =
               yield sprintf "-I:%s" i
             for define in defines do
               yield sprintf "--define:%s" define ]
-
+               
       let fsiSession =
         try
-          let fsiConfig = FsiEvaluationSession.GetDefaultConfiguration(new InteractiveSettings(), false)
+          let fsiConfig = FsiEvaluationSession.GetDefaultConfiguration(fsi, false)
           FsiEvaluationSession.Create(fsiConfig, args |> List.toArray, inStream, outStream, errStream)
         with e ->
           raise <| new Exception(
@@ -296,17 +300,113 @@ module internal Helper =
       let evalExpression = save fsiSession.EvalExpression
       let evalScript = saveScript fsiSession.EvalScript
       
-      { new IFsiSession with
-          member x.EvalInteraction text = evalInteraction text
-          member x.EvalScript path = evalScript path
-          member x.TryEvalExpression text = 
-            evalExpression text |> Option.map (fun r -> r.ReflectionValue, r.ReflectionType)
-      }
+      let session =
+        { new IFsiSession with
+            member x.EvalInteraction text = evalInteraction text
+            member x.EvalScript path = evalScript path
+            member x.TryEvalExpression text = 
+              evalExpression text |> Option.map (fun r -> r.ReflectionValue, r.ReflectionType)
+        }
+      // This works around a FCS bug, I would expect "fsi" to be defined already...
+      // This is probably not the case because we do not have any type with the correct signature loaded
+      // We just compile ourself a forwarder to fix that.
+      //session.Reference (typeof<Microsoft.FSharp.Compiler.Interactive.Shell.Settings.InteractiveSettings>.Assembly.Location)
+      //session.Let "fsi" fsi
+      session.Let "__rawfsi" (box fsi)
+      session.EvalInteraction """
+module __ReflectHelper =
+  open System
+  open System.Reflection
+  let rec tryFindMember (name : string) (memberType : MemberTypes) (declaringType : Type) =
+      match declaringType.GetMember
+        ( name, 
+          memberType, 
+          ( System.Reflection.BindingFlags.Instance ||| 
+            System.Reflection.BindingFlags.Public ||| 
+            System.Reflection.BindingFlags.NonPublic)) with
+      | [||] -> declaringType.GetInterfaces() |> Array.tryPick (tryFindMember name memberType)
+      | [|m|] -> Some m
+      | _ -> raise <| new System.Reflection.AmbiguousMatchException(sprintf "Ambiguous match for member '%s'" name)
 
+  let getInstanceProperty (obj:obj) (nm:string) =
+      let p = (tryFindMember nm System.Reflection.MemberTypes.Property <| obj.GetType()).Value :?> PropertyInfo
+      p.GetValue(obj, [||]) |> unbox
+
+  let setInstanceProperty (obj:obj) (nm:string) (v:obj) =
+      let p = (tryFindMember nm System.Reflection.MemberTypes.Property <| obj.GetType()).Value :?> PropertyInfo
+      p.SetValue(obj, v, [||]) |> unbox
+
+  let callInstanceMethod0 (obj:obj) (typeArgs : System.Type []) (nm:string) =
+      let m = (tryFindMember nm System.Reflection.MemberTypes.Method <| obj.GetType()).Value :?> MethodInfo
+      let m = match typeArgs with [||] -> m | _ -> m.MakeGenericMethod(typeArgs)
+      m.Invoke(obj, [||]) |> unbox
+
+  let callInstanceMethod1 (obj:obj) (typeArgs : Type []) (nm:string) (v:obj) =
+      let m = (tryFindMember nm System.Reflection.MemberTypes.Method <| obj.GetType()).Value :?> MethodInfo
+      let m = match typeArgs with [||] -> m | _ -> m.MakeGenericMethod(typeArgs)
+      m.Invoke(obj, [|v|]) |> unbox
+
+  type ForwardEventLoop(ev) =
+    member x.Inner = ev
+    member x.Run () = 
+      callInstanceMethod0 ev [||] "Run" : unit
+    member x.Invoke<'T>(f:unit -> 'T) = 
+      callInstanceMethod1 ev [| typeof<'T> |] "Invoke" f : 'T
+    member x.ScheduleRestart() = 
+      callInstanceMethod0 ev [||] "ScheduleRestart" : unit
+
+  type ForwardingInteractiveSettings(fsiObj) =
+    member self.FloatingPointFormat 
+      with get() = getInstanceProperty fsiObj "FloatingPointFormat" : string
+      and set (v:string) = setInstanceProperty fsiObj "FloatingPointFormat" v
+    member self.FormatProvider 
+      with get() = getInstanceProperty fsiObj "FormatProvider"  : System.IFormatProvider
+      and set (v: System.IFormatProvider) = setInstanceProperty fsiObj "FormatProvider" v
+    member self.PrintWidth  
+      with get() = getInstanceProperty fsiObj "PrintWidth" :int
+      and set (v:int) = setInstanceProperty fsiObj "PrintWidth" v
+    member self.PrintDepth 
+      with get() = getInstanceProperty fsiObj "PrintDepth" :int
+      and set (v:int) = setInstanceProperty fsiObj "PrintDepth" v
+    member self.PrintLength 
+      with get() = getInstanceProperty fsiObj "PrintLength"  :int
+      and set (v:int) = setInstanceProperty fsiObj "PrintLength" v
+    member self.PrintSize 
+      with get() = getInstanceProperty fsiObj "PrintSize"  :int
+      and set (v:int) = setInstanceProperty fsiObj "PrintSize" v
+    member self.ShowDeclarationValues 
+      with get() = getInstanceProperty fsiObj "ShowDeclarationValues" :bool
+      and set (v:bool) = setInstanceProperty fsiObj "ShowDeclarationValues" v
+    member self.ShowProperties
+      with get() = getInstanceProperty fsiObj "ShowProperties" :bool
+      and set (v:bool) = setInstanceProperty fsiObj "ShowProperties" v
+    member self.ShowIEnumerable 
+      with get() = getInstanceProperty fsiObj "ShowIEnumerable" :bool
+      and set (v:bool) = setInstanceProperty fsiObj "ShowIEnumerable" v
+    member self.ShowIDictionary 
+      with get() = getInstanceProperty fsiObj "ShowIDictionary" :bool
+      and set (v:bool) = setInstanceProperty fsiObj "ShowIDictionary" v
+    member self.AddedPrinters 
+      with get() = getInstanceProperty fsiObj "AddedPrinters" : Choice<System.Type * (obj -> string), System.Type * (obj -> obj)> list
+      and set (v:Choice<System.Type * (obj -> string), System.Type * (obj -> obj)> list) = setInstanceProperty fsiObj "AddedPrinters" v
+    member self.CommandLineArgs
+      with get() = getInstanceProperty fsiObj "CommandLineArgs" :string array
+      and set (v:string array) = setInstanceProperty fsiObj "CommandLineArgs" v
+    member self.AddPrinter(printer : 'T -> string) =
+      callInstanceMethod1 fsiObj [|typeof<'T>|] "AddPrinter" printer : unit
+
+    member self.EventLoop
+      with get() = ForwardEventLoop(getInstanceProperty fsiObj "EventLoop")
+      and set (v:ForwardEventLoop) = setInstanceProperty fsiObj "EventLoop" v.Inner
+
+    member self.AddPrintTransformer(printer : 'T -> obj) =
+      callInstanceMethod1 fsiObj [|typeof<'T>|] "AddPrintTransformer" printer
+let fsi = __ReflectHelper.ForwardingInteractiveSettings(__rawfsi)"""
+      session
 #if YAAF_FSHARP_SCRIPTING_PUBLIC
 type ScriptHost private() =
 #else
 type internal ScriptHost private() =
 #endif
-    static member CreateNew (?defines : string list) =
-        Helper.getSession(defaultArg defines [])
+    static member CreateNew (?defines : string list, ?fsiObj : obj) =
+        Helper.getSession(defaultArg defines [], defaultArg fsiObj (Microsoft.FSharp.Compiler.Interactive.Shell.Settings.fsi :> obj))
