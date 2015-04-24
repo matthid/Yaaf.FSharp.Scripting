@@ -1,6 +1,8 @@
 ﻿module Test.Yaaf.FSharp.Scripting.ExtensionMethodTests
 type T () =
     let t = ()
+type TGen<'a> () =
+    let t = ()
 open System.IO
 open NUnit.Framework
 open Swensen.Unquote
@@ -25,7 +27,7 @@ let ``check that we can get the fsassembly and fstype of a custom nested type`` 
 
 [<Test>]
 let ``check that we can get the fsassembly and fstype of a custom generic type`` () =
-    testType<Yaaf.FSharp.Scripting.HookHelper<int>>()
+    testType<int TGen>()
 
 [<Test>]
 let ``check that we can get the fsassembly and fstype of a interface type`` () =

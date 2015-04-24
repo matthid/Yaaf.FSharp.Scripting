@@ -29,6 +29,32 @@
   <div class="span1"></div>
 </div>
 
+## Include as source file 
+
+### Paket
+
+You can include the functionality directly into your application by using paket source files:
+
+`paket.dependencies`:
+
+```
+github matthid/Yaaf.FSharp.Scripting src/source/Yaaf.FSharp.Scripting/YaafFSharpScripting.fs
+```
+
+`paket.references`:
+
+```
+File: YaafFSharpScripting.fs 
+```
+
+See http://fsprojects.github.io/Paket/github-dependencies.html for details.
+
+
+### NuGet 
+
+The `YaafFSharpScripting.fs` is included in the nuget package as well in `content/YaafFSharpScripting.fs`.
+In this case you don't need an additional reference to the Yaaf.FSharp.Scripting package. 
+
 ## Quick intro
 
 This library tries to improve the scripting capabilities of FSharp.

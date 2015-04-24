@@ -21,5 +21,7 @@
     <file src="release/lib/net40/Yaaf.FSharp.Scripting.xml" target="lib/net40" />
     <file src="release/lib/net45/Yaaf.FSharp.Scripting.dll" target="lib/net45" />
     <file src="release/lib/net45/Yaaf.FSharp.Scripting.xml" target="lib/net45" />
+    <!-- Remember to change the path in the readme as well (even better, don't change it at all)! -->
+    <file src="src/source/Yaaf.FSharp.Scripting/YaafFSharpScripting.fs" target="content" />
   </files>
 </package>
