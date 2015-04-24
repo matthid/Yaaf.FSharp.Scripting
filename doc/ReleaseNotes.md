@@ -1,4 +1,8 @@
-﻿### 1.0.7
+﻿### 1.0.8
+
+ * Support for custom fsi settings object ("fsi")
+
+### 1.0.7
 
  * Add TryEvalExpression to get the type of the expression (not the runtime type).
 
