@@ -253,12 +253,15 @@ module internal CompilerServiceExtensions =
       /// Gets a string that can be used in F# source code to reference the current type instance.
       member x.FSharpFullNameWithTypeArgs = x.FSharpFullName + x.FSharpParamList
 
+type OutputData =
+  { FsiOutput : string; ScriptOutput : string; Merged : string }
+
 #if YAAF_FSHARP_SCRIPTING_PUBLIC
 type InteractionResult =
 #else 
 type internal InteractionResult =
 #endif
-  { Output : string; Error : string }
+  { Output : OutputData; Error : OutputData }
 
 /// This exception indicates that an exception happened while compiling or executing given F# code.
 [<System.Serializable>]
@@ -277,19 +280,31 @@ type internal FsiEvaluationException =
     new (info:System.Runtime.Serialization.SerializationInfo, context:System.Runtime.Serialization.StreamingContext) = {
         inherit System.Exception(info, context)
         input = info.GetString("Input")
-        result = { Output = info.GetString("Result_Output"); Error = info.GetString("Result_Error")}
+        result = 
+          { Output = 
+              { FsiOutput = info.GetString("Result_Output_FsiOutput")
+                ScriptOutput = info.GetString "Result_Output_ScriptOutput"
+                Merged = info.GetString "Result_Output_Merged" }
+            Error = 
+              { FsiOutput = info.GetString("Result_Error_FsiOutput")
+                ScriptOutput = info.GetString "Result_Error_ScriptOutput"
+                Merged = info.GetString "Result_Error_Merged" } }
     }
     override x.GetObjectData(info, context) =
       info.AddValue("Input", x.input)
-      info.AddValue("Result_Output", x.result.Output)
-      info.AddValue("Result_Error", x.result.Error)
+      info.AddValue("Result_Output_FsiOutput", x.result.Output.FsiOutput)
+      info.AddValue("Result_Output_ScriptOutput", x.result.Output.ScriptOutput)
+      info.AddValue("Result_Output_Merged", x.result.Output.Merged)
+      info.AddValue("Result_Error_FsiOutput", x.result.Error.FsiOutput)
+      info.AddValue("Result_Error_ScriptOutput", x.result.Error.ScriptOutput)
+      info.AddValue("Result_Error_Merged", x.result.Error.Merged)
     member x.Result with get () = x.result
     member x.Input with get () = x.input
     override x.ToString () =
       let nl (s:string) = s.Replace("\n", "\n\t")
       sprintf
         "FsiEvaluationException:\n\nError: %s\n\nOutput: %s\n\nInput: %s\n\nException: %s"
-        (nl x.Result.Error) (nl x.Result.Output) (nl x.Input) (base.ToString())
+        (nl x.Result.Error.Merged) (nl x.Result.Output.Merged) (nl x.Input) (base.ToString())
 
 /// Represents a simple F# interactive session.
 #if YAAF_FSHARP_SCRIPTING_PUBLIC
@@ -717,17 +732,59 @@ module internal Helper =
   open System.IO
   open System.Text
   open Microsoft.FSharp.Compiler.SourceCodeServices
+  type CombineTextWriter (l : TextWriter list) =
+    inherit TextWriter()
+    do assert (l.Length > 0)
+    let doAll f = 
+      l |> Seq.iter f
+    override x.Flush() = doAll (fun t -> t.Flush())
+    override x.Write(c:char) = doAll (fun t -> t.Write c)
+    override x.Write(c:string) = doAll (fun t -> t.Write c)
+    override x.WriteLine(c:string) = doAll (fun t -> t.WriteLine c)
+    override x.WriteLine() = doAll (fun t -> t.WriteLine ())
+    override x.Dispose (r) = if r then doAll (fun t -> t.Dispose())
+    override x.Encoding = l.Head.Encoding
+    static member Create l = new CombineTextWriter (l) :> TextWriter
+  type OutStreamHelper (saveGlobal, liveOutWriter : _ option, liveFsiWriter : _ option) =
+    let globalFsiOut = new StringBuilder()
+    let globalStdOut = new StringBuilder()
+    let globalMergedOut = new StringBuilder()
 
-  let getSession (fsi : obj, options : FsiOptions, reportGlobal) =
+    let fsiOut = new StringBuilder()
+    let stdOut = new StringBuilder()
+    let mergedOut = new StringBuilder()
+    let fsiOutStream = new StringWriter(fsiOut) :> TextWriter
+    let stdOutStream = new StringWriter(stdOut) :> TextWriter
+    let mergedOutStream = new StringWriter(mergedOut) :> TextWriter
+    let fsiOutWriter = 
+      CombineTextWriter.Create [ yield fsiOutStream; yield mergedOutStream; 
+                                 if liveFsiWriter.IsSome then yield liveFsiWriter.Value ]
+    let stdOutWriter = 
+      CombineTextWriter.Create [ yield stdOutStream; yield mergedOutStream; 
+                                 if liveOutWriter.IsSome then yield liveOutWriter.Value ]
+    let all = [ globalFsiOut, fsiOut; globalStdOut, stdOut; globalMergedOut, mergedOut ]
+    member x.FsiOutWriter = fsiOutWriter
+    member x.StdOutWriter = stdOutWriter
+    member x.SaveOutput () =
+      let [ fsi; std; merged ] =
+        all 
+        |> List.map (fun (global', local) ->
+          let data = local.ToString() 
+          if saveGlobal then global'.Append(data) |> ignore
+          local.Clear() |> ignore
+          data)
+      { FsiOutput = fsi; ScriptOutput = std; Merged = merged}
+    member x.GetOut () =
+      let [ fsi; std; merged ] =
+        all
+        |> List.map (fun (global', local) -> if saveGlobal then global'.ToString() else local.ToString() )
+      { FsiOutput = fsi; ScriptOutput = std; Merged = merged} 
+  let getSession (fsi : obj, options : FsiOptions, reportGlobal, liveOut, liveOutFsi, liveErr, liveErrFsi, preventStdOut) =
       // Intialize output and input streams
-      let globalOut = new StringBuilder()
-      let globalErr = new StringBuilder()
-      let sbOut = new StringBuilder()
-      let sbErr = new StringBuilder()
+      let out = new OutStreamHelper(reportGlobal, liveOut, liveOutFsi)
+      let err = new OutStreamHelper(reportGlobal, liveErr, liveErrFsi) 
       let sbInput = new StringBuilder()
       let inStream = new StringReader("")
-      let outStream = new StringWriter(sbOut)
-      let errStream = new StringWriter(sbErr)
 
       // Build command line arguments & start FSI session
 
@@ -735,25 +792,35 @@ module internal Helper =
         [| yield "C:\\fsi.exe"
            yield! options.AsArgs |]
       let saveOutput () =
-        let out, err = sbOut.ToString(), sbErr.ToString()
-        if reportGlobal then
-          globalOut.Append(out) |> ignore
-          globalErr.Append(err) |> ignore
-        sbOut.Clear() |> ignore
-        sbErr.Clear() |> ignore
+        let out = out.SaveOutput()
+        let err = err.SaveOutput()
         { Output = out; Error = err }
       let getMessages () =
-        if reportGlobal then
-          globalErr.ToString(), globalOut.ToString(), sbInput.ToString()
-        else
-          sbErr.ToString(), sbOut.ToString(), sbInput.ToString()
-
+        let out = out.GetOut()
+        let err = err.GetOut()
+        let inp = sbInput.ToString()
+        err, out, inp
+      let redirectOut f =
+        let defOut = Console.Out
+        let defErr = Console.Error
+        try
+          if preventStdOut then
+            Console.SetOut out.StdOutWriter
+            Console.SetError err.StdOutWriter
+          else
+            Console.SetOut (CombineTextWriter.Create [defOut; out.StdOutWriter])
+            Console.SetError (CombineTextWriter.Create [defErr; err.StdOutWriter])
+          f ()
+        finally 
+          Console.SetOut defOut
+          Console.SetError defErr
       let fsiSession =
         try
           let fsiConfig = FsiEvaluationSession.GetDefaultConfiguration(fsi, false)
-          let session = FsiEvaluationSession.Create(fsiConfig, args, inStream, outStream, errStream)
-          saveOutput() |> ignore
-          session
+          redirectOut (fun () ->
+            let session = FsiEvaluationSession.Create(fsiConfig, args, inStream, out.FsiOutWriter, err.FsiOutWriter)
+            saveOutput() |> ignore
+            session)
         with e ->
           let err, out, inp = getMessages()
           raise <| 
@@ -765,8 +832,9 @@ module internal Helper =
     
       let save_ f text =
         try
-          let res = f text
-          saveOutput(), res
+          redirectOut (fun () ->
+            let res = f text
+            saveOutput(), res)
         with e ->
           let err, out, inp = getMessages()
           raise <| 
@@ -895,22 +963,36 @@ module __ReflectHelper =
       callInstanceMethod1 fsiObj [|typeof<'T>|] "AddPrintTransformer" printer
 let fsi = __ReflectHelper.ForwardingInteractiveSettings(__rawfsi)"""
       session
-
+      
+open System
+open System.IO
 #if YAAF_FSHARP_SCRIPTING_PUBLIC
 type ScriptHost private() =
 #else
 type internal ScriptHost private() =
 #endif
   /// Create a new IFsiSession by specifying all arguments manually.
-  static member Create (opts : FsiOptions, ?fsiObj : obj, ?reportGlobal) =
+  static member Create 
+   ( opts : FsiOptions, ?fsiObj : obj, ?reportGlobal, 
+     ?outWriter : TextWriter, ?fsiOutWriter : TextWriter,
+     ?errWriter : TextWriter, ?fsiErrWriter : TextWriter,
+     ?preventStdOut) =
     Helper.getSession(
       defaultArg fsiObj (Microsoft.FSharp.Compiler.Interactive.Shell.Settings.fsi :> obj), 
       opts,
-      defaultArg reportGlobal false)
+      defaultArg reportGlobal false, outWriter, fsiOutWriter, errWriter, fsiErrWriter,
+      defaultArg preventStdOut false)
   /// Quickly create a new IFsiSession with some same defaults
-  static member CreateNew (?defines : string list, ?fsiObj : obj, ?reportGlobal) =
+  static member CreateNew 
+   ( ?defines : string list, ?fsiObj : obj, ?reportGlobal, 
+     ?outWriter : TextWriter, ?fsiOutWriter : TextWriter,
+     ?errWriter : TextWriter, ?fsiErrWriter : TextWriter, 
+     ?preventStdOut) =
     let opts =
       { FsiOptions.Default with
-          Defines = defaultArg defines []
-      }
-    ScriptHost.Create(opts, ?fsiObj = fsiObj, ?reportGlobal = reportGlobal)
+          Defines = defaultArg defines [] }
+    ScriptHost.Create
+      (opts, ?fsiObj = fsiObj, ?reportGlobal = reportGlobal,
+       ?outWriter = outWriter, ?fsiOutWriter = fsiOutWriter,
+       ?errWriter = errWriter, ?fsiErrWriter = fsiErrWriter,
+       ?preventStdOut = preventStdOut)
