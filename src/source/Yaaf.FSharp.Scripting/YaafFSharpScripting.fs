@@ -1,5 +1,8 @@
 ﻿namespace Yaaf.FSharp.Scripting
 
+module internal Env =
+  let isMono = try System.Type.GetType("Mono.Runtime") <> null with _ -> false 
+open Env
 [<AutoOpen>]
 #if YAAF_FSHARP_SCRIPTING_PUBLIC
 module CompilerServiceExtensions =
@@ -11,16 +14,82 @@ module internal CompilerServiceExtensions =
   open Microsoft.FSharp.Compiler
   open Microsoft.FSharp.Compiler.Interactive.Shell
   open Microsoft.FSharp.Compiler.SourceCodeServices
+  open System.IO
 
   module internal FSharpAssemblyHelper =
       open System.IO
       let checker = FSharpChecker.Create()
-          
-      let getProjectReferences otherFlags libDirs dllFiles = 
-          let otherFlags = defaultArg otherFlags []
-          let libDirs = defaultArg libDirs []
+      
+      let (++) a b = System.IO.Path.Combine(a,b)
+      let (=?) s1 s2 = System.String.Equals(s1, s2, System.StringComparison.InvariantCultureIgnoreCase)
+      let sysDir =
+        if System.Environment.OSVersion.Platform = System.PlatformID.Win32NT then
+          @"C:\Program Files (x86)\Reference Assemblies\Microsoft\Framework\.NETFramework\v4.0"
+        else
+          System.Runtime.InteropServices.RuntimeEnvironment.GetRuntimeDirectory()
+      let getLib dir nm = 
+          dir ++ nm + ".dll" 
+      let sysLib = getLib sysDir
+      let fsCore4300Dir = 
+          if System.Environment.OSVersion.Platform = System.PlatformID.Win32NT then // file references only valid on Windows 
+              @"C:\Program Files (x86)\Reference Assemblies\Microsoft\FSharp\.NETFramework\v4.0\4.3.0.0"  
+          else 
+              sysDir
+      
+      let fscoreResolveDirs libDirs =
+        [ yield sysDir
+          yield System.Runtime.InteropServices.RuntimeEnvironment.GetRuntimeDirectory()
+          yield! libDirs
+          yield Environment.CurrentDirectory
+          yield fsCore4300Dir
+          yield Path.GetDirectoryName (Assembly.GetExecutingAssembly().Location)
+          yield Path.GetDirectoryName (typeof<Microsoft.FSharp.Compiler.Interactive.Shell.Settings.InteractiveSettings>.Assembly.Location)
+          if isMono then
+            // See https://github.com/fsharp/FSharp.Compiler.Service/issues/317
+            yield Path.GetDirectoryName sysDir ++ "4.0"
+        ]
+
+      let tryCheckFsCore fscorePath =
+        let lib = fscorePath
+        let opt = Path.ChangeExtension (lib, "optdata")
+        let sig' = Path.ChangeExtension(lib, "sigdata")
+        if [ lib; opt; sig' ] |> Seq.forall File.Exists then
+          Some lib
+        else None
+
+      let findFSCore dllFiles libDirs =
+        // lets find ourself some FSharp.Core.dll
+        let tried =
+          dllFiles @ (fscoreResolveDirs libDirs 
+                      |> List.map (fun (l:string) -> getLib l "FSharp.Core"))
+        match tried |> Seq.tryPick tryCheckFsCore with
+        | Some s -> s
+        | None -> failwithf "Could not find a FSharp.Core.dll (with bundled .optdata and .sigdata) in %A" tried
+
+      let getProjectReferences otherFlags libDirs dllFiles =
+          let otherFlags = defaultArg otherFlags Seq.empty
+          let libDirs = defaultArg libDirs Seq.empty |> Seq.toList
+          let dllFiles = dllFiles |> Seq.toList
+          let hasAssembly asm = 
+            dllFiles |> Seq.exists (fun a -> Path.GetFileNameWithoutExtension a =? asm) ||
+            libDirs |> Seq.exists (fun lib ->
+              Directory.EnumerateFiles(lib)
+              |> Seq.filter (fun file -> Path.GetExtension file =? ".dll")
+              |> Seq.exists (fun file -> Path.GetFileNameWithoutExtension file =? asm))
+          let hasFsCoreLib = hasAssembly "FSharp.Core"
+          let fsCoreLib =
+            if not hasFsCoreLib then
+              Some (findFSCore dllFiles libDirs)
+            else None
+          let defaultReferences = 
+            Directory.EnumerateFiles(sysDir)
+            |> Seq.filter (fun file -> Path.GetExtension file =? ".dll")
+            |> Seq.map Path.GetFileNameWithoutExtension
+            |> Seq.filter (fun f -> not (f =? "FSharp.Core"))
+            |> Seq.filter (not << hasAssembly)
           let base1 = Path.GetTempFileName()
           let dllName = Path.ChangeExtension(base1, ".dll")
+          let xmlName = Path.ChangeExtension(base1, ".xml")
           let fileName1 = Path.ChangeExtension(base1, ".fs")
           let projFileName = Path.ChangeExtension(base1, ".fsproj")
           File.WriteAllText(fileName1, """module M""")
@@ -31,8 +100,13 @@ module internal CompilerServiceExtensions =
                       //yield "--optimize-" 
                       yield "--nooptimizationdata"
                       yield "--noframework"
+                      yield sprintf "-I:%s" sysDir
+                      for ref in defaultReferences do
+                        yield sprintf "-r:%s" (sysLib ref)
+                      if fsCoreLib.IsSome then
+                        yield sprintf "-r:%s" fsCoreLib.Value
                       yield "--out:" + dllName
-                      yield "--doc:test.xml" 
+                      yield "--doc:" + xmlName
                       yield "--warn:3" 
                       yield "--fullpaths" 
                       yield "--flaterrors" 
@@ -53,16 +127,24 @@ module internal CompilerServiceExtensions =
 
           let references = results.ProjectContext.GetReferencedAssemblies()
           references
-          
+      let referenceMap references =
+          references
+          |> Seq.choose (fun (r:FSharpAssembly) -> r.FileName |> Option.map (fun f -> f, r))
+      let resolve dllFiles references =
+          let referenceMap = 
+            referenceMap references
+            |> dict
+          dllFiles |> Seq.map (fun file -> file, if referenceMap.ContainsKey file then Some referenceMap.[file] else None)
+        
       let getProjectReferencesSimple dllFiles = 
-          let references =
-              getProjectReferences None None dllFiles
-              |> Seq.choose (fun r -> r.FileName |> Option.map (fun f -> f, r))
-              |> dict
-          dllFiles |> List.map (fun file -> references.[file])
+        let dllFiles = dllFiles |> Seq.toList
+        getProjectReferences None None dllFiles
+        |> resolve dllFiles
+        
       let getProjectReferenceFromFile dllFile = 
           getProjectReferencesSimple [ dllFile ]
           |> Seq.exactlyOne
+          |> snd
 
       let rec enumerateEntities (e:FSharpEntity) =
           [
@@ -76,19 +158,41 @@ module internal CompilerServiceExtensions =
           x.FullName.Substring(0, match x.FullName.IndexOf("[") with | -1 -> x.FullName.Length | _ as i -> i)
 
   type FSharpAssembly with
+      static member LoadFiles (dllFiles, ?libDirs, ?otherFlags, ?manualResolve) =
+        let resolveDirs = defaultArg manualResolve true
+        let libDirs = defaultArg libDirs Seq.empty
+        let dllFiles = dllFiles |> Seq.toList
+        let findReferences libDir =
+          Directory.EnumerateFiles(libDir, "*.dll")
+          |> Seq.map Path.GetFullPath
+          |> Seq.filter (fun file -> dllFiles |> List.exists (fun binary -> binary = file) |> not)
+        
+        // See https://github.com/tpetricek/FSharp.Formatting/commit/22ffb8ec3c743ceaf069893a46a7521667c6fc9d
+        let blacklist =
+          [ "FSharp.Core.dll"; "mscorlib.dll" ]
+
+        // See https://github.com/tpetricek/FSharp.Formatting/commit/5d14f45cd7e70c2164a7448ea50a6b9995166489
+        let _dllFiles, _libDirs =
+          if resolveDirs then
+            libDirs
+            |> Seq.collect findReferences
+            |> Seq.append dllFiles
+            |> Seq.filter (fun file -> blacklist |> List.exists (fun black -> black = Path.GetFileName file) |> not),
+            Seq.empty
+          else dllFiles |> List.toSeq, libDirs
+        FSharpAssemblyHelper.getProjectReferences otherFlags (Some _libDirs) _dllFiles
+        |> FSharpAssemblyHelper.resolve dllFiles
+            
+
       static member FromAssembly (assembly:Assembly) =
           let isWindows = System.Environment.OSVersion.Platform = System.PlatformID.Win32NT
           let loc =
               if isWindows && assembly.GetName().Name = "FSharp.Core" then
-                  // TODO: handle more cases / versions.
-                  // file references only valid on Windows 
-                  // NOTE: we use 4.3.0.0 as even when you specify 4.3.1.0 you will get a 4.3.0.0 reference as result 
-                  // (this will break above when we try to find for every file its reference)
-                  sprintf @"C:\Program Files (x86)\Reference Assemblies\Microsoft\FSharp\.NETFramework\v4.0\4.3.0.0\FSharp.Core.dll"
+                  FSharpAssemblyHelper.findFSCore [] []
               else
                   assembly.Location
           if loc = null then None
-          else Some (FSharpAssemblyHelper.getProjectReferenceFromFile loc)
+          else FSharpAssemblyHelper.getProjectReferenceFromFile loc
 
       member x.FindType (t:Type) =
           x.Contents.Entities 
@@ -241,7 +345,6 @@ module internal Helper =
   open System.Text
   open Microsoft.FSharp.Compiler.SourceCodeServices
 
-  let isMono = try Type.GetType("Mono.Runtime") <> null with _ -> false 
   let getSession (defines, fsi : obj) =
       // Intialize output and input streams
       let sbOut = new StringBuilder()
