@@ -1,4 +1,8 @@
-﻿### 1.0.12
+﻿### 1.0.13
+
+ * Introduce FsiEvaluationException when something goes wrong.
+
+### 1.0.12
 
  * Add overloaded methods which return the FSI output and error text
  * Support for running from within FSI.exe.
