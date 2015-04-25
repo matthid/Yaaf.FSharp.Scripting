@@ -2,7 +2,7 @@
 <html lang="en">
   <head>
     <meta charset="utf-8">
-    <title>ScriptHost - Yaaf.FSharp.Scripting</title>
+    <title>FsiEvaluationException - Yaaf.FSharp.Scripting</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="">
     <meta name="author" content="Matthias Dittrich">
@@ -38,56 +38,142 @@
 
 
 
-<h1>ScriptHost </h1>
+<h1>FsiEvaluationException </h1>
 <div class="xmldoc">
     Defined in Yaaf.FSharp.Scripting.dll.
 </div>
 <div class="xmldoc">
-</div>
-  <h3>Static members</h3>
+
+ This exception indicates that an exception happened while compiling or executing given F# code.
+</br></div>
+  <h3>Record Fields</h3>
   <table class="table table-bordered member-list">
     <thead>
-      <tr><td>Static member</td><td>Description</td></tr>
+      <tr><td>Record Field</td><td>Description</td></tr>
     </thead>
     <tbody>
       <tr>
         <td class="member-name">
 
-          <code onmouseout="hideTip(event, '104', 104)" onmouseover="showTip(event, '104', 104)">
-            Create(opts, fsiObj, reportGlobal)
+          <code onmouseout="hideTip(event, '58', 58)" onmouseover="showTip(event, '58', 58)">
+            input
           </code>
-          <div class="tip" id="104">
-            <strong>Signature:</strong> (opts:FsiOptions * fsiObj:obj option * reportGlobal:bool option) -&gt; IFsiSession<br />
+          <div class="tip" id="58">
+            <strong>Signature:</strong> string<br />
                       </div>
         </td>
         <td class="xmldoc">
-            <a href="https://github.com/matthid/Yaaf.FSharp.Scripting/blob/master/src/source/Yaaf.FSharp.Scripting/YaafFSharpScripting.fs#L905-905" class="github-link">
+            <a href="https://github.com/matthid/Yaaf.FSharp.Scripting/blob/master/src/source/Yaaf.FSharp.Scripting/YaafFSharpScripting.fs#L272-272" class="github-link">
               <img src="../content/img/github.png" class="normal" />
               <img src="../content/img/github-blue.png" class="hover" />
             </a>
           
- Create a new IFsiSession by specifying all arguments manually.
-</br>
         </td>
       </tr>
       <tr>
         <td class="member-name">
 
-          <code onmouseout="hideTip(event, '105', 105)" onmouseover="showTip(event, '105', 105)">
-            CreateNew(defines, fsiObj, reportGlobal)
+          <code onmouseout="hideTip(event, '59', 59)" onmouseover="showTip(event, '59', 59)">
+            result
           </code>
-          <div class="tip" id="105">
-            <strong>Signature:</strong> (defines:string list option * fsiObj:obj option * reportGlobal:bool option) -&gt; IFsiSession<br />
+          <div class="tip" id="59">
+            <strong>Signature:</strong> InteractionResult<br />
                       </div>
         </td>
         <td class="xmldoc">
-            <a href="https://github.com/matthid/Yaaf.FSharp.Scripting/blob/master/src/source/Yaaf.FSharp.Scripting/YaafFSharpScripting.fs#L911-911" class="github-link">
+            <a href="https://github.com/matthid/Yaaf.FSharp.Scripting/blob/master/src/source/Yaaf.FSharp.Scripting/YaafFSharpScripting.fs#L271-271" class="github-link">
               <img src="../content/img/github.png" class="normal" />
               <img src="../content/img/github-blue.png" class="hover" />
             </a>
           
- Quickly create a new IFsiSession with some same defaults
-</br>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+  <h3>Constructors</h3>
+  <table class="table table-bordered member-list">
+    <thead>
+      <tr><td>Constructor</td><td>Description</td></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td class="member-name">
+
+          <code onmouseout="hideTip(event, '60', 60)" onmouseover="showTip(event, '60', 60)">
+            new(info, context)
+          </code>
+          <div class="tip" id="60">
+            <strong>Signature:</strong> (info:SerializationInfo * context:StreamingContext) -&gt; FsiEvaluationException<br />
+                      </div>
+        </td>
+        <td class="xmldoc">
+            <a href="https://github.com/matthid/Yaaf.FSharp.Scripting/blob/master/src/source/Yaaf.FSharp.Scripting/YaafFSharpScripting.fs#L277-277" class="github-link">
+              <img src="../content/img/github.png" class="normal" />
+              <img src="../content/img/github-blue.png" class="hover" />
+            </a>
+          
+        </td>
+      </tr>
+      <tr>
+        <td class="member-name">
+
+          <code onmouseout="hideTip(event, '61', 61)" onmouseover="showTip(event, '61', 61)">
+            new(msg, input, result, inner)
+          </code>
+          <div class="tip" id="61">
+            <strong>Signature:</strong> (msg:string * input:string * result:InteractionResult * inner:Exception) -&gt; FsiEvaluationException<br />
+                      </div>
+        </td>
+        <td class="xmldoc">
+            <a href="https://github.com/matthid/Yaaf.FSharp.Scripting/blob/master/src/source/Yaaf.FSharp.Scripting/YaafFSharpScripting.fs#L273-273" class="github-link">
+              <img src="../content/img/github.png" class="normal" />
+              <img src="../content/img/github-blue.png" class="hover" />
+            </a>
+          
+        </td>
+      </tr>
+    </tbody>
+  </table>
+  <h3>Instance members</h3>
+  <table class="table table-bordered member-list">
+    <thead>
+      <tr><td>Instance member</td><td>Description</td></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td class="member-name">
+
+          <code onmouseout="hideTip(event, '62', 62)" onmouseover="showTip(event, '62', 62)">
+            Input
+          </code>
+          <div class="tip" id="62">
+            <strong>Signature:</strong> string<br />
+                      </div>
+        </td>
+        <td class="xmldoc">
+            <a href="https://github.com/matthid/Yaaf.FSharp.Scripting/blob/master/src/source/Yaaf.FSharp.Scripting/YaafFSharpScripting.fs#L287-287" class="github-link">
+              <img src="../content/img/github.png" class="normal" />
+              <img src="../content/img/github-blue.png" class="hover" />
+            </a>
+          
+        </td>
+      </tr>
+      <tr>
+        <td class="member-name">
+
+          <code onmouseout="hideTip(event, '63', 63)" onmouseover="showTip(event, '63', 63)">
+            Result
+          </code>
+          <div class="tip" id="63">
+            <strong>Signature:</strong> InteractionResult<br />
+                      </div>
+        </td>
+        <td class="xmldoc">
+            <a href="https://github.com/matthid/Yaaf.FSharp.Scripting/blob/master/src/source/Yaaf.FSharp.Scripting/YaafFSharpScripting.fs#L286-286" class="github-link">
+              <img src="../content/img/github.png" class="normal" />
+              <img src="../content/img/github-blue.png" class="hover" />
+            </a>
+          
         </td>
       </tr>
     </tbody>
