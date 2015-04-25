@@ -21,6 +21,7 @@ module internal CompilerServiceExtensions =
       let checker = FSharpChecker.Create()
       
       let (++) a b = System.IO.Path.Combine(a,b)
+      let (=?) s1 s2 = System.String.Equals(s1, s2, System.StringComparison.InvariantCultureIgnoreCase)
       let sysDir =
         if System.Environment.OSVersion.Platform = System.PlatformID.Win32NT then
           @"C:\Program Files (x86)\Reference Assemblies\Microsoft\Framework\.NETFramework\v4.0"
@@ -35,16 +36,26 @@ module internal CompilerServiceExtensions =
           else 
               sysLib "FSharp.Core"
 
-      let getProjectReferences otherFlags libDirs dllFiles = 
+      let getProjectReferences otherFlags libDirs dllFiles =
+          let otherFlags = defaultArg otherFlags Seq.empty
+          let libDirs = defaultArg libDirs Seq.empty |> Seq.toList
           let dllFiles = dllFiles |> Seq.toList
-          let hasAssembly asm = dllFiles |> Seq.exists (fun a -> Path.GetFileNameWithoutExtension a = asm)
+          let hasAssembly asm = 
+            dllFiles |> Seq.exists (fun a -> Path.GetFileNameWithoutExtension a =? asm) ||
+            libDirs |> Seq.exists (fun lib ->
+              Directory.EnumerateFiles(lib)
+              |> Seq.filter (fun file -> Path.GetExtension file =? ".dll")
+              |> Seq.exists (fun file -> Path.GetFileNameWithoutExtension file =? asm))
           let hasFsCoreLib = hasAssembly "FSharp.Core"
           let fsCoreLib =
             if not hasFsCoreLib then Some (fsCore4300())
             else None
-          let defaultReferences = [ "mscorlib"; "System"; "System.Core" ]
-          let otherFlags = defaultArg otherFlags Seq.empty
-          let libDirs = defaultArg libDirs Seq.empty
+          let defaultReferences = 
+            Directory.EnumerateFiles(sysDir)
+            |> Seq.filter (fun file -> Path.GetExtension file =? ".dll")
+            |> Seq.map Path.GetFileNameWithoutExtension
+            |> Seq.filter (fun f -> not (f =? "FSharp.Core"))
+            |> Seq.filter (not << hasAssembly)
           let base1 = Path.GetTempFileName()
           let dllName = Path.ChangeExtension(base1, ".dll")
           let xmlName = Path.ChangeExtension(base1, ".xml")
@@ -60,8 +71,7 @@ module internal CompilerServiceExtensions =
                       yield "--noframework"
                       yield sprintf "-I:%s" sysDir
                       for ref in defaultReferences do
-                        if not (hasAssembly ref) then
-                          yield sprintf "-r:%s" (sysLib ref)
+                        yield sprintf "-r:%s" (sysLib ref)
                       if fsCoreLib.IsSome then
                         yield sprintf "-r:%s" fsCoreLib.Value
                       yield "--out:" + dllName
