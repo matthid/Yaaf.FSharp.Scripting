@@ -19,19 +19,36 @@ module internal CompilerServiceExtensions =
   module internal FSharpAssemblyHelper =
       open System.IO
       let checker = FSharpChecker.Create()
-          
-      let getProjectReferences otherFlags libDirs dllFiles = 
-          let dllFiles, hasCoreLib =
-            dllFiles
-            |> Seq.fold (fun (files, hasCoreLib) dllFile -> 
-               dllFile :: files, 
-               hasCoreLib || 
-               let name = (Path.GetFileName dllFile).ToLowerInvariant()
-               let iscorelib = name = "fsharp.core.dll" || name = "mscorlib.dll" 
-               printfn "%s is corlib: %b" dllFile iscorelib
-               iscorelib
-            ) ([], false)
 
+      let sysLib nm = 
+          if System.Environment.OSVersion.Platform = System.PlatformID.Win32NT then // file references only valid on Windows 
+              @"C:\Program Files (x86)\Reference Assemblies\Microsoft\Framework\.NETFramework\v4.0\" + nm + ".dll"
+          else
+              let sysDir = System.Runtime.InteropServices.RuntimeEnvironment.GetRuntimeDirectory()
+              let (++) a b = System.IO.Path.Combine(a,b)
+              sysDir ++ nm + ".dll" 
+
+      let fsCore4300() = 
+          if System.Environment.OSVersion.Platform = System.PlatformID.Win32NT then // file references only valid on Windows 
+              @"C:\Program Files (x86)\Reference Assemblies\Microsoft\FSharp\.NETFramework\v4.0\4.3.0.0\FSharp.Core.dll"  
+          else 
+              sysLib "FSharp.Core"
+
+      let getProjectReferences otherFlags libDirs dllFiles = 
+          let dllFiles, hasMsCoreLib, hasFsCoreLib =
+            dllFiles
+            |> Seq.fold (fun (files, hasMsCoreLib, hasFsCoreLib) dllFile -> 
+               let name = (Path.GetFileName dllFile).ToLowerInvariant()
+               dllFile :: files, 
+               hasMsCoreLib || name = "mscorlib.dll",
+               hasFsCoreLib || name = "fsharp.core.dll"
+            ) ([], false, false)
+          let msCoreLib =
+            if not hasMsCoreLib then Some (sysLib "mscorlib")
+            else None
+          let fsCoreLib =
+            if not hasFsCoreLib then Some (fsCore4300())
+            else None
           let otherFlags = defaultArg otherFlags Seq.empty
           let libDirs = defaultArg libDirs Seq.empty
           let base1 = Path.GetTempFileName()
@@ -46,8 +63,11 @@ module internal CompilerServiceExtensions =
                       yield "--define:DEBUG" 
                       //yield "--optimize-" 
                       yield "--nooptimizationdata"
-                      if hasCoreLib then
-                        yield "--noframework"
+                      yield "--noframework"
+                      if msCoreLib.IsSome then
+                        yield sprintf "-r:%s" msCoreLib.Value
+                      if fsCoreLib.IsSome then
+                        yield sprintf "-r:%s" fsCoreLib.Value
                       yield "--out:" + dllName
                       yield "--doc:" + xmlName
                       yield "--warn:3" 
@@ -131,11 +151,12 @@ module internal CompilerServiceExtensions =
           let isWindows = System.Environment.OSVersion.Platform = System.PlatformID.Win32NT
           let loc =
               if isWindows && assembly.GetName().Name = "FSharp.Core" then
+                  FSharpAssemblyHelper.fsCore4300()
                   // TODO: handle more cases / versions.
                   // file references only valid on Windows 
                   // NOTE: we use 4.3.0.0 as even when you specify 4.3.1.0 you will get a 4.3.0.0 reference as result 
                   // (this will break above when we try to find for every file its reference)
-                  sprintf @"C:\Program Files (x86)\Reference Assemblies\Microsoft\FSharp\.NETFramework\v4.0\4.3.0.0\FSharp.Core.dll"
+                  //sprintf @"C:\Program Files (x86)\Reference Assemblies\Microsoft\FSharp\.NETFramework\v4.0\4.3.0.0\FSharp.Core.dll"
               else
                   assembly.Location
           if loc = null then None
