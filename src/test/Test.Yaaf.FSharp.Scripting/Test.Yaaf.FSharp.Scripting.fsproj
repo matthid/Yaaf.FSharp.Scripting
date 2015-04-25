@@ -76,6 +76,7 @@
   -->
   <Import Project="..\..\..\.paket\paket.targets" />
   <ItemGroup>
+    <Compile Include="UnquoteFix.fs" />
     <Compile Include="FsiArgsTest.fs" />
     <Compile Include="ExtensionMethodTests.fs" />
     <Compile Include="FsiSessionTests.fs" />

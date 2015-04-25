@@ -1,4 +1,9 @@
-﻿### 1.0.11
+﻿### 1.0.12
+
+ * Add overloaded methods which return the FSI output and error text
+ * Support for running from within FSI.exe.
+
+### 1.0.11
 
  * Add FsiOptions record.
 
