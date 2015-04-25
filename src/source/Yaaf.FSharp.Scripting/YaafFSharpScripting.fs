@@ -971,7 +971,7 @@ type ScriptHost private() =
 #else
 type internal ScriptHost private() =
 #endif
-  /// Create a new IFsiSession by specifying all arguments manually.
+  /// Create a new IFsiSession by specifying all fsi arguments manually.
   static member Create 
    ( opts : FsiOptions, ?fsiObj : obj, ?reportGlobal, 
      ?outWriter : TextWriter, ?fsiOutWriter : TextWriter,
@@ -982,7 +982,7 @@ type internal ScriptHost private() =
       opts,
       defaultArg reportGlobal false, outWriter, fsiOutWriter, errWriter, fsiErrWriter,
       defaultArg preventStdOut false)
-  /// Quickly create a new IFsiSession with some same defaults
+  /// Quickly create a new IFsiSession with some sane defaults
   static member CreateNew 
    ( ?defines : string list, ?fsiObj : obj, ?reportGlobal, 
      ?outWriter : TextWriter, ?fsiOutWriter : TextWriter,
