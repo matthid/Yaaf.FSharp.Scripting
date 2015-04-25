@@ -33,6 +33,6 @@ let test = 0
 [<Test>]
 let ``check that fsi object works`` () =
     fsiSession.EvalInteraction ("""
-fsi.AddPrinter(fun (n:int) -> "test" + n.ToString())
+fsi.AddPrinter(fun (n:int) -> n.ToString())
 printfn "%d" 4
 """)
