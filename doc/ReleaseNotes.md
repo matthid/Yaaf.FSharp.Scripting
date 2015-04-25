@@ -1,4 +1,9 @@
-﻿### 1.0.13
+﻿### 1.1.0
+
+ * Redirect of stdout and stderr, see https://github.com/fsharp/FSharp.Compiler.Service/issues/201 
+ * added an option prevent writing to stdout and stderr.
+
+### 1.0.13
 
  * Introduce FsiEvaluationException when something goes wrong.
 
