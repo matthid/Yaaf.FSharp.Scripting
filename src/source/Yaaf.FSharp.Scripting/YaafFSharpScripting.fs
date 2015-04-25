@@ -27,14 +27,44 @@ module internal CompilerServiceExtensions =
           @"C:\Program Files (x86)\Reference Assemblies\Microsoft\Framework\.NETFramework\v4.0"
         else
           System.Runtime.InteropServices.RuntimeEnvironment.GetRuntimeDirectory()
-      let sysLib nm = 
-          sysDir ++ nm + ".dll" 
-
-      let fsCore4300() = 
+      let getLib dir nm = 
+          dir ++ nm + ".dll" 
+      let sysLib = getLib sysDir
+      let fsCore4300Dir = 
           if System.Environment.OSVersion.Platform = System.PlatformID.Win32NT then // file references only valid on Windows 
-              @"C:\Program Files (x86)\Reference Assemblies\Microsoft\FSharp\.NETFramework\v4.0\4.3.0.0\FSharp.Core.dll"  
+              @"C:\Program Files (x86)\Reference Assemblies\Microsoft\FSharp\.NETFramework\v4.0\4.3.0.0"  
           else 
-              sysLib "FSharp.Core"
+              sysDir
+      
+      let fscoreResolveDirs libDirs =
+        [ yield sysDir
+          yield System.Runtime.InteropServices.RuntimeEnvironment.GetRuntimeDirectory()
+          yield! libDirs
+          yield Environment.CurrentDirectory
+          yield fsCore4300Dir
+          yield Path.GetDirectoryName (Assembly.GetExecutingAssembly().Location)
+          yield Path.GetDirectoryName (typeof<Microsoft.FSharp.Compiler.Interactive.Shell.Settings.InteractiveSettings>.Assembly.Location)
+          if isMono then
+            // See https://github.com/fsharp/FSharp.Compiler.Service/issues/317
+            yield Path.GetDirectoryName sysDir ++ "4.0"
+        ]
+
+      let tryCheckFsCore fscorePath =
+        let lib = fscorePath
+        let opt = Path.ChangeExtension (lib, "optdata")
+        let sig' = Path.ChangeExtension(lib, "sigdata")
+        if [ lib; opt; sig' ] |> Seq.forall File.Exists then
+          Some lib
+        else None
+
+      let findFSCore dllFiles libDirs =
+        // lets find ourself some FSharp.Core.dll
+        let tried =
+          dllFiles @ (fscoreResolveDirs libDirs 
+                      |> List.map (fun (l:string) -> getLib l "FSharp.Core"))
+        match tried |> Seq.tryPick tryCheckFsCore with
+        | Some s -> s
+        | None -> failwithf "Could not find a FSharp.Core.dll (with bundled .optdata and .sigdata) in %A" tried
 
       let getProjectReferences otherFlags libDirs dllFiles =
           let otherFlags = defaultArg otherFlags Seq.empty
@@ -48,7 +78,8 @@ module internal CompilerServiceExtensions =
               |> Seq.exists (fun file -> Path.GetFileNameWithoutExtension file =? asm))
           let hasFsCoreLib = hasAssembly "FSharp.Core"
           let fsCoreLib =
-            if not hasFsCoreLib then Some (fsCore4300())
+            if not hasFsCoreLib then
+              Some (findFSCore dllFiles libDirs)
             else None
           let defaultReferences = 
             Directory.EnumerateFiles(sysDir)
@@ -157,12 +188,7 @@ module internal CompilerServiceExtensions =
           let isWindows = System.Environment.OSVersion.Platform = System.PlatformID.Win32NT
           let loc =
               if isWindows && assembly.GetName().Name = "FSharp.Core" then
-                  FSharpAssemblyHelper.fsCore4300()
-                  // TODO: handle more cases / versions.
-                  // file references only valid on Windows 
-                  // NOTE: we use 4.3.0.0 as even when you specify 4.3.1.0 you will get a 4.3.0.0 reference as result 
-                  // (this will break above when we try to find for every file its reference)
-                  //sprintf @"C:\Program Files (x86)\Reference Assemblies\Microsoft\FSharp\.NETFramework\v4.0\4.3.0.0\FSharp.Core.dll"
+                  FSharpAssemblyHelper.findFSCore [] []
               else
                   assembly.Location
           if loc = null then None
