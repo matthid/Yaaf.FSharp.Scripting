@@ -253,8 +253,44 @@ module internal CompilerServiceExtensions =
       /// Gets a string that can be used in F# source code to reference the current type instance.
       member x.FSharpFullNameWithTypeArgs = x.FSharpFullName + x.FSharpParamList
 
+#if YAAF_FSHARP_SCRIPTING_PUBLIC
 type InteractionResult =
+#else 
+type internal InteractionResult =
+#endif
   { Output : string; Error : string }
+
+/// This exception indicates that an exception happened while compiling or executing given F# code.
+[<System.Serializable>]
+#if YAAF_FSHARP_SCRIPTING_PUBLIC
+type FsiEvaluationException =
+#else 
+type internal FsiEvaluationException =
+#endif    
+    inherit System.Exception
+    val private result : InteractionResult
+    val private input : string
+    new (msg:string, input:string, result: InteractionResult, inner:System.Exception) = { 
+      inherit System.Exception(msg, inner)
+      input = input
+      result = result }
+    new (info:System.Runtime.Serialization.SerializationInfo, context:System.Runtime.Serialization.StreamingContext) = {
+        inherit System.Exception(info, context)
+        input = info.GetString("Input")
+        result = { Output = info.GetString("Result_Output"); Error = info.GetString("Result_Error")}
+    }
+    override x.GetObjectData(info, context) =
+      info.AddValue("Input", x.input)
+      info.AddValue("Result_Output", x.result.Output)
+      info.AddValue("Result_Error", x.result.Error)
+    member x.Result with get () = x.result
+    member x.Input with get () = x.input
+    override x.ToString () =
+      let nl (s:string) = s.Replace("\n", "\n\t")
+      sprintf
+        "FsiEvaluationException:\n\nError: %s\n\nOutput: %s\n\nInput: %s\n\nException: %s"
+        (nl x.Result.Error) (nl x.Result.Output) (nl x.Input) (base.ToString())
+
 /// Represents a simple F# interactive session.
 #if YAAF_FSHARP_SCRIPTING_PUBLIC
 type IFsiSession =
@@ -720,9 +756,12 @@ module internal Helper =
           session
         with e ->
           let err, out, inp = getMessages()
-          raise <| new Exception(
-            sprintf "Error in creating a fsi session: %s\nConcrete exn: %A\nOutput: %s\nInput: %s" err e out inp,
-            e)
+          raise <| 
+            new FsiEvaluationException(
+              "Error while creating a fsi session.",
+              sprintf "Fsi Arguments: %A" args,
+              { Output = out; Error = err },
+              e)
     
       let save_ f text =
         try
@@ -730,9 +769,12 @@ module internal Helper =
           saveOutput(), res
         with e ->
           let err, out, inp = getMessages()
-          raise <| new Exception(
-            sprintf "Evaluation of (\n%s\n) failed: %s\nConcrete exn: %A\nOutput: %s\nInput: %s" text err e out inp,
-            e)
+          raise <| 
+            new FsiEvaluationException(
+              "Error while compiling or executing fsharp snippet.",
+              (if reportGlobal then inp else text),
+              { Output = out; Error = err },
+              e)
       
       let save f = 
           save_ (fun text ->
@@ -742,7 +784,7 @@ module internal Helper =
       let saveScript f = 
           save_ (fun path ->
               if reportGlobal then
-                sbInput.AppendLine(File.ReadAllText path) |> ignore
+                sbInput.AppendLine(sprintf "#script %s" path) |> ignore
               f path)
 
       let evalInteraction = save fsiSession.EvalInteraction 

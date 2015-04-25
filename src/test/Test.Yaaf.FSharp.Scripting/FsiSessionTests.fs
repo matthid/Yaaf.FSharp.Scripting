@@ -36,3 +36,19 @@ let ``check that fsi object works`` () =
 fsi.AddPrinter(fun (n:int) -> n.ToString())
 printfn "%d" 4
 """)
+
+[<Test>]
+let ``check that compile time exceptions are wrapped`` () =
+  Assert.Throws<FsiEvaluationException>(fun () ->
+    fsiSession.EvalInteraction ("""
+asdfasd
+"""))
+  |> ignore
+
+[<Test>]
+let ``check that runtime exceptions are wrapped`` () =
+  Assert.Throws<FsiEvaluationException>(fun () ->
+    fsiSession.EvalInteraction ("""
+((failwith "game over") : unit)
+"""))
+  |> ignore
