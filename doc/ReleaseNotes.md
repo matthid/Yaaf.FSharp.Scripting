@@ -1,4 +1,8 @@
-﻿### 1.0.10
+﻿### 1.0.11
+
+ * Add FsiOptions record.
+
+### 1.0.10
 
  * Improve FSharp.Core resolution.
 
