@@ -2,7 +2,7 @@
 
 open System.IO
 open NUnit.Framework
-open Swensen.Unquote
+open Test.Yaaf.FSharp.Scripting.FsiUnquote
 open Yaaf.FSharp.Scripting
 
 let argTest args =

@@ -5,7 +5,7 @@ type TGen<'a> () =
     let t = ()
 open System.IO
 open NUnit.Framework
-open Swensen.Unquote
+open Test.Yaaf.FSharp.Scripting.FsiUnquote
 open Yaaf.FSharp.Scripting
 open Microsoft.FSharp.Compiler.SourceCodeServices
 let testType<'a> () =

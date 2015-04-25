@@ -43,8 +43,14 @@ module internal CompilerServiceExtensions =
           yield! libDirs
           yield Environment.CurrentDirectory
           yield fsCore4300Dir
-          yield Path.GetDirectoryName (Assembly.GetExecutingAssembly().Location)
-          yield Path.GetDirectoryName (typeof<Microsoft.FSharp.Compiler.Interactive.Shell.Settings.InteractiveSettings>.Assembly.Location)
+          yield! try Path.GetDirectoryName (Assembly.GetExecutingAssembly().Location)
+                     |> Seq.singleton
+                 with :? NotSupportedException -> Seq.empty
+          yield! try Path.GetDirectoryName 
+                        (typeof<Microsoft.FSharp.Compiler.Interactive
+                         .Shell.Settings.InteractiveSettings>.Assembly.Location)
+                     |> Seq.singleton
+                 with :? NotSupportedException -> Seq.empty
           if isMono then
             // See https://github.com/fsharp/FSharp.Compiler.Service/issues/317
             yield Path.GetDirectoryName sysDir ++ "4.0"
@@ -247,6 +253,8 @@ module internal CompilerServiceExtensions =
       /// Gets a string that can be used in F# source code to reference the current type instance.
       member x.FSharpFullNameWithTypeArgs = x.FSharpFullName + x.FSharpParamList
 
+type InteractionResult =
+  { Output : string; Error : string }
 /// Represents a simple F# interactive session.
 #if YAAF_FSHARP_SCRIPTING_PUBLIC
 type IFsiSession =
@@ -254,11 +262,11 @@ type IFsiSession =
 type internal IFsiSession =
 #endif
     /// Evaluate the given interaction.
-    abstract member EvalInteraction : string -> unit
+    abstract member EvalInteractionWithOutput : string -> InteractionResult
     /// Try to evaluate the given expression and return its result.
-    abstract member TryEvalExpression : string -> (obj * System.Type) option
+    abstract member TryEvalExpressionWithOutput : string -> InteractionResult * ((obj * System.Type) option)
     /// Evaluate the given script.
-    abstract member EvalScript : string -> unit
+    abstract member EvalScriptWithOutput : string -> InteractionResult
 
 [<AutoOpen>]
 #if YAAF_FSHARP_SCRIPTING_PUBLIC
@@ -267,14 +275,20 @@ module Extensions =
 module internal Extensions =
 #endif
   type IFsiSession with
+      member x.EvalInteraction s = x.EvalInteractionWithOutput s |> ignore
+      member x.TryEvalExpression s = x.TryEvalExpressionWithOutput s |> snd
+      member x.EvalScript s = x.EvalScriptWithOutput s |> ignore
+      
+      member x.EvalExpressionWithOutput<'a> text =
+        match x.TryEvalExpressionWithOutput text with
+        | int, Some (value, _) ->
+          match value with
+          | :? 'a as v -> int, v
+          | o -> failwithf "the returned value (%O) doesn't match the expected type (%A) but has type %A" o (typeof<'a>) (o.GetType())
+        | _ -> failwith "no value was returned by expression: %s" text  
       /// Evaluate the given expression and return its result.
       member x.EvalExpression<'a> text = 
-        match x.TryEvalExpression text with
-        | Some (value, _) ->
-          match value with
-          | :? 'a as v -> v
-          | o -> failwithf "the returned value (%O) doesn't match the expected type (%A) but has type %A" o (typeof<'a>) (o.GetType())
-        | _ -> failwith "no value was returned by expression: %s" text 
+        x.EvalExpressionWithOutput<'a> text |> snd
       /// Assigns the given object to the given name (ie "let varName = obj") 
       member x.Let<'a> varName obj =
           let typeName = typeof<'a>.FSharpFullNameWithTypeArgs
@@ -373,7 +387,8 @@ type internal OptimizationType =
   | NoLocalOptimize
   | NoCrossOptimize
   | NoTailCalls
-  
+ 
+/// See https://msdn.microsoft.com/en-us/library/dd233172.aspx
 #if YAAF_FSHARP_SCRIPTING_PUBLIC
 type FsiOptions =
 #else
@@ -667,8 +682,10 @@ module internal Helper =
   open System.Text
   open Microsoft.FSharp.Compiler.SourceCodeServices
 
-  let getSession (fsi : obj, options : FsiOptions) =
+  let getSession (fsi : obj, options : FsiOptions, reportGlobal) =
       // Intialize output and input streams
+      let globalOut = new StringBuilder()
+      let globalErr = new StringBuilder()
       let sbOut = new StringBuilder()
       let sbErr = new StringBuilder()
       let sbInput = new StringBuilder()
@@ -681,31 +698,51 @@ module internal Helper =
       let args =
         [| yield "C:\\fsi.exe"
            yield! options.AsArgs |]
-               
+      let saveOutput () =
+        let out, err = sbOut.ToString(), sbErr.ToString()
+        if reportGlobal then
+          globalOut.Append(out) |> ignore
+          globalErr.Append(err) |> ignore
+        sbOut.Clear() |> ignore
+        sbErr.Clear() |> ignore
+        { Output = out; Error = err }
+      let getMessages () =
+        if reportGlobal then
+          globalErr.ToString(), globalOut.ToString(), sbInput.ToString()
+        else
+          sbErr.ToString(), sbOut.ToString(), sbInput.ToString()
+
       let fsiSession =
         try
           let fsiConfig = FsiEvaluationSession.GetDefaultConfiguration(fsi, false)
-          FsiEvaluationSession.Create(fsiConfig, args, inStream, outStream, errStream)
+          let session = FsiEvaluationSession.Create(fsiConfig, args, inStream, outStream, errStream)
+          saveOutput() |> ignore
+          session
         with e ->
+          let err, out, inp = getMessages()
           raise <| new Exception(
-            sprintf "Error in creating a fsi session: %s\nConcrete exn: %A\nOutput: %s\nInput: %s" (sbErr.ToString()) e (sbOut.ToString()) (sbInput.ToString()),
+            sprintf "Error in creating a fsi session: %s\nConcrete exn: %A\nOutput: %s\nInput: %s" err e out inp,
             e)
     
       let save_ f text =
         try
-          f text
+          let res = f text
+          saveOutput(), res
         with e ->
+          let err, out, inp = getMessages()
           raise <| new Exception(
-            sprintf "Evaluation of (\n%s\n) failed: %s\nConcrete exn: %A\nOutput: %s\nInput: %s" text (sbErr.ToString()) e (sbOut.ToString()) (sbInput.ToString()),
+            sprintf "Evaluation of (\n%s\n) failed: %s\nConcrete exn: %A\nOutput: %s\nInput: %s" text err e out inp,
             e)
       
       let save f = 
           save_ (fun text ->
-              sbInput.AppendLine(text) |> ignore
+              if reportGlobal then
+                sbInput.AppendLine(text) |> ignore
               f text)
       let saveScript f = 
           save_ (fun path ->
-              sbInput.AppendLine(File.ReadAllText path) |> ignore
+              if reportGlobal then
+                sbInput.AppendLine(File.ReadAllText path) |> ignore
               f path)
 
       let evalInteraction = save fsiSession.EvalInteraction 
@@ -714,10 +751,11 @@ module internal Helper =
       
       let session =
         { new IFsiSession with
-            member x.EvalInteraction text = evalInteraction text
-            member x.EvalScript path = evalScript path
-            member x.TryEvalExpression text = 
-              evalExpression text |> Option.map (fun r -> r.ReflectionValue, r.ReflectionType)
+            member x.EvalInteractionWithOutput text = evalInteraction text |> fst
+            member x.EvalScriptWithOutput path = evalScript path |> fst
+            member x.TryEvalExpressionWithOutput text = 
+              let i, r = evalExpression text 
+              i, r |> Option.map (fun r -> r.ReflectionValue, r.ReflectionType)
         }
       // This works around a FCS bug, I would expect "fsi" to be defined already...
       // This is probably not the case because we do not have any type with the correct signature loaded
@@ -815,20 +853,22 @@ module __ReflectHelper =
       callInstanceMethod1 fsiObj [|typeof<'T>|] "AddPrintTransformer" printer
 let fsi = __ReflectHelper.ForwardingInteractiveSettings(__rawfsi)"""
       session
+
 #if YAAF_FSHARP_SCRIPTING_PUBLIC
 type ScriptHost private() =
 #else
 type internal ScriptHost private() =
 #endif
   /// Create a new IFsiSession by specifying all arguments manually.
-  static member Create (opts : FsiOptions, ?fsiObj : obj) =
+  static member Create (opts : FsiOptions, ?fsiObj : obj, ?reportGlobal) =
     Helper.getSession(
       defaultArg fsiObj (Microsoft.FSharp.Compiler.Interactive.Shell.Settings.fsi :> obj), 
-      opts)
+      opts,
+      defaultArg reportGlobal false)
   /// Quickly create a new IFsiSession with some same defaults
-  static member CreateNew (?defines : string list, ?fsiObj : obj) =
+  static member CreateNew (?defines : string list, ?fsiObj : obj, ?reportGlobal) =
     let opts =
       { FsiOptions.Default with
           Defines = defaultArg defines []
       }
-    ScriptHost.Create(opts, ?fsiObj = fsiObj)
+    ScriptHost.Create(opts, ?fsiObj = fsiObj, ?reportGlobal = reportGlobal)
