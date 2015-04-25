@@ -1,4 +1,8 @@
-﻿### 1.0.9
+﻿### 1.0.10
+
+ * Improve FSharp.Core resolution.
+
+### 1.0.9
 
  * added FSharpAssembly.LoadFiles API.
 
