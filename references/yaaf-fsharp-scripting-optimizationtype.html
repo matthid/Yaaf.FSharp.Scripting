@@ -2,7 +2,7 @@
 <html lang="en">
   <head>
     <meta charset="utf-8">
-    <title>SimpleEventLoop - Yaaf.FSharp.Scripting</title>
+    <title>OptimizationType - Yaaf.FSharp.Scripting</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="">
     <meta name="author" content="Matthias Dittrich">
@@ -38,58 +38,30 @@
 
 
 
-<h1>SimpleEventLoop </h1>
+<h1>OptimizationType </h1>
 <div class="xmldoc">
     Defined in Yaaf.FSharp.Scripting.dll.
 </div>
 <div class="xmldoc">
-
- Represents a simple (fake) event loop for the 'fsi' object
-</br></div>
-  <h3>Constructors</h3>
+</div>
+  <h3>Union Cases</h3>
   <table class="table table-bordered member-list">
     <thead>
-      <tr><td>Constructor</td><td>Description</td></tr>
+      <tr><td>Union Case</td><td>Description</td></tr>
     </thead>
     <tbody>
       <tr>
         <td class="member-name">
 
-          <code onmouseout="hideTip(event, '47', 47)" onmouseover="showTip(event, '47', 47)">
-            new()
+          <code onmouseout="hideTip(event, '87', 87)" onmouseover="showTip(event, '87', 87)">
+            NoCrossOptimize
           </code>
-          <div class="tip" id="47">
-            <strong>Signature:</strong> unit -&gt; SimpleEventLoop<br />
+          <div class="tip" id="87">
+            <strong>Signature:</strong> <br />
                       </div>
         </td>
         <td class="xmldoc">
-            <a href="https://github.com/matthid/Yaaf.FSharp.Scripting/blob/master/src/source/Yaaf.FSharp.Scripting/YaafFSharpScripting.fs#L297-297" class="github-link">
-              <img src="../content/img/github.png" class="normal" />
-              <img src="../content/img/github-blue.png" class="hover" />
-            </a>
-          
-        </td>
-      </tr>
-    </tbody>
-  </table>
-  <h3>Instance members</h3>
-  <table class="table table-bordered member-list">
-    <thead>
-      <tr><td>Instance member</td><td>Description</td></tr>
-    </thead>
-    <tbody>
-      <tr>
-        <td class="member-name">
-
-          <code onmouseout="hideTip(event, '48', 48)" onmouseover="showTip(event, '48', 48)">
-            Invoke(f)
-          </code>
-          <div class="tip" id="48">
-            <strong>Signature:</strong> (f:(unit -&gt; &#39;T)) -&gt; &#39;T<br />
-                          <strong>Type parameters:</strong> 'T          </div>
-        </td>
-        <td class="xmldoc">
-            <a href="https://github.com/matthid/Yaaf.FSharp.Scripting/blob/master/src/source/Yaaf.FSharp.Scripting/YaafFSharpScripting.fs#L299-299" class="github-link">
+            <a href="https://github.com/matthid/Yaaf.FSharp.Scripting/blob/master/src/source/Yaaf.FSharp.Scripting/YaafFSharpScripting.fs#L374-374" class="github-link">
               <img src="../content/img/github.png" class="normal" />
               <img src="../content/img/github-blue.png" class="hover" />
             </a>
@@ -99,15 +71,15 @@
       <tr>
         <td class="member-name">
 
-          <code onmouseout="hideTip(event, '49', 49)" onmouseover="showTip(event, '49', 49)">
-            Run()
+          <code onmouseout="hideTip(event, '88', 88)" onmouseover="showTip(event, '88', 88)">
+            NoJitOptimize
           </code>
-          <div class="tip" id="49">
-            <strong>Signature:</strong> unit -&gt; unit<br />
+          <div class="tip" id="88">
+            <strong>Signature:</strong> <br />
                       </div>
         </td>
         <td class="xmldoc">
-            <a href="https://github.com/matthid/Yaaf.FSharp.Scripting/blob/master/src/source/Yaaf.FSharp.Scripting/YaafFSharpScripting.fs#L298-298" class="github-link">
+            <a href="https://github.com/matthid/Yaaf.FSharp.Scripting/blob/master/src/source/Yaaf.FSharp.Scripting/YaafFSharpScripting.fs#L371-371" class="github-link">
               <img src="../content/img/github.png" class="normal" />
               <img src="../content/img/github-blue.png" class="hover" />
             </a>
@@ -117,15 +89,51 @@
       <tr>
         <td class="member-name">
 
-          <code onmouseout="hideTip(event, '50', 50)" onmouseover="showTip(event, '50', 50)">
-            ScheduleRestart()
+          <code onmouseout="hideTip(event, '89', 89)" onmouseover="showTip(event, '89', 89)">
+            NoJitTracking
           </code>
-          <div class="tip" id="50">
-            <strong>Signature:</strong> unit -&gt; unit<br />
+          <div class="tip" id="89">
+            <strong>Signature:</strong> <br />
                       </div>
         </td>
         <td class="xmldoc">
-            <a href="https://github.com/matthid/Yaaf.FSharp.Scripting/blob/master/src/source/Yaaf.FSharp.Scripting/YaafFSharpScripting.fs#L300-300" class="github-link">
+            <a href="https://github.com/matthid/Yaaf.FSharp.Scripting/blob/master/src/source/Yaaf.FSharp.Scripting/YaafFSharpScripting.fs#L372-372" class="github-link">
+              <img src="../content/img/github.png" class="normal" />
+              <img src="../content/img/github-blue.png" class="hover" />
+            </a>
+          
+        </td>
+      </tr>
+      <tr>
+        <td class="member-name">
+
+          <code onmouseout="hideTip(event, '90', 90)" onmouseover="showTip(event, '90', 90)">
+            NoLocalOptimize
+          </code>
+          <div class="tip" id="90">
+            <strong>Signature:</strong> <br />
+                      </div>
+        </td>
+        <td class="xmldoc">
+            <a href="https://github.com/matthid/Yaaf.FSharp.Scripting/blob/master/src/source/Yaaf.FSharp.Scripting/YaafFSharpScripting.fs#L373-373" class="github-link">
+              <img src="../content/img/github.png" class="normal" />
+              <img src="../content/img/github-blue.png" class="hover" />
+            </a>
+          
+        </td>
+      </tr>
+      <tr>
+        <td class="member-name">
+
+          <code onmouseout="hideTip(event, '91', 91)" onmouseover="showTip(event, '91', 91)">
+            NoTailCalls
+          </code>
+          <div class="tip" id="91">
+            <strong>Signature:</strong> <br />
+                      </div>
+        </td>
+        <td class="xmldoc">
+            <a href="https://github.com/matthid/Yaaf.FSharp.Scripting/blob/master/src/source/Yaaf.FSharp.Scripting/YaafFSharpScripting.fs#L375-375" class="github-link">
               <img src="../content/img/github.png" class="normal" />
               <img src="../content/img/github-blue.png" class="hover" />
             </a>
