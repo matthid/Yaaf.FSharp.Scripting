@@ -12,6 +12,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "doc", "doc", "{A6A6AF7D-D6E
 	ProjectSection(SolutionItems) = preProject
 		..\CONTRIBUTING.md = ..\CONTRIBUTING.md
 		..\doc\DevelopReadme.md = ..\doc\DevelopReadme.md
+		..\doc\IntroExamples.fsx = ..\doc\IntroExamples.fsx
 		..\README.md = ..\README.md
 		..\doc\ReleaseNotes.md = ..\doc\ReleaseNotes.md
 	EndProjectSection

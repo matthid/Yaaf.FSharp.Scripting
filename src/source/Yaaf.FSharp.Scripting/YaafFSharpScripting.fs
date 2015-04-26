@@ -1,5 +1,7 @@
 ﻿namespace Yaaf.FSharp.Scripting
 
+#nowarn "25" // Binding incomplete: let [ t ] = list
+
 module internal Env =
   let isMono = try System.Type.GetType("Mono.Runtime") <> null with _ -> false 
 
@@ -13,7 +15,6 @@ module internal CompilerServiceExtensions =
   open System
   open System.Reflection
   open Microsoft.FSharp.Compiler
-  open Microsoft.FSharp.Compiler.Interactive.Shell
   open Microsoft.FSharp.Compiler.SourceCodeServices
   open System.IO
 
@@ -240,7 +241,7 @@ module internal CompilerServiceExtensions =
               let args = t.GetGenericArguments()
               builder.Append "<" |> ignore
               if t.IsGenericTypeDefinition then
-                  args |> Seq.iter (fun t -> builder.Append "_," |> ignore)
+                  args |> Seq.iter (fun _ -> builder.Append "_," |> ignore)
               else
                   args |> Seq.iter (fun t -> builder.Append (sprintf "%s," (t.FSharpFullName + getFSharpTypeParameterList t)) |> ignore)
               builder.Length <- builder.Length - 1
@@ -290,7 +291,7 @@ type internal FsiEvaluationException =
                 ScriptOutput = info.GetString "Result_Error_ScriptOutput"
                 Merged = info.GetString "Result_Error_Merged" } }
     }
-    override x.GetObjectData(info, context) =
+    override x.GetObjectData(info, _) =
       info.AddValue("Input", x.input)
       info.AddValue("Result_Output_FsiOutput", x.result.Output.FsiOutput)
       info.AddValue("Result_Output_ScriptOutput", x.result.Output.ScriptOutput)
@@ -353,6 +354,27 @@ module internal Extensions =
       member x.Reference file = 
           x.EvalInteraction (sprintf "#r @\"%s\"" file)
 
+      /// Change the current directory (so that relative paths within scripts work properly).
+      /// Returns a handle to change the current directory back to it's initial state 
+      /// (Because this will change the current directory of the currently running code as well!).
+      member x.ChangeCurrentDirectory dir =
+          let oldDir = System.IO.Directory.GetCurrentDirectory()
+          let cd dir =
+            x.EvalInteraction (sprintf "System.IO.Directory.SetCurrentDirectory(@\"%s\")" dir)
+            x.EvalInteraction (sprintf "#cd @\"%s\"" dir)
+          cd dir
+          let isDisposed = ref false
+          { new System.IDisposable with
+              member __.Dispose() = 
+                if not !isDisposed then
+                  cd oldDir
+                  isDisposed := true }
+
+      /// Same as ChangeCurrentDirectory but takes a function for the scope.
+      member x.WithCurrentDirectory dir f =
+          use __ = x.ChangeCurrentDirectory dir
+          f ()
+
 #if YAAF_FSHARP_SCRIPTING_PUBLIC
 module Shell =
 #else
@@ -360,9 +382,9 @@ module internal Shell =
 #endif
   /// Represents a simple (fake) event loop for the 'fsi' object
   type SimpleEventLoop () = 
-    member x.Run () = ()
-    member x.Invoke<'T>(f:unit -> 'T) = f()
-    member x.ScheduleRestart() = ()
+    member __.Run () = ()
+    member __.Invoke<'T>(f:unit -> 'T) = f()
+    member __.ScheduleRestart() = ()
 
   /// Implements a simple 'fsi' object to be passed to the FSI evaluator
   [<Sealed>]
@@ -381,26 +403,26 @@ module internal Shell =
     let mutable showProperties = true
     let mutable addedPrinters = []
 
-    member self.FloatingPointFormat with get() = fpfmt and set v = fpfmt <- v
-    member self.FormatProvider with get() = fp and set v = fp <- v
-    member self.PrintWidth  with get() = printWidth and set v = printWidth <- v
-    member self.PrintDepth  with get() = printDepth and set v = printDepth <- v
-    member self.PrintLength  with get() = printLength and set v = printLength <- v
-    member self.PrintSize  with get() = printSize and set v = printSize <- v
-    member self.ShowDeclarationValues with get() = showDeclarationValues and set v = showDeclarationValues <- v
-    member self.ShowProperties  with get() = showProperties and set v = showProperties <- v
-    member self.ShowIEnumerable with get() = showIEnumerable and set v = showIEnumerable <- v
-    member self.ShowIDictionary with get() = showIDictionary and set v = showIDictionary <- v
-    member self.AddedPrinters with get() = addedPrinters and set v = addedPrinters <- v
-    member self.CommandLineArgs with get() = args  and set v  = args <- v
-    member self.AddPrinter(printer : 'T -> string) =
+    member __.FloatingPointFormat with get() = fpfmt and set v = fpfmt <- v
+    member __.FormatProvider with get() = fp and set v = fp <- v
+    member __.PrintWidth  with get() = printWidth and set v = printWidth <- v
+    member __.PrintDepth  with get() = printDepth and set v = printDepth <- v
+    member __.PrintLength  with get() = printLength and set v = printLength <- v
+    member __.PrintSize  with get() = printSize and set v = printSize <- v
+    member __.ShowDeclarationValues with get() = showDeclarationValues and set v = showDeclarationValues <- v
+    member __.ShowProperties  with get() = showProperties and set v = showProperties <- v
+    member __.ShowIEnumerable with get() = showIEnumerable and set v = showIEnumerable <- v
+    member __.ShowIDictionary with get() = showIDictionary and set v = showIDictionary <- v
+    member __.AddedPrinters with get() = addedPrinters and set v = addedPrinters <- v
+    member __.CommandLineArgs with get() = args  and set v  = args <- v
+    member __.AddPrinter(printer : 'T -> string) =
       addedPrinters <- Choice1Of2 (typeof<'T>, (fun (x:obj) -> printer (unbox x))) :: addedPrinters
 
-    member self.EventLoop
+    member __.EventLoop
       with get () = evLoop
-      and set (x:SimpleEventLoop)  = ()
+      and set (_:SimpleEventLoop)  = ()
 
-    member self.AddPrintTransformer(printer : 'T -> obj) =
+    member __.AddPrintTransformer(printer : 'T -> obj) =
       addedPrinters <- Choice2Of2 (typeof<'T>, (fun (x:obj) -> printer (unbox x))) :: addedPrinters
 
 module internal ArgParser =
@@ -727,23 +749,34 @@ type internal FsiOptions =
 
 module internal Helper =
   open System
-  open System.Collections.Generic
   open Microsoft.FSharp.Compiler.Interactive.Shell
   open System.IO
   open System.Text
-  open Microsoft.FSharp.Compiler.SourceCodeServices
+  type ForwardTextWriter (f) =
+    inherit TextWriter()
+    override __.Flush() = ()
+    override __.Write(c:char) = f (string c)
+    override __.Write(c:string) = f c
+    override __.WriteLine(c:string) = f <| sprintf "%s%s" c Environment.NewLine
+    override __.WriteLine() = f Environment.NewLine 
+    override __.Dispose (r) = 
+      base.Dispose r
+    override __.Encoding = Encoding.UTF8
+    static member Create f = new ForwardTextWriter (f) :> TextWriter
   type CombineTextWriter (l : TextWriter list) =
     inherit TextWriter()
     do assert (l.Length > 0)
     let doAll f = 
       l |> Seq.iter f
-    override x.Flush() = doAll (fun t -> t.Flush())
-    override x.Write(c:char) = doAll (fun t -> t.Write c)
-    override x.Write(c:string) = doAll (fun t -> t.Write c)
-    override x.WriteLine(c:string) = doAll (fun t -> t.WriteLine c)
-    override x.WriteLine() = doAll (fun t -> t.WriteLine ())
-    override x.Dispose (r) = if r then doAll (fun t -> t.Dispose())
-    override x.Encoding = l.Head.Encoding
+    override __.Flush() = doAll (fun t -> t.Flush())
+    override __.Write(c:char) = doAll (fun t -> t.Write c)
+    override __.Write(c:string) = doAll (fun t -> t.Write c)
+    override __.WriteLine(c:string) = doAll (fun t -> t.WriteLine c)
+    override __.WriteLine() = doAll (fun t -> t.WriteLine ())
+    override __.Dispose (r) = 
+      base.Dispose r
+      if r then doAll (fun t -> t.Dispose())
+    override __.Encoding = l.Head.Encoding
     static member Create l = new CombineTextWriter (l) :> TextWriter
   type OutStreamHelper (saveGlobal, liveOutWriter : _ option, liveFsiWriter : _ option) =
     let globalFsiOut = new StringBuilder()
@@ -763,9 +796,9 @@ module internal Helper =
       CombineTextWriter.Create [ yield stdOutStream; yield mergedOutStream; 
                                  if liveOutWriter.IsSome then yield liveOutWriter.Value ]
     let all = [ globalFsiOut, fsiOut; globalStdOut, stdOut; globalMergedOut, mergedOut ]
-    member x.FsiOutWriter = fsiOutWriter
-    member x.StdOutWriter = stdOutWriter
-    member x.SaveOutput () =
+    member __.FsiOutWriter = fsiOutWriter
+    member __.StdOutWriter = stdOutWriter
+    member __.SaveOutput () =
       let [ fsi; std; merged ] =
         all 
         |> List.map (fun (global', local) ->
@@ -774,7 +807,7 @@ module internal Helper =
           local.Clear() |> ignore
           data)
       { FsiOutput = fsi; ScriptOutput = std; Merged = merged}
-    member x.GetOut () =
+    member __.GetOut () =
       let [ fsi; std; merged ] =
         all
         |> List.map (fun (global', local) -> if saveGlobal then global'.ToString() else local.ToString() )
@@ -822,7 +855,7 @@ module internal Helper =
             saveOutput() |> ignore
             session)
         with e ->
-          let err, out, inp = getMessages()
+          let err, out, _ = getMessages()
           raise <| 
             new FsiEvaluationException(
               "Error while creating a fsi session.",
@@ -861,9 +894,9 @@ module internal Helper =
       
       let session =
         { new IFsiSession with
-            member x.EvalInteractionWithOutput text = evalInteraction text |> fst
-            member x.EvalScriptWithOutput path = evalScript path |> fst
-            member x.TryEvalExpressionWithOutput text = 
+            member __.EvalInteractionWithOutput text = evalInteraction text |> fst
+            member __.EvalScriptWithOutput path = evalScript path |> fst
+            member __.TryEvalExpressionWithOutput text = 
               let i, r = evalExpression text 
               i, r |> Option.map (fun r -> r.ReflectionValue, r.ReflectionType)
         }
@@ -964,14 +997,15 @@ module __ReflectHelper =
 let fsi = __ReflectHelper.ForwardingInteractiveSettings(__rawfsi)"""
       session
       
-open System
 open System.IO
 #if YAAF_FSHARP_SCRIPTING_PUBLIC
 type ScriptHost private() =
 #else
 type internal ScriptHost private() =
 #endif
-  /// Create a new IFsiSession by specifying all fsi arguments manually.
+  static member CreateForwardWriter f =
+    Helper.ForwardTextWriter.Create f
+  /// Create a new IFsiSession by specifying all fsi arguments manually. 
   static member Create 
    ( opts : FsiOptions, ?fsiObj : obj, ?reportGlobal, 
      ?outWriter : TextWriter, ?fsiOutWriter : TextWriter,
