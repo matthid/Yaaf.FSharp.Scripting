@@ -12,7 +12,7 @@ NUGET
     NUnit (2.6.4)
     NUnit.Runners (2.6.4)
     Unquote (2.2.2)
-    Yaaf.AdvancedBuilding (0.6.0)
+    Yaaf.AdvancedBuilding (0.6.1)
       FAKE (3.28.8)
       FSharp.Formatting (2.9.2)
       FSharpVSPowerTools.Core (1.8.0)

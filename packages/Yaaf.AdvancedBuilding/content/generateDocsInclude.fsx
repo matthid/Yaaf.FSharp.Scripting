@@ -221,6 +221,6 @@ MyTarget "GithubDoc" (fun _ -> doGithub())
 MyTarget "LocalDoc" (fun _ -> doLocal())
 
 MyTarget "AllDocs" (fun _ ->
-    doGithub()
+    if config.EnableGithub then doGithub()
     doLocal()
 )

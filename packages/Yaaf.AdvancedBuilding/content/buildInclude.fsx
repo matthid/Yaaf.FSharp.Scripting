@@ -303,17 +303,12 @@ MyTarget "NuGetPush" (fun _ ->
 )
 
 // Documentation 
-
 MyTarget "GithubDoc" (fun _ -> buildDocumentationTarget "GithubDoc")
 
-MyTarget "LocalDoc" (fun _ -> 
-    buildDocumentationTarget "LocalDoc"
-    trace (sprintf "Local documentation has been finished, you can view it by opening %s in your browser!" (Path.GetFullPath (config.OutDocDir @@ "local" @@ "html" @@ "index.html")))
-)
+MyTarget "LocalDoc" (fun _ -> buildDocumentationTarget "LocalDoc")
 
-MyTarget "AllDocs" (fun _ ->
-    buildDocumentationTarget "AllDocs"
-)
+// its just faster to generate all at the same time...
+MyTarget "AllDocs" (fun _ -> buildDocumentationTarget "AllDocs")
 
 MyTarget "ReleaseGithubDoc" (fun isSingle ->
     let repro = (sprintf "git@github.com:%s/%s.git" config.GithubUser config.GithubProject)
@@ -420,13 +415,12 @@ config.BuildTargets
   ==> "CopyToRelease"
   =?> ("CreateReleaseSymbolFiles", config.EnableDebugSymbolConversion)
   ==> "NuGetPack"
-  ==> "LocalDoc"
+  ==> "AllDocs"
   ==> "All"
  
 "All"
   =?> ("CheckWindows", config.RestrictReleaseToWindows)
   ==> "VersionBump"
-  =?> ("GithubDoc", config.EnableGithub)
   =?> ("ReleaseGithubDoc", config.EnableGithub)
   ==> "NuGetPush"
   ==> "Release"
