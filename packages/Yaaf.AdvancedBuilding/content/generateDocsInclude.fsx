@@ -6,13 +6,17 @@
 (*
     This file handles the generation of the docs (it is called by the build automatically). 
 *)
+#if FAKE
+#else
+// Support when file is opened in Visual Studio
+#load "buildConfigDef.fsx"
+#load "../../../buildConfig.fsx"
+#endif
 
 open BuildConfigDef
 let config = BuildConfig.buildConfig.FillDefaults()
 
 #load @"../../FSharp.Formatting/FSharp.Formatting.fsx"
-// see https://github.com/tpetricek/FSharp.Formatting/pull/302
-#r "RazorEngine.dll"
 
 open System.Collections.Generic
 open System.IO
@@ -67,8 +71,19 @@ let rec replaceCodeBlocks ctx = function
         let nested = List.map (List.choose (replaceCodeBlocks ctx)) nested
         Some(Matching.ParagraphNested(pn, nested))
     | par -> Some par
-    
+
+let editLiterateDocument ctx (doc:LiterateDocument) =
+  doc.With(paragraphs = List.choose (replaceCodeBlocks ctx) doc.Paragraphs)
+
+//let evalutator = lazy (Some <| (FsiEvaluator() :> IFsiEvaluator))
+let evalutator = lazy None
+let fullLayoutRoots = config.LayoutRoots |> List.map Path.GetFullPath
+
 let buildAllDocumentation outDocDir website_root =
+    let outDocDir = Path.GetFullPath outDocDir
+    let resetPwd = 
+      let pwd =  System.IO.Directory.GetCurrentDirectory()
+      (fun () -> System.IO.Directory.SetCurrentDirectory pwd)
     let references = config.DocRazorReferences
     
     let projInfo =
@@ -98,53 +113,40 @@ let buildAllDocumentation outDocDir website_root =
       let indexTemplate, template, outDirName, indexName, extension =
         match outputKind with
         | OutputKind.Html -> "docpage-index.cshtml", "docpage.cshtml", "html", "index.html", ".html"
-        | OutputKind.Latex -> config.DocTemplatesDir @@ "template-color.tex", config.DocTemplatesDir @@ "template-color.tex", "latex", "Readme.tex", ".tex"
+        | OutputKind.Latex -> 
+          Path.GetFullPath(config.DocTemplatesDir @@ "template-color.tex"), 
+          Path.GetFullPath(config.DocTemplatesDir @@ "template-color.tex"), 
+          "latex", "Readme.tex", ".tex"
       let outDir = outDocDir @@ outDirName
       let handleDoc template (doc:LiterateDocument) outfile =
         // prismjs support
-        let ctx = formattingContext (Some template) (Some outputKind) (Some true) (Some projInfo) (Some config.LayoutRoots)
-        let newParagraphs = List.choose (replaceCodeBlocks ctx) doc.Paragraphs
-        Templating.processFile references (doc.With(paragraphs = newParagraphs)) outfile ctx 
-        
+        let ctx = formattingContext (Some template) (Some outputKind) (Some true) (Some projInfo) (Some fullLayoutRoots)
+        Templating.processFile references (editLiterateDocument ctx doc) outfile ctx 
+        resetPwd()
+
       let processMarkdown template infile outfile =
-        let doc = Literate.ParseMarkdownFile( infile )
+        let doc = Literate.ParseMarkdownFile( infile, ?fsiEvaluator = evalutator.Value )
         handleDoc template doc outfile
       let processScriptFile template infile outfile =
-        let doc = Literate.ParseScriptFile( infile )
+        let doc = Literate.ParseScriptFile( infile, ?fsiEvaluator = evalutator.Value )
         handleDoc template doc outfile
         
       let rec processDirectory template indir outdir = 
-        // Create output directory if it does not exist
-        if Directory.Exists(outdir) |> not then
-          try Directory.CreateDirectory(outdir) |> ignore 
-          with _ -> failwithf "Cannot create directory '%s'" outdir
+        Literate.ProcessDirectory(
+          indir, template, outdir, outputKind, generateAnchors = true, replacements = projInfo, 
+          layoutRoots = fullLayoutRoots, customizeDocument = editLiterateDocument,
+          processRecursive = true, includeSource = true, ?fsiEvaluator = evalutator.Value,
+          ?assemblyReferences = references)
+        resetPwd()
 
-        let fsx = [ for f in Directory.GetFiles(indir, "*.fsx") -> processScriptFile template, f ]
-        let mds = [ for f in Directory.GetFiles(indir, "*.md") -> processMarkdown template, f ]
-        for func, file in fsx @ mds do
-          let dir = Path.GetDirectoryName(file)
-          let name = Path.GetFileNameWithoutExtension(file)
-          let ext = (match outputKind with OutputKind.Latex -> "tex" | _ -> "html")
-          let output = Path.Combine(outdir, sprintf "%s.%s" name ext)
-
-          // Update only when needed
-          let changeTime = File.GetLastWriteTime(file)
-          let generateTime = File.GetLastWriteTime(output)
-          if changeTime > generateTime then
-            printfn "Generating '%s/%s.%s'" dir name ext
-            func file output
-
-        for d in Directory.EnumerateDirectories(indir) do
-          let name = Path.GetFileName(d)
-          processDirectory template (Path.Combine(indir, name)) (Path.Combine(outdir, name))
-
-      processDirectory template "./doc" outDir
+      processDirectory template (Path.GetFullPath "./doc") outDir
       let processFile template inFile outFile =
         if File.Exists inFile then
           processMarkdown template inFile outFile
         else
           trace (sprintf "File %s was not found so %s was not created!" inFile outFile)
-
+      
+      // Handle some special files.
       processFile indexTemplate "./README.md" (outDir @@ indexName)
       processFile template "./CONTRIBUTING.md" (outDir @@ "Contributing" + extension)
       processFile template "./LICENSE.md" (outDir @@ "License" + extension)
@@ -186,7 +188,7 @@ let buildAllDocumentation outDocDir website_root =
             |> Seq.map (sprintf "-r:%s")
             |> Seq.toList
         MetadataFormat.Generate
-           (binaries, Path.GetFullPath outDir, config.LayoutRoots,
+           (binaries, Path.GetFullPath outDir, fullLayoutRoots,
             parameters = projInfo,
             libDirs = [ ],
             otherFlags = libraries,
