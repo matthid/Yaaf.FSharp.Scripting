@@ -1,4 +1,10 @@
-﻿### 1.1.0
+﻿### 1.1.1
+
+ * Add ScriptHost.CreateForwardWriter which creates a new TextWriter that forwards everything to a simple (string -> unit) function.
+ * Add session.ChangeCurrentDirectory and session.WithCurrentDirectory, to take care of relative paths within executed snippets.
+ * Some more docs.
+
+### 1.1.0
 
  * Redirect of stdout and stderr, see https://github.com/fsharp/FSharp.Compiler.Service/issues/201 
  * added an option prevent writing to stdout and stderr.

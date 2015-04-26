@@ -52,8 +52,10 @@ See http://fsprojects.github.io/Paket/github-dependencies.html for details.
 
 ### NuGet 
 
-The `YaafFSharpScripting.fs` is included in the nuget package as well in `content/YaafFSharpScripting.fs`.
-In this case you don't need an additional reference to the Yaaf.FSharp.Scripting package. 
+The `YaafFSharpScripting.fs` source code file is included in the nuget package as well.
+You can find it in `content/YaafFSharpScripting.fs`.
+By adding the source code file (as reference) to your project you don't need
+to add a nuget dependency (`Yaaf.FSharp.Scripting`) to your final package. 
 
 ## Quick intro
 
@@ -74,9 +76,21 @@ fsiSession.Let "test" 25
 // Get a value out of the evaluator
 let v = fsiSession.EvalExpression<int> "test"
 assert (v = 25)
+
+// Get the output of the snippet
+let v = fsiSession.EvalInteractionWithOutput """printf "test" """
+assert (v.Output.ScriptOutput = "test")
+
+// Get the error message of the compilation
+try fsiSession.EvalInteraction """ Some_Invalid_F# """
+with :? FsiEvaluationException ev ->
+    printfn "FSI said: %s" ev.Result.Error.FsiOutput
+    printfn "Complete Error: %O" ev
+
+// Load scripts
+fsiSession.EvalScript "Script.fsx"
+
 ```
-
-
 
 The library also provides some nice members which are missing in FSharp.Compiler.Service:
 
@@ -116,3 +130,6 @@ test <@ def.FSharpName = "Option" @>
 
 ```
 
+[Examples and configuration overview](https://matthid.github.io/Yaaf.FSharp.Scripting/IntroExamples.html/) 
+
+ 
