@@ -130,6 +130,6 @@ test <@ def.FSharpName = "Option" @>
 
 ```
 
-[Examples and configuration overview](https://matthid.github.io/Yaaf.FSharp.Scripting/IntroExamples.html/) 
+[Examples and configuration overview](https://matthid.github.io/Yaaf.FSharp.Scripting/IntroExamples.html) 
 
  
