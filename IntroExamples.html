@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>Working with IFsiSessions
+</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="A helper library to easily add F# scripts to your application.">
+    <meta name="author" content="Matthias Dittrich">
+
+    <script src="https://code.jquery.com/jquery-1.8.0.js"></script>
+    <script src="https://code.jquery.com/ui/1.8.23/jquery-ui.js"></script>
+    <script src="https://netdna.bootstrapcdn.com/twitter-bootstrap/2.2.1/js/bootstrap.min.js"></script>
+    <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link href="https://netdna.bootstrapcdn.com/twitter-bootstrap/2.2.1/css/bootstrap-combined.min.css" rel="stylesheet">
+
+    <link type="text/css" rel="stylesheet" href="https://matthid.github.io/Yaaf.FSharp.Scripting/content/style.css" />
+    <link type="text/css" rel="stylesheet" href="https://matthid.github.io/Yaaf.FSharp.Scripting/content/prism.css" />
+    <script type="text/javascript" src="https://matthid.github.io/Yaaf.FSharp.Scripting/content/tips.js"></script>
+    <script type="text/javascript" src="https://matthid.github.io/Yaaf.FSharp.Scripting/content/prism.js"></script>
+    <!-- HTML5 shim, for IE6-8 support of HTML5 elements -->
+    <!--[if lt IE 9]>
+      <script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+  </head>
+  <body>
+    <div class="container">
+      <div class="masthead">
+        <ul class="nav nav-pills pull-right">
+          <li><a href="http://fsharp.org">fsharp.org</a></li>
+          <li><a href="http://fsharp.github.io/FSharp.Compiler.Service"><img src="https://fsharp.github.io/FSharp.Compiler.Service/images/logo.png" style="width:16px; height:16px;" /> F# Compiler Services</a></li>
+          <li><a href="http://tpetricek.github.io/FSharp.Formatting/"><img height="16" width="16" src="https://matthid.github.io/Yaaf.AdvancedBuilding/content/img/FSharp.Formatting.png" /> F# Formatting</a></li>
+        </ul>
+        <h3 class="muted"><a href="https://matthid.github.io/Yaaf.FSharp.Scripting/index.html">Yaaf.FSharp.Scripting</a></h3>
+      </div>
+      <hr />
+      <div class="row">
+        <div class="span9" id="main">
+          
+<h1><a name="Working-with-IFsiSessions" class="anchor" href="#Working-with-IFsiSessions">Working with IFsiSessions</a></h1>
+
+<h2><a name="Creating-sessions" class="anchor" href="#Creating-sessions">Creating sessions</a></h2>
+
+<p><code>ScriptHost.CreateNew()</code> and <code>ScriptHost.Create()</code> provide several optional parameters 
+to configure the scripting environment:</p>
+
+<ul>
+<li><code>fsiObj: obj</code>: 
+The optional "fsi" object to use (defaults to using the one defined in <code>FSharp.Compiler.Service.dll</code>)
+You should have the same members as <a href="https://github.com/Microsoft/visualfsharp/blob/fsharp4/src/fsharp/fsiaux.fsi#L19">https://github.com/Microsoft/visualfsharp/blob/fsharp4/src/fsharp/fsiaux.fsi#L19</a> .
+All your members are called via reflection.</li>
+<li><code>reportGlobal: bool</code>:
+When true all error messages and outputs contain the complete output (instead of only the output of the last command).
+This only affects error messages.
+Defaults to <code>false</code></li>
+<li><code>outWriter: TextWriter</code>:
+A custom TextWriter object where we additionally write the stdout of the executing code (for long running scripts).</li>
+<li><code>fsiOutWriter: TextWriter</code>:
+A custom TextWriter object where we additionally write the fsi stdout (for long running scripts).</li>
+<li><code>errWriter: TextWriter</code>:
+A custom TextWriter object where we additionally write the stderr of the executing code (for long running scripts).</li>
+<li><code>fsiErrWriter: TextWriter</code>:
+A custom TextWriter object where we additionally write the fsi stderr (for long running scripts).</li>
+<li><code>preventStdOut: bool</code>:
+A value indicating whether we should completly block the executing script from writing to the current stdout and stderr.
+Defaults to <code>false</code>.</li>
+</ul>
+
+<p>You should use <code>preventStdOut = true</code> if you want to control the script output yourself.
+You can work with either the live output or with the return values.
+Return values will be constant no matter the configuration options!</p>
+
+<h3><a name="Example-usage-Live-Output" class="anchor" href="#Example-usage-Live-Output">Example usage ("Live Output"):</a></h3>
+
+<table class="pre"><tr><td class="lines"><pre class="fssnip">
+<span class="l"> 1: </span>
+<span class="l"> 2: </span>
+<span class="l"> 3: </span>
+<span class="l"> 4: </span>
+<span class="l"> 5: </span>
+<span class="l"> 6: </span>
+<span class="l"> 7: </span>
+<span class="l"> 8: </span>
+<span class="l"> 9: </span>
+<span class="l">10: </span>
+<span class="l">11: </span>
+<span class="l">12: </span>
+<span class="l">13: </span>
+<span class="l">14: </span>
+<span class="l">15: </span>
+<span class="l">16: </span>
+</pre>
+</td>
+<td class="snippet"><pre class="fssnip">
+<span class="c">// (*** define-output: liveRedirect ***)</span>
+<span class="k">open</span> <span onmouseout="hideTip(event, 'fs1', 1)" onmouseover="showTip(event, 'fs1', 1)" class="i">Yaaf</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs2', 2)" onmouseover="showTip(event, 'fs2', 2)" class="i">FSharp</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs3', 3)" onmouseover="showTip(event, 'fs3', 3)" class="i">Scripting</span>
+
+<span class="c">// Setup for all future interactions</span>
+<span class="k">let</span> <span onmouseout="hideTip(event, 'fs4', 4)" onmouseover="showTip(event, 'fs4', 4)" class="i">liveSession</span> <span class="o">=</span>
+    <span class="k">try</span> <span onmouseout="hideTip(event, 'fs5', 5)" onmouseover="showTip(event, 'fs5', 5)" class="t">ScriptHost</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs6', 6)" onmouseover="showTip(event, 'fs6', 6)" class="f">CreateNew</span>
+          (<span class="i">preventStdOut</span> <span class="o">=</span> <span class="k">true</span>,
+           <span class="i">outWriter</span> <span class="o">=</span> <span onmouseout="hideTip(event, 'fs5', 7)" onmouseover="showTip(event, 'fs5', 7)" class="t">ScriptHost</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs7', 8)" onmouseover="showTip(event, 'fs7', 8)" class="f">CreateForwardWriter</span> (<span onmouseout="hideTip(event, 'fs8', 9)" onmouseover="showTip(event, 'fs8', 9)" class="f">printf</span> <span class="s">&quot;Script stdout: </span><span class="pf">%s</span><span class="s">&quot;</span>),
+           <span class="i">errWriter</span> <span class="o">=</span> <span onmouseout="hideTip(event, 'fs5', 10)" onmouseover="showTip(event, 'fs5', 10)" class="t">ScriptHost</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs7', 11)" onmouseover="showTip(event, 'fs7', 11)" class="f">CreateForwardWriter</span> (<span onmouseout="hideTip(event, 'fs8', 12)" onmouseover="showTip(event, 'fs8', 12)" class="f">printf</span> <span class="s">&quot;Script stderr: </span><span class="pf">%s</span><span class="s">&quot;</span>))
+    <span class="k">with</span> <span class="o">:?</span> <span onmouseout="hideTip(event, 'fs9', 13)" onmouseover="showTip(event, 'fs9', 13)" class="t">FsiEvaluationException</span> <span class="k">as</span> <span onmouseout="hideTip(event, 'fs10', 14)" onmouseover="showTip(event, 'fs10', 14)" class="i">e</span> <span class="k">-&gt;</span>
+        <span onmouseout="hideTip(event, 'fs8', 15)" onmouseover="showTip(event, 'fs8', 15)" class="f">printf</span> <span class="s">&quot;FsiEvaluationSession could not be created.&quot;</span>
+        <span onmouseout="hideTip(event, 'fs8', 16)" onmouseover="showTip(event, 'fs8', 16)" class="f">printf</span> <span class="s">&quot;</span><span class="pf">%s</span><span class="s">&quot;</span> <span onmouseout="hideTip(event, 'fs10', 17)" onmouseover="showTip(event, 'fs10', 17)" class="i">e</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs11', 18)" onmouseover="showTip(event, 'fs11', 18)" class="i">Result</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs12', 19)" onmouseover="showTip(event, 'fs12', 19)" class="i">Error</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs13', 20)" onmouseover="showTip(event, 'fs13', 20)" class="i">Merged</span>
+        <span onmouseout="hideTip(event, 'fs14', 21)" onmouseover="showTip(event, 'fs14', 21)" class="f">reraise</span> ()
+<span onmouseout="hideTip(event, 'fs4', 22)" onmouseover="showTip(event, 'fs4', 22)" class="i">liveSession</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs15', 23)" onmouseover="showTip(event, 'fs15', 23)" class="f">EvalInteraction</span> <span class="s">&quot;&quot;&quot;printf &quot;Some test&quot; &quot;&quot;&quot;</span>
+<span class="c">// (** The standard output is: *)</span>
+<span class="c">// (*** include-output:test ***)</span>
+</pre>
+</td>
+</tr>
+</table>
+
+<h3><a name="Example-usage-Return-values" class="anchor" href="#Example-usage-Return-values">Example usage ("Return values"):</a></h3>
+
+<table class="pre"><tr><td class="lines"><pre class="fssnip">
+<span class="l"> 1: </span>
+<span class="l"> 2: </span>
+<span class="l"> 3: </span>
+<span class="l"> 4: </span>
+<span class="l"> 5: </span>
+<span class="l"> 6: </span>
+<span class="l"> 7: </span>
+<span class="l"> 8: </span>
+<span class="l"> 9: </span>
+<span class="l">10: </span>
+<span class="l">11: </span>
+<span class="l">12: </span>
+<span class="l">13: </span>
+<span class="l">14: </span>
+</pre>
+</td>
+<td class="snippet"><pre class="fssnip">
+<span class="c">// (*** define-output: direct ***)</span>
+<span class="c">// Use the &quot;WithOutput&quot; members and work with the return type</span>
+<span class="k">let</span> <span onmouseout="hideTip(event, 'fs16', 24)" onmouseover="showTip(event, 'fs16', 24)" class="i">directSession</span> <span class="o">=</span>
+    <span class="k">try</span> <span onmouseout="hideTip(event, 'fs5', 25)" onmouseover="showTip(event, 'fs5', 25)" class="t">ScriptHost</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs6', 26)" onmouseover="showTip(event, 'fs6', 26)" class="f">CreateNew</span>(<span class="i">preventStdOut</span> <span class="o">=</span> <span class="k">true</span>)
+    <span class="k">with</span> <span class="o">:?</span> <span onmouseout="hideTip(event, 'fs9', 27)" onmouseover="showTip(event, 'fs9', 27)" class="t">FsiEvaluationException</span> <span class="k">as</span> <span onmouseout="hideTip(event, 'fs10', 28)" onmouseover="showTip(event, 'fs10', 28)" class="i">e</span> <span class="k">-&gt;</span>
+        <span onmouseout="hideTip(event, 'fs8', 29)" onmouseover="showTip(event, 'fs8', 29)" class="f">printf</span> <span class="s">&quot;FsiEvaluationSession could not be created.&quot;</span>
+        <span onmouseout="hideTip(event, 'fs8', 30)" onmouseover="showTip(event, 'fs8', 30)" class="f">printf</span> <span class="s">&quot;</span><span class="pf">%s</span><span class="s">&quot;</span> <span onmouseout="hideTip(event, 'fs10', 31)" onmouseover="showTip(event, 'fs10', 31)" class="i">e</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs11', 32)" onmouseover="showTip(event, 'fs11', 32)" class="i">Result</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs12', 33)" onmouseover="showTip(event, 'fs12', 33)" class="i">Error</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs13', 34)" onmouseover="showTip(event, 'fs13', 34)" class="i">Merged</span>
+        <span onmouseout="hideTip(event, 'fs14', 35)" onmouseover="showTip(event, 'fs14', 35)" class="f">reraise</span> ()
+<span class="k">let</span> <span onmouseout="hideTip(event, 'fs17', 36)" onmouseover="showTip(event, 'fs17', 36)" class="i">v</span> <span class="o">=</span> <span onmouseout="hideTip(event, 'fs16', 37)" onmouseover="showTip(event, 'fs16', 37)" class="i">directSession</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs18', 38)" onmouseover="showTip(event, 'fs18', 38)" class="f">EvalInteractionWithOutput</span> <span class="s">&quot;&quot;&quot;printf &quot;direct result&quot; &quot;&quot;&quot;</span>
+<span onmouseout="hideTip(event, 'fs19', 39)" onmouseover="showTip(event, 'fs19', 39)" class="f">printfn</span> <span class="s">&quot;And We have: </span><span class="pf">%s</span><span class="s">&quot;</span> <span onmouseout="hideTip(event, 'fs17', 40)" onmouseover="showTip(event, 'fs17', 40)" class="i">v</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs20', 41)" onmouseover="showTip(event, 'fs20', 41)" class="i">Output</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs21', 42)" onmouseover="showTip(event, 'fs21', 42)" class="i">ScriptOutput</span>
+<span class="c">//(** The standard output is: *)</span>
+<span class="c">//(*** include-output:test ***)</span>
+<span class="c">//(** The value v is: *)</span>
+<span class="c">//(*** include-value: v ***)</span>
+</pre>
+</td>
+</tr>
+</table>
+
+<p>Note that you can use both systems at the same time as well (the return values are always available).</p>
+
+<div class="tip" id="fs1">namespace Yaaf</div>
+<div class="tip" id="fs2">namespace Yaaf.FSharp</div>
+<div class="tip" id="fs3">namespace Yaaf.FSharp.Scripting</div>
+<div class="tip" id="fs4">val liveSession : IFsiSession<br /><br />Full name: IntroExamples.liveSession</div>
+<div class="tip" id="fs5">type ScriptHost =<br />&#160;&#160;private new : unit -&gt; ScriptHost<br />&#160;&#160;static member Create : opts:FsiOptions * ?fsiObj:obj * ?reportGlobal:bool * ?outWriter:TextWriter * ?fsiOutWriter:TextWriter * ?errWriter:TextWriter * ?fsiErrWriter:TextWriter * ?preventStdOut:bool -&gt; IFsiSession<br />&#160;&#160;static member CreateForwardWriter : f:(string -&gt; unit) -&gt; TextWriter<br />&#160;&#160;static member CreateNew : ?defines:string list * ?fsiObj:obj * ?reportGlobal:bool * ?outWriter:TextWriter * ?fsiOutWriter:TextWriter * ?errWriter:TextWriter * ?fsiErrWriter:TextWriter * ?preventStdOut:bool -&gt; IFsiSession<br /><br />Full name: Yaaf.FSharp.Scripting.ScriptHost</div>
+<div class="tip" id="fs6">static member ScriptHost.CreateNew : ?defines:string list * ?fsiObj:obj * ?reportGlobal:bool * ?outWriter:System.IO.TextWriter * ?fsiOutWriter:System.IO.TextWriter * ?errWriter:System.IO.TextWriter * ?fsiErrWriter:System.IO.TextWriter * ?preventStdOut:bool -&gt; IFsiSession</div>
+<div class="tip" id="fs7">static member ScriptHost.CreateForwardWriter : f:(string -&gt; unit) -&gt; System.IO.TextWriter</div>
+<div class="tip" id="fs8">val printf : format:Printf.TextWriterFormat&lt;&#39;T&gt; -&gt; &#39;T<br /><br />Full name: Microsoft.FSharp.Core.ExtraTopLevelOperators.printf</div>
+<div class="tip" id="fs9">Multiple items<br />type FsiEvaluationException =<br />&#160;&#160;inherit Exception<br />&#160;&#160;new : info:SerializationInfo * context:StreamingContext -&gt; FsiEvaluationException<br />&#160;&#160;new : msg:string * input:string * result:InteractionResult * inner:Exception -&gt; FsiEvaluationException<br />&#160;&#160;val private result: InteractionResult<br />&#160;&#160;val private input: string<br />&#160;&#160;override GetObjectData : info:SerializationInfo * StreamingContext -&gt; unit<br />&#160;&#160;override ToString : unit -&gt; string<br />&#160;&#160;member Input : string<br />&#160;&#160;member Result : InteractionResult<br /><br />Full name: Yaaf.FSharp.Scripting.FsiEvaluationException<br /><br />--------------------<br />new : info:System.Runtime.Serialization.SerializationInfo * context:System.Runtime.Serialization.StreamingContext -&gt; FsiEvaluationException<br />new : msg:string * input:string * result:InteractionResult * inner:System.Exception -&gt; FsiEvaluationException</div>
+<div class="tip" id="fs10">val e : FsiEvaluationException</div>
+<div class="tip" id="fs11">property FsiEvaluationException.Result: InteractionResult</div>
+<div class="tip" id="fs12">InteractionResult.Error: OutputData</div>
+<div class="tip" id="fs13">OutputData.Merged: string</div>
+<div class="tip" id="fs14">val reraise : unit -&gt; &#39;T<br /><br />Full name: Microsoft.FSharp.Core.Operators.reraise</div>
+<div class="tip" id="fs15">member IFsiSession.EvalInteraction : s:string -&gt; unit</div>
+<div class="tip" id="fs16">val directSession : IFsiSession<br /><br />Full name: IntroExamples.directSession</div>
+<div class="tip" id="fs17">val v : InteractionResult<br /><br />Full name: IntroExamples.v</div>
+<div class="tip" id="fs18">abstract member IFsiSession.EvalInteractionWithOutput : string -&gt; InteractionResult</div>
+<div class="tip" id="fs19">val printfn : format:Printf.TextWriterFormat&lt;&#39;T&gt; -&gt; &#39;T<br /><br />Full name: Microsoft.FSharp.Core.ExtraTopLevelOperators.printfn</div>
+<div class="tip" id="fs20">InteractionResult.Output: OutputData</div>
+<div class="tip" id="fs21">OutputData.ScriptOutput: string</div>
+
+        </div>
+        <div class="span3">
+          <a href="https://matthid.github.io/Yaaf.FSharp.Scripting/index.html">
+            <img src="https://matthid.github.io/Yaaf.FSharp.Scripting/content/img/logo.png" style="width:140px;height:140px;margin:10px 0px 0px 35px;border-style:none;" />
+          </a>
+
+          <ul class="nav nav-list" id="menu">
+
+            <li class="nav-header">Yaaf.FSharp.Scripting</li>
+
+            <li class="divider"></li>
+            <li><a href="https://www.nuget.org/packages/Yaaf.FSharp.Scripting/">Get Yaaf.FSharp.Scripting package via NuGet</a></li>
+            <li><a href="https://github.com/matthid/Yaaf.FSharp.Scripting">Source Code</a></li>
+            <li><a href="https://github.com/matthid/Yaaf.FSharp.Scripting/issues">Open bugs and feature requests</a></li>
+            <li><a href="https://github.com/matthid/Yaaf.FSharp.Scripting/issues/new">Report Issue or Request Feature</a></li>
+            <li><a href="https://github.com/matthid/Yaaf.FSharp.Scripting/blob/develop/LICENSE.md">License (Apache 2)</a></li>
+            <li><a href="https://matthid.github.io/Yaaf.FSharp.Scripting/Contributing.html">Contributing</a></li>
+            
+            <li class="nav-header">Documentation</li>
+              
+            <li><a href="https://matthid.github.io/Yaaf.FSharp.Scripting/index.html">Quick Intro</a></li>
+            <li><a href="https://matthid.github.io/Yaaf.FSharp.Scripting/IntroExamples.html">Intro Examples</a></li>
+            <li><a href="https://matthid.github.io/Yaaf.FSharp.Scripting/ReleaseNotes.html">Release Notes</a></li>
+            <li><a href="https://matthid.github.io/Yaaf.FSharp.Scripting/DevelopReadme.html">Development Intro</a></li>
+
+            <li class="nav-header">Reference</li>
+              
+            <li><a href="https://matthid.github.io/Yaaf.FSharp.Scripting/references/index.html">API Reference</a></li>
+
+          </ul>
+        </div>
+      </div>
+    </div>
+      <a href="https://github.com/matthid/Yaaf.FSharp.Scripting"><img style="position: absolute; top: 0; right: 0; border: 0;" src="https://s3.amazonaws.com/github/ribbons/forkme_right_gray_6d6d6d.png" alt="Fork me on GitHub"></a>
+    </body>
+  </html>

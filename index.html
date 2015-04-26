@@ -28,6 +28,7 @@
       <div class="masthead">
         <ul class="nav nav-pills pull-right">
           <li><a href="http://fsharp.org">fsharp.org</a></li>
+          <li><a href="http://fsharp.github.io/FSharp.Compiler.Service"><img src="https://fsharp.github.io/FSharp.Compiler.Service/images/logo.png" style="width:16px; height:16px;" /> F# Compiler Services</a></li>
           <li><a href="http://tpetricek.github.io/FSharp.Formatting/"><img height="16" width="16" src="https://matthid.github.io/Yaaf.AdvancedBuilding/content/img/FSharp.Formatting.png" /> F# Formatting</a></li>
         </ul>
         <h3 class="muted"><a href="https://matthid.github.io/Yaaf.FSharp.Scripting/index.html">Yaaf.FSharp.Scripting</a></h3>
@@ -36,7 +37,7 @@
       <div class="row">
         <div class="span9" id="main">
           
-<!-- GENERATED FROM COMMIT: d5bac436c628c10edeb5178b358d3cd449214d85 -->
+<!-- GENERATED FROM COMMIT: e3bfb5c366524bf5584779ec0cb66057fc158100 -->
 <h1><a name="Yaaf-FSharp-Scripting" class="anchor" href="#Yaaf-FSharp-Scripting">Yaaf.FSharp.Scripting</a></h1>
 
 <h2><a name="Documentation" class="anchor" href="#Documentation"><a href="https://matthid.github.io/Yaaf.FSharp.Scripting/">Documentation</a></a></h2>
@@ -104,8 +105,10 @@
 
 <h3><a name="NuGet-1" class="anchor" href="#NuGet-1">NuGet</a></h3>
 
-<p>The <code>YaafFSharpScripting.fs</code> is included in the nuget package as well in <code>content/YaafFSharpScripting.fs</code>.
-In this case you don't need an additional reference to the Yaaf.FSharp.Scripting package.</p>
+<p>The <code>YaafFSharpScripting.fs</code> source code file is included in the nuget package as well.
+You can find it in <code>content/YaafFSharpScripting.fs</code>.
+By adding the source code file (as reference) to your project you don't need
+to add a nuget dependency (<code>Yaaf.FSharp.Scripting</code>) to your final package.</p>
 
 <h2><a name="Quick-intro" class="anchor" href="#Quick-intro">Quick intro</a></h2>
 
@@ -126,6 +129,19 @@ In this case you don't need an additional reference to the Yaaf.FSharp.Scripting
 <span class="l">10: </span>
 <span class="l">11: </span>
 <span class="l">12: </span>
+<span class="l">13: </span>
+<span class="l">14: </span>
+<span class="l">15: </span>
+<span class="l">16: </span>
+<span class="l">17: </span>
+<span class="l">18: </span>
+<span class="l">19: </span>
+<span class="l">20: </span>
+<span class="l">21: </span>
+<span class="l">22: </span>
+<span class="l">23: </span>
+<span class="l">24: </span>
+<span class="l">25: </span>
 </pre>
 </td>
 <td class="snippet"><pre class="fssnip">
@@ -141,6 +157,19 @@ In this case you don't need an additional reference to the Yaaf.FSharp.Scripting
 <span class="c">// Get a value out of the evaluator</span>
 <span class="k">let</span> <span class="i">v</span> <span class="o">=</span> <span class="i">fsiSession</span><span class="o">.</span><span class="i">EvalExpression</span><span class="o">&lt;</span><span onmouseout="hideTip(event, 'fs1', 1)" onmouseover="showTip(event, 'fs1', 1)" class="i">int</span><span class="o">&gt;</span> <span class="s">&quot;test&quot;</span>
 <span class="k">assert</span> (<span class="i">v</span> <span class="o">=</span> <span class="n">25</span>)
+
+<span class="c">// Get the output of the snippet</span>
+<span class="k">let</span> <span class="i">v</span> <span class="o">=</span> <span class="i">fsiSession</span><span class="o">.</span><span class="i">EvalInteractionWithOutput</span> <span class="s">&quot;&quot;&quot;printf &quot;test&quot; &quot;&quot;&quot;</span>
+<span class="k">assert</span> (<span class="i">v</span><span class="o">.</span><span class="i">Output</span><span class="o">.</span><span class="i">ScriptOutput</span> <span class="o">=</span> <span class="s">&quot;test&quot;</span>)
+
+<span class="c">// Get the error message of the compilation</span>
+<span class="k">try</span> <span class="i">fsiSession</span><span class="o">.</span><span class="i">EvalInteraction</span> <span class="s">&quot;&quot;&quot; Some_Invalid_F# &quot;&quot;&quot;</span>
+<span class="k">with</span> <span class="o">:?</span> <span class="i">FsiEvaluationException</span> <span class="i">ev</span> <span class="k">-&gt;</span>
+    <span onmouseout="hideTip(event, 'fs2', 2)" onmouseover="showTip(event, 'fs2', 2)" class="i">printfn</span> <span class="s">&quot;FSI said: %s&quot;</span> <span class="i">ev</span><span class="o">.</span><span class="i">Result</span><span class="o">.</span><span class="i">Error</span><span class="o">.</span><span class="i">FsiOutput</span>
+    <span onmouseout="hideTip(event, 'fs2', 3)" onmouseover="showTip(event, 'fs2', 3)" class="i">printfn</span> <span class="s">&quot;Complete Error: %O&quot;</span> <span class="i">ev</span>
+
+<span class="c">// Load scripts</span>
+<span class="i">fsiSession</span><span class="o">.</span><span class="i">EvalScript</span> <span class="s">&quot;Script.fsx&quot;</span>
 </pre>
 </td>
 </tr>
@@ -161,13 +190,13 @@ In this case you don't need an additional reference to the Yaaf.FSharp.Scripting
 </td>
 <td class="snippet"><pre class="fssnip">
 <span class="k">open</span> <span class="i">Yaaf</span><span class="o">.</span><span class="i">FSharp</span><span class="o">.</span><span class="i">Scripting</span>
-<span class="k">open</span> <span onmouseout="hideTip(event, 'fs2', 2)" onmouseover="showTip(event, 'fs2', 2)" class="i">Microsoft</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs3', 3)" onmouseover="showTip(event, 'fs3', 3)" class="i">FSharp</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs4', 4)" onmouseover="showTip(event, 'fs4', 4)" class="i">Compiler</span><span class="o">.</span><span class="i">SourceCodeServices</span>
+<span class="k">open</span> <span onmouseout="hideTip(event, 'fs3', 4)" onmouseover="showTip(event, 'fs3', 4)" class="i">Microsoft</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs4', 5)" onmouseover="showTip(event, 'fs4', 5)" class="i">FSharp</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs5', 6)" onmouseover="showTip(event, 'fs5', 6)" class="i">Compiler</span><span class="o">.</span><span class="i">SourceCodeServices</span>
 
 <span class="c">// A Assembly -&gt; FSharpEntity mapping (extension) function</span>
-<span class="k">let</span> <span class="i">fsAssembly</span> <span class="o">=</span> <span class="i">FSharpAssembly</span><span class="o">.</span><span class="i">FromAssembly</span> <span onmouseout="hideTip(event, 'fs5', 5)" onmouseover="showTip(event, 'fs5', 5)" class="i">typeof</span><span class="o">&lt;</span><span class="i">MyType</span><span class="o">&gt;</span><span class="o">.</span><span class="i">Assembly</span>
+<span class="k">let</span> <span class="i">fsAssembly</span> <span class="o">=</span> <span class="i">FSharpAssembly</span><span class="o">.</span><span class="i">FromAssembly</span> <span onmouseout="hideTip(event, 'fs6', 7)" onmouseover="showTip(event, 'fs6', 7)" class="i">typeof</span><span class="o">&lt;</span><span class="i">MyType</span><span class="o">&gt;</span><span class="o">.</span><span class="i">Assembly</span>
 
 <span class="c">// A extension method to find the entity type</span>
-<span class="k">let</span> <span class="i">fsType</span> <span class="o">=</span> <span class="i">fsAssembly</span><span class="o">.</span><span class="i">Value</span><span class="o">.</span><span class="i">FindType</span> <span onmouseout="hideTip(event, 'fs5', 6)" onmouseover="showTip(event, 'fs5', 6)" class="i">typeof</span><span class="o">&lt;</span><span class="i">MyType</span><span class="o">&gt;</span>
+<span class="k">let</span> <span class="i">fsType</span> <span class="o">=</span> <span class="i">fsAssembly</span><span class="o">.</span><span class="i">Value</span><span class="o">.</span><span class="i">FindType</span> <span onmouseout="hideTip(event, 'fs6', 8)" onmouseover="showTip(event, 'fs6', 8)" class="i">typeof</span><span class="o">&lt;</span><span class="i">MyType</span><span class="o">&gt;</span>
 </pre>
 </td>
 </tr>
@@ -199,7 +228,7 @@ In this case you don't need an additional reference to the Yaaf.FSharp.Scripting
 </td>
 <td class="snippet"><pre class="fssnip">
 <span class="c">// with concrete types.</span>
-<span class="k">let</span> <span class="i">def</span> <span class="o">=</span> <span onmouseout="hideTip(event, 'fs5', 7)" onmouseover="showTip(event, 'fs5', 7)" class="i">typeof</span><span class="o">&lt;</span><span onmouseout="hideTip(event, 'fs6', 8)" onmouseover="showTip(event, 'fs6', 8)" class="i">option</span><span class="o">&lt;</span><span onmouseout="hideTip(event, 'fs1', 9)" onmouseover="showTip(event, 'fs1', 9)" class="i">int</span><span class="o">&gt;</span><span class="o">&gt;</span>
+<span class="k">let</span> <span class="i">def</span> <span class="o">=</span> <span onmouseout="hideTip(event, 'fs6', 9)" onmouseover="showTip(event, 'fs6', 9)" class="i">typeof</span><span class="o">&lt;</span><span onmouseout="hideTip(event, 'fs7', 10)" onmouseover="showTip(event, 'fs7', 10)" class="i">option</span><span class="o">&lt;</span><span onmouseout="hideTip(event, 'fs1', 11)" onmouseover="showTip(event, 'fs1', 11)" class="i">int</span><span class="o">&gt;</span><span class="o">&gt;</span>
 <span class="i">test</span> &lt;@ <span class="i">def</span><span class="o">.</span><span class="i">Name</span> <span class="o">=</span> <span class="s">&quot;FSharpOption`1&quot;</span> @&gt;
 <span class="i">test</span> &lt;@ <span class="i">def</span><span class="o">.</span><span class="i">Namespace</span> <span class="o">=</span> <span class="s">&quot;Microsoft.FSharp.Core&quot;</span> @&gt;
 
@@ -209,7 +238,7 @@ In this case you don't need an additional reference to the Yaaf.FSharp.Scripting
 <span class="i">test</span> &lt;@ <span class="i">def</span><span class="o">.</span><span class="i">FSharpName</span> <span class="o">=</span> <span class="s">&quot;Option&quot;</span> @&gt;
 
 <span class="c">// With typedefs.</span>
-<span class="k">let</span> <span class="i">def</span> <span class="o">=</span> <span onmouseout="hideTip(event, 'fs7', 10)" onmouseover="showTip(event, 'fs7', 10)" class="i">typedefof</span><span class="o">&lt;</span><span onmouseout="hideTip(event, 'fs6', 11)" onmouseover="showTip(event, 'fs6', 11)" class="i">option</span><span class="o">&lt;</span><span onmouseout="hideTip(event, 'fs1', 12)" onmouseover="showTip(event, 'fs1', 12)" class="i">int</span><span class="o">&gt;</span><span class="o">&gt;</span>
+<span class="k">let</span> <span class="i">def</span> <span class="o">=</span> <span onmouseout="hideTip(event, 'fs8', 12)" onmouseover="showTip(event, 'fs8', 12)" class="i">typedefof</span><span class="o">&lt;</span><span onmouseout="hideTip(event, 'fs7', 13)" onmouseover="showTip(event, 'fs7', 13)" class="i">option</span><span class="o">&lt;</span><span onmouseout="hideTip(event, 'fs1', 14)" onmouseover="showTip(event, 'fs1', 14)" class="i">int</span><span class="o">&gt;</span><span class="o">&gt;</span>
 <span class="i">test</span> &lt;@ <span class="i">def</span><span class="o">.</span><span class="i">Name</span> <span class="o">=</span> <span class="s">&quot;FSharpOption`1&quot;</span> @&gt;
 <span class="i">test</span> &lt;@ <span class="i">def</span><span class="o">.</span><span class="i">FullName</span> <span class="o">=</span> <span class="s">&quot;Microsoft.FSharp.Core.FSharpOption`1&quot;</span> @&gt;
 
@@ -222,13 +251,16 @@ In this case you don't need an additional reference to the Yaaf.FSharp.Scripting
 </tr>
 </table>
 
+<p><a href="https://matthid.github.io/Yaaf.FSharp.Scripting/IntroExamples.html">Examples and configuration overview</a></p>
+
 <div class="tip" id="fs1">Multiple items<br />val int : value:&#39;T -&gt; int (requires member op_Explicit)<br /><br />Full name: Microsoft.FSharp.Core.Operators.int<br /><br />--------------------<br />type int = int32<br /><br />Full name: Microsoft.FSharp.Core.int<br /><br />--------------------<br />type int&lt;&#39;Measure&gt; = int<br /><br />Full name: Microsoft.FSharp.Core.int&lt;_&gt;</div>
-<div class="tip" id="fs2">namespace Microsoft</div>
-<div class="tip" id="fs3">namespace Microsoft.FSharp</div>
-<div class="tip" id="fs4">namespace Microsoft.FSharp.Compiler</div>
-<div class="tip" id="fs5">val typeof&lt;&#39;T&gt; : System.Type<br /><br />Full name: Microsoft.FSharp.Core.Operators.typeof</div>
-<div class="tip" id="fs6">type &#39;T option = Option&lt;&#39;T&gt;<br /><br />Full name: Microsoft.FSharp.Core.option&lt;_&gt;</div>
-<div class="tip" id="fs7">val typedefof&lt;&#39;T&gt; : System.Type<br /><br />Full name: Microsoft.FSharp.Core.Operators.typedefof</div>
+<div class="tip" id="fs2">val printfn : format:Printf.TextWriterFormat&lt;&#39;T&gt; -&gt; &#39;T<br /><br />Full name: Microsoft.FSharp.Core.ExtraTopLevelOperators.printfn</div>
+<div class="tip" id="fs3">namespace Microsoft</div>
+<div class="tip" id="fs4">namespace Microsoft.FSharp</div>
+<div class="tip" id="fs5">namespace Microsoft.FSharp.Compiler</div>
+<div class="tip" id="fs6">val typeof&lt;&#39;T&gt; : System.Type<br /><br />Full name: Microsoft.FSharp.Core.Operators.typeof</div>
+<div class="tip" id="fs7">type &#39;T option = Option&lt;&#39;T&gt;<br /><br />Full name: Microsoft.FSharp.Core.option&lt;_&gt;</div>
+<div class="tip" id="fs8">val typedefof&lt;&#39;T&gt; : System.Type<br /><br />Full name: Microsoft.FSharp.Core.Operators.typedefof</div>
 
         </div>
         <div class="span3">
@@ -251,6 +283,7 @@ In this case you don't need an additional reference to the Yaaf.FSharp.Scripting
             <li class="nav-header">Documentation</li>
               
             <li><a href="https://matthid.github.io/Yaaf.FSharp.Scripting/index.html">Quick Intro</a></li>
+            <li><a href="https://matthid.github.io/Yaaf.FSharp.Scripting/IntroExamples.html">Intro Examples</a></li>
             <li><a href="https://matthid.github.io/Yaaf.FSharp.Scripting/ReleaseNotes.html">Release Notes</a></li>
             <li><a href="https://matthid.github.io/Yaaf.FSharp.Scripting/DevelopReadme.html">Development Intro</a></li>
 

@@ -27,6 +27,7 @@
       <div class="masthead">
         <ul class="nav nav-pills pull-right">
           <li><a href="http://fsharp.org">fsharp.org</a></li>
+          <li><a href="http://fsharp.github.io/FSharp.Compiler.Service"><img src="https://fsharp.github.io/FSharp.Compiler.Service/images/logo.png" style="width:16px; height:16px;" /> F# Compiler Services</a></li>
           <li><a href="http://tpetricek.github.io/FSharp.Formatting/"><img height="16" width="16" src="https://matthid.github.io/Yaaf.AdvancedBuilding/content/img/FSharp.Formatting.png" /> F# Formatting</a></li>
         </ul>
         <h3 class="muted"><a href="https://matthid.github.io/Yaaf.FSharp.Scripting/index.html">Yaaf.FSharp.Scripting</a></h3>
@@ -53,35 +54,53 @@
       <tr>
         <td class="member-name">
 
-          <code onmouseout="hideTip(event, '107', 107)" onmouseover="showTip(event, '107', 107)">
+          <code onmouseout="hideTip(event, '109', 109)" onmouseover="showTip(event, '109', 109)">
             Create(...)
           </code>
-          <div class="tip" id="107">
+          <div class="tip" id="109">
             <strong>Signature:</strong> (opts:FsiOptions * fsiObj:obj option * reportGlobal:bool option * outWriter:TextWriter option * fsiOutWriter:TextWriter option * errWriter:TextWriter option * fsiErrWriter:TextWriter option * preventStdOut:bool option) -&gt; IFsiSession<br />
                       </div>
         </td>
         <td class="xmldoc">
-            <a href="https://github.com/matthid/Yaaf.FSharp.Scripting/blob/master/src/source/Yaaf.FSharp.Scripting/YaafFSharpScripting.fs#L975-975" class="github-link">
+            <a href="https://github.com/matthid/Yaaf.FSharp.Scripting/blob/master/src/source/Yaaf.FSharp.Scripting/YaafFSharpScripting.fs#L1009-1009" class="github-link">
               <img src="../content/img/github.png" class="normal" />
               <img src="../content/img/github-blue.png" class="hover" />
             </a>
           
- Create a new IFsiSession by specifying all fsi arguments manually.
+ Create a new IFsiSession by specifying all fsi arguments manually. 
 </br>
         </td>
       </tr>
       <tr>
         <td class="member-name">
 
-          <code onmouseout="hideTip(event, '108', 108)" onmouseover="showTip(event, '108', 108)">
+          <code onmouseout="hideTip(event, '110', 110)" onmouseover="showTip(event, '110', 110)">
+            CreateForwardWriter(f)
+          </code>
+          <div class="tip" id="110">
+            <strong>Signature:</strong> (f:(string -&gt; unit)) -&gt; TextWriter<br />
+                      </div>
+        </td>
+        <td class="xmldoc">
+            <a href="https://github.com/matthid/Yaaf.FSharp.Scripting/blob/master/src/source/Yaaf.FSharp.Scripting/YaafFSharpScripting.fs#L1006-1006" class="github-link">
+              <img src="../content/img/github.png" class="normal" />
+              <img src="../content/img/github-blue.png" class="hover" />
+            </a>
+          
+        </td>
+      </tr>
+      <tr>
+        <td class="member-name">
+
+          <code onmouseout="hideTip(event, '111', 111)" onmouseover="showTip(event, '111', 111)">
             CreateNew(...)
           </code>
-          <div class="tip" id="108">
+          <div class="tip" id="111">
             <strong>Signature:</strong> (defines:string list option * fsiObj:obj option * reportGlobal:bool option * outWriter:TextWriter option * fsiOutWriter:TextWriter option * errWriter:TextWriter option * fsiErrWriter:TextWriter option * preventStdOut:bool option) -&gt; IFsiSession<br />
                       </div>
         </td>
         <td class="xmldoc">
-            <a href="https://github.com/matthid/Yaaf.FSharp.Scripting/blob/master/src/source/Yaaf.FSharp.Scripting/YaafFSharpScripting.fs#L986-986" class="github-link">
+            <a href="https://github.com/matthid/Yaaf.FSharp.Scripting/blob/master/src/source/Yaaf.FSharp.Scripting/YaafFSharpScripting.fs#L1020-1020" class="github-link">
               <img src="../content/img/github.png" class="normal" />
               <img src="../content/img/github-blue.png" class="hover" />
             </a>
@@ -114,6 +133,7 @@
             <li class="nav-header">Documentation</li>
               
             <li><a href="https://matthid.github.io/Yaaf.FSharp.Scripting/index.html">Quick Intro</a></li>
+            <li><a href="https://matthid.github.io/Yaaf.FSharp.Scripting/IntroExamples.html">Intro Examples</a></li>
             <li><a href="https://matthid.github.io/Yaaf.FSharp.Scripting/ReleaseNotes.html">Release Notes</a></li>
             <li><a href="https://matthid.github.io/Yaaf.FSharp.Scripting/DevelopReadme.html">Development Intro</a></li>
 
