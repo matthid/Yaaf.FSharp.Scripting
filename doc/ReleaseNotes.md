@@ -1,4 +1,12 @@
-﻿### 1.1.1
+﻿### 1.1.2
+
+ * Revert the redirect when using CreateForwardWriter (otherwise users run into unexpected StackOverflowExceptions when printing to stdout or stderr)
+   See https://github.com/fsharp/FAKE/pull/771
+ * Add an option to remove NewLines when using a forward function (the function will be called whenever a line as been finished).
+   Note: You must Dispose the TextWrapper to get the last output (if it wasn't finished with a NewLine character).
+ * Add the AppDomain.BaseDirectory to the base path when searching for a FSharp.Core.dll
+
+### 1.1.1
 
  * Add ScriptHost.CreateForwardWriter which creates a new TextWriter that forwards everything to a simple (string -> unit) function.
  * Add session.ChangeCurrentDirectory and session.WithCurrentDirectory, to take care of relative paths within executed snippets.

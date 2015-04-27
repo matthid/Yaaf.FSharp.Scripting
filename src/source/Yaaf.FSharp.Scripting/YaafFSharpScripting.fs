@@ -39,7 +39,8 @@ module internal CompilerServiceExtensions =
               sysDir
       
       let fscoreResolveDirs libDirs =
-        [ yield sysDir
+        [ yield System.AppDomain.CurrentDomain.BaseDirectory
+          yield sysDir
           yield System.Runtime.InteropServices.RuntimeEnvironment.GetRuntimeDirectory()
           yield! libDirs
           yield Environment.CurrentDirectory
@@ -756,11 +757,12 @@ module internal Helper =
     inherit TextWriter()
     override __.Flush() = ()
     override __.Write(c:char) = f (string c)
-    override __.Write(c:string) = f c
+    override __.Write(c:string) = if c <> null then f c
     override __.WriteLine(c:string) = f <| sprintf "%s%s" c Environment.NewLine
     override __.WriteLine() = f Environment.NewLine 
     override __.Dispose (r) = 
       base.Dispose r
+      if r then f null
     override __.Encoding = Encoding.UTF8
     static member Create f = new ForwardTextWriter (f) :> TextWriter
   type CombineTextWriter (l : TextWriter list) =
@@ -770,7 +772,7 @@ module internal Helper =
       l |> Seq.iter f
     override __.Flush() = doAll (fun t -> t.Flush())
     override __.Write(c:char) = doAll (fun t -> t.Write c)
-    override __.Write(c:string) = doAll (fun t -> t.Write c)
+    override __.Write(c:string) = if not (System.String.IsNullOrEmpty c) then doAll (fun t -> t.Write c)
     override __.WriteLine(c:string) = doAll (fun t -> t.WriteLine c)
     override __.WriteLine() = doAll (fun t -> t.WriteLine ())
     override __.Dispose (r) = 
@@ -812,6 +814,19 @@ module internal Helper =
         all
         |> List.map (fun (global', local) -> if saveGlobal then global'.ToString() else local.ToString() )
       { FsiOutput = fsi; ScriptOutput = std; Merged = merged} 
+  
+  
+  let consoleCapture out err f =
+    let defOut = Console.Out
+    let defErr = Console.Error 
+    try
+      Console.SetOut out
+      Console.SetError err
+      f ()
+    finally 
+      Console.SetOut defOut
+      Console.SetError defErr 
+  
   let getSession (fsi : obj, options : FsiOptions, reportGlobal, liveOut, liveOutFsi, liveErr, liveErrFsi, preventStdOut) =
       // Intialize output and input streams
       let out = new OutStreamHelper(reportGlobal, liveOut, liveOutFsi)
@@ -836,17 +851,13 @@ module internal Helper =
       let redirectOut f =
         let defOut = Console.Out
         let defErr = Console.Error
-        try
+        let captureOut, captureErr =
           if preventStdOut then
-            Console.SetOut out.StdOutWriter
-            Console.SetError err.StdOutWriter
+            out.StdOutWriter, err.StdOutWriter
           else
-            Console.SetOut (CombineTextWriter.Create [defOut; out.StdOutWriter])
-            Console.SetError (CombineTextWriter.Create [defErr; err.StdOutWriter])
-          f ()
-        finally 
-          Console.SetOut defOut
-          Console.SetError defErr
+            (CombineTextWriter.Create [defOut; out.StdOutWriter]),
+            (CombineTextWriter.Create [defErr; err.StdOutWriter])
+        consoleCapture captureOut captureErr f
       let fsiSession =
         try
           let fsiConfig = FsiEvaluationSession.GetDefaultConfiguration(fsi, false)
@@ -891,7 +902,7 @@ module internal Helper =
       let evalInteraction = save fsiSession.EvalInteraction 
       let evalExpression = save fsiSession.EvalExpression
       let evalScript = saveScript fsiSession.EvalScript
-      
+
       let session =
         { new IFsiSession with
             member __.EvalInteractionWithOutput text = evalInteraction text |> fst
@@ -1003,8 +1014,38 @@ type ScriptHost private() =
 #else
 type internal ScriptHost private() =
 #endif
-  static member CreateForwardWriter f =
-    Helper.ForwardTextWriter.Create f
+  /// Creates a forwarder Textwriter, which forwards all output to the given function.
+  /// Set revertRedirect only to "false" if you know that f doesn't print anything to the stdout.
+  /// When revertRedirect is true we capture the Console.Out property and set it before calling f.
+  /// RemoveNewLines
+  static member CreateForwardWriter (f, ?revertRedirect, ?removeNewLines) =
+    let captureOut = System.Console.Out
+    let captureErr = System.Console.Error
+    let bufferF =
+      let builder = new System.Text.StringBuilder()
+      let clearBuilder () =
+        let current = builder.ToString()
+        builder.Clear() |> ignore
+        let reader = new StringReader(current)
+        let mutable line = ""
+        while line <> null do
+          line <- reader.ReadLine()
+          if line <> null then
+            if reader.Peek() = -1 && not (current.EndsWith "\n") then
+              builder.Append line |> ignore
+            else
+              f line
+      (fun (data:string) ->
+        if data = null then
+          // finished.
+          f (builder.ToString())
+        else
+        builder.Append data |> ignore
+        clearBuilder())
+    let withBuffer = if defaultArg removeNewLines false then bufferF else (fun s -> if s <> null then f s) 
+    let myF data = Helper.consoleCapture captureOut captureErr (fun () -> withBuffer data)
+    Helper.ForwardTextWriter.Create 
+      (if defaultArg revertRedirect true then myF else withBuffer)
   /// Create a new IFsiSession by specifying all fsi arguments manually. 
   static member Create 
    ( opts : FsiOptions, ?fsiObj : obj, ?reportGlobal, 
