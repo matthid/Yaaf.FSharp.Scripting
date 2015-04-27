@@ -36,6 +36,16 @@
       <div class="row">
         <div class="span9" id="main">
           
+<h3><a name="1-1-2" class="anchor" href="#1-1-2">1.1.2</a></h3>
+
+<ul>
+<li>Revert the redirect when using CreateForwardWriter (otherwise users run into unexpected StackOverflowExceptions when printing to stdout or stderr)
+See <a href="https://github.com/fsharp/FAKE/pull/771">https://github.com/fsharp/FAKE/pull/771</a></li>
+<li>Add an option to remove NewLines when using a forward function (the function will be called whenever a line as been finished).
+Note: You must Dispose the TextWrapper to get the last output (if it wasn't finished with a NewLine character).</li>
+<li>Add the AppDomain.BaseDirectory to the base path when searching for a FSharp.Core.dll</li>
+</ul>
+
 <h3><a name="1-1-1" class="anchor" href="#1-1-1">1.1.1</a></h3>
 
 <ul>

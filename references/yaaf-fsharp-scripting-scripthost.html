@@ -62,7 +62,7 @@
                       </div>
         </td>
         <td class="xmldoc">
-            <a href="https://github.com/matthid/Yaaf.FSharp.Scripting/blob/master/src/source/Yaaf.FSharp.Scripting/YaafFSharpScripting.fs#L1009-1009" class="github-link">
+            <a href="https://github.com/matthid/Yaaf.FSharp.Scripting/blob/master/src/source/Yaaf.FSharp.Scripting/YaafFSharpScripting.fs#L1050-1050" class="github-link">
               <img src="../content/img/github.png" class="normal" />
               <img src="../content/img/github-blue.png" class="hover" />
             </a>
@@ -75,18 +75,23 @@
         <td class="member-name">
 
           <code onmouseout="hideTip(event, '110', 110)" onmouseover="showTip(event, '110', 110)">
-            CreateForwardWriter(f)
+            CreateForwardWriter(...)
           </code>
           <div class="tip" id="110">
-            <strong>Signature:</strong> (f:(string -&gt; unit)) -&gt; TextWriter<br />
+            <strong>Signature:</strong> (f:(string -&gt; unit) * revertRedirect:bool option * removeNewLines:bool option) -&gt; TextWriter<br />
                       </div>
         </td>
         <td class="xmldoc">
-            <a href="https://github.com/matthid/Yaaf.FSharp.Scripting/blob/master/src/source/Yaaf.FSharp.Scripting/YaafFSharpScripting.fs#L1006-1006" class="github-link">
+            <a href="https://github.com/matthid/Yaaf.FSharp.Scripting/blob/master/src/source/Yaaf.FSharp.Scripting/YaafFSharpScripting.fs#L1021-1021" class="github-link">
               <img src="../content/img/github.png" class="normal" />
               <img src="../content/img/github-blue.png" class="hover" />
             </a>
           
+ Creates a forwarder Textwriter, which forwards all output to the given function.
+ Set revertRedirect only to "false" if you know that f doesn't print anything to the stdout.
+ When revertRedirect is true we capture the Console.Out property and set it before calling f.
+ RemoveNewLines
+</br>
         </td>
       </tr>
       <tr>
@@ -100,7 +105,7 @@
                       </div>
         </td>
         <td class="xmldoc">
-            <a href="https://github.com/matthid/Yaaf.FSharp.Scripting/blob/master/src/source/Yaaf.FSharp.Scripting/YaafFSharpScripting.fs#L1020-1020" class="github-link">
+            <a href="https://github.com/matthid/Yaaf.FSharp.Scripting/blob/master/src/source/Yaaf.FSharp.Scripting/YaafFSharpScripting.fs#L1061-1061" class="github-link">
               <img src="../content/img/github.png" class="normal" />
               <img src="../content/img/github-blue.png" class="hover" />
             </a>
