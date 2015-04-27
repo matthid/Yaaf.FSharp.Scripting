@@ -3,8 +3,31 @@ module Test.Yaaf.FSharp.Scripting.FsiSessionTests
 open NUnit.Framework
 open Test.Yaaf.FSharp.Scripting.FsiUnquote
 open Yaaf.FSharp.Scripting
+open System.Text
+open System.IO
 let fsiSession = ScriptHost.CreateNew(["MYDEFINE"])
+let liveOut = new StringBuilder()
+let liveErr = new StringBuilder()
+let liveOutStream = new StringWriter(liveOut)
+let liveErrStream = new StringWriter(liveErr)
+let preventFsiSession = 
+  ScriptHost.CreateNew(
+    ["MYDEFINE"], 
+    preventStdOut = true,
+    outWriter = liveOutStream,
+    errWriter = liveErrStream)
+let forwardFsiSession = 
+  ScriptHost.CreateNew(
+    ["MYDEFINE"], 
+    preventStdOut = true,
+    outWriter = ScriptHost.CreateForwardWriter (fun s -> liveOut.Append s |> ignore),
+    errWriter = ScriptHost.CreateForwardWriter (fun s -> liveErr.Append s |> ignore))
 let fixNewLines (l:string) = l.Replace("\r\n", "\n") 
+let withOutput f =
+  liveOut.Clear() |> ignore
+  liveErr.Clear() |> ignore
+  f (),
+  liveOut.ToString(), liveErr.ToString()
 [<Test>]
 let ``let with a given integer type works`` () =
     fsiSession.Let "test" 25
@@ -58,3 +81,23 @@ let ``check that we get print output`` () =
     let res = fsiSession.EvalInteractionWithOutput ("""
 printf "%s" "test" """)
     test <@ res.Output.ScriptOutput = "test" @>
+    
+[<Test>]
+let ``check that we can work with live output`` () =
+  let _, out, err = withOutput (fun () ->
+    let res = preventFsiSession.EvalInteractionWithOutput ("""
+printfn "%s" "test"
+eprintfn "%s" "test" """)
+    test <@ fixNewLines res.Error.ScriptOutput = "test\n" @>)
+  test <@ fixNewLines out = "test\n" @>
+  test <@ fixNewLines err = "test\n" @>
+
+[<Test>]
+let ``check that we can work with a forwarder`` () =
+  let _, out, err = withOutput (fun () ->
+    let res = forwardFsiSession.EvalInteractionWithOutput ("""
+printfn "%s" "test"
+eprintfn "%s" "test" """)
+    test <@ fixNewLines res.Error.ScriptOutput = "test\n" @>)
+  test <@ fixNewLines out = "test\n" @>
+  test <@ fixNewLines err = "test\n" @>
