@@ -37,7 +37,7 @@
       <div class="row">
         <div class="span9" id="main">
           
-<!-- GENERATED FROM COMMIT: 6f9e7f677fcf038ba923d88d551d7522da2e9f25 -->
+<!-- GENERATED FROM COMMIT: 5d3b4ed081c835cf45b5cc4e4667e902365089a2 -->
 <h1><a name="Yaaf-FSharp-Scripting" class="anchor" href="#Yaaf-FSharp-Scripting">Yaaf.FSharp.Scripting</a></h1>
 
 <h2><a name="Documentation" class="anchor" href="#Documentation"><a href="https://matthid.github.io/Yaaf.FSharp.Scripting/">Documentation</a></a></h2>
@@ -142,6 +142,21 @@ to add a nuget dependency (<code>Yaaf.FSharp.Scripting</code>) to your final pac
 <span class="l">23: </span>
 <span class="l">24: </span>
 <span class="l">25: </span>
+<span class="l">26: </span>
+<span class="l">27: </span>
+<span class="l">28: </span>
+<span class="l">29: </span>
+<span class="l">30: </span>
+<span class="l">31: </span>
+<span class="l">32: </span>
+<span class="l">33: </span>
+<span class="l">34: </span>
+<span class="l">35: </span>
+<span class="l">36: </span>
+<span class="l">37: </span>
+<span class="l">38: </span>
+<span class="l">39: </span>
+<span class="l">40: </span>
 </pre>
 </td>
 <td class="snippet"><pre class="fssnip">
@@ -158,6 +173,21 @@ to add a nuget dependency (<code>Yaaf.FSharp.Scripting</code>) to your final pac
 <span class="k">let</span> <span class="i">v</span> <span class="o">=</span> <span class="i">fsiSession</span><span class="o">.</span><span class="i">EvalExpression</span><span class="o">&lt;</span><span onmouseout="hideTip(event, 'fs1', 1)" onmouseover="showTip(event, 'fs1', 1)" class="i">int</span><span class="o">&gt;</span> <span class="s">&quot;test&quot;</span>
 <span class="k">assert</span> (<span class="i">v</span> <span class="o">=</span> <span class="n">25</span>)
 
+<span class="c">// Try to get a value (with handling error cases)</span>
+<span class="k">match</span> <span class="i">fsiSession</span><span class="o">.</span><span class="i">Handle</span><span class="o">&lt;</span><span onmouseout="hideTip(event, 'fs1', 2)" onmouseover="showTip(event, 'fs1', 2)" class="i">int</span><span class="o">&gt;</span> <span class="i">fsiSession</span><span class="o">.</span><span class="i">EvalExpression</span> <span class="s">&quot;test&quot;</span> <span class="k">with</span>
+| <span class="i">InvalidExpressionType</span> <span class="i">e</span> <span class="k">-&gt;</span> 
+  <span class="c">// not of type int</span>
+  <span class="c">// e.Value contains the result object, e.ExpectedType the expected type (int in this case)</span>
+  ()
+| <span class="i">InvalidCode</span> <span class="i">e</span> <span class="k">-&gt;</span> 
+  <span class="c">// couldn&#39;t get app value (compiler error, not defined or exception in the running code)</span>
+  <span class="c">// e.Input is the given text, e.Result is the compiler or the script output</span>
+  <span class="c">// Note: script exceptions are written as strings within e.Result</span>
+  ()
+| <span class="i">Result</span> <span class="i">r</span> <span class="k">-&gt;</span> 
+  <span class="c">// r is the value.</span>
+  ()
+
 <span class="c">// Get the output of the snippet</span>
 <span class="k">let</span> <span class="i">v</span> <span class="o">=</span> <span class="i">fsiSession</span><span class="o">.</span><span class="i">EvalInteractionWithOutput</span> <span class="s">&quot;&quot;&quot;printf &quot;test&quot; &quot;&quot;&quot;</span>
 <span class="k">assert</span> (<span class="i">v</span><span class="o">.</span><span class="i">Output</span><span class="o">.</span><span class="i">ScriptOutput</span> <span class="o">=</span> <span class="s">&quot;test&quot;</span>)
@@ -165,8 +195,8 @@ to add a nuget dependency (<code>Yaaf.FSharp.Scripting</code>) to your final pac
 <span class="c">// Get the error message of the compilation</span>
 <span class="k">try</span> <span class="i">fsiSession</span><span class="o">.</span><span class="i">EvalInteraction</span> <span class="s">&quot;&quot;&quot; Some_Invalid_F# &quot;&quot;&quot;</span>
 <span class="k">with</span> <span class="o">:?</span> <span class="i">FsiEvaluationException</span> <span class="i">ev</span> <span class="k">-&gt;</span>
-    <span onmouseout="hideTip(event, 'fs2', 2)" onmouseover="showTip(event, 'fs2', 2)" class="i">printfn</span> <span class="s">&quot;FSI said: %s&quot;</span> <span class="i">ev</span><span class="o">.</span><span class="i">Result</span><span class="o">.</span><span class="i">Error</span><span class="o">.</span><span class="i">FsiOutput</span>
-    <span onmouseout="hideTip(event, 'fs2', 3)" onmouseover="showTip(event, 'fs2', 3)" class="i">printfn</span> <span class="s">&quot;Complete Error: %O&quot;</span> <span class="i">ev</span>
+    <span onmouseout="hideTip(event, 'fs2', 3)" onmouseover="showTip(event, 'fs2', 3)" class="i">printfn</span> <span class="s">&quot;FSI said: %s&quot;</span> <span class="i">ev</span><span class="o">.</span><span class="i">Result</span><span class="o">.</span><span class="i">Error</span><span class="o">.</span><span class="i">FsiOutput</span>
+    <span onmouseout="hideTip(event, 'fs2', 4)" onmouseover="showTip(event, 'fs2', 4)" class="i">printfn</span> <span class="s">&quot;Complete Error: %O&quot;</span> <span class="i">ev</span>
 
 <span class="c">// Load scripts</span>
 <span class="i">fsiSession</span><span class="o">.</span><span class="i">EvalScript</span> <span class="s">&quot;Script.fsx&quot;</span>
@@ -190,13 +220,13 @@ to add a nuget dependency (<code>Yaaf.FSharp.Scripting</code>) to your final pac
 </td>
 <td class="snippet"><pre class="fssnip">
 <span class="k">open</span> <span class="i">Yaaf</span><span class="o">.</span><span class="i">FSharp</span><span class="o">.</span><span class="i">Scripting</span>
-<span class="k">open</span> <span onmouseout="hideTip(event, 'fs3', 4)" onmouseover="showTip(event, 'fs3', 4)" class="i">Microsoft</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs4', 5)" onmouseover="showTip(event, 'fs4', 5)" class="i">FSharp</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs5', 6)" onmouseover="showTip(event, 'fs5', 6)" class="i">Compiler</span><span class="o">.</span><span class="i">SourceCodeServices</span>
+<span class="k">open</span> <span onmouseout="hideTip(event, 'fs3', 5)" onmouseover="showTip(event, 'fs3', 5)" class="i">Microsoft</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs4', 6)" onmouseover="showTip(event, 'fs4', 6)" class="i">FSharp</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs5', 7)" onmouseover="showTip(event, 'fs5', 7)" class="i">Compiler</span><span class="o">.</span><span class="i">SourceCodeServices</span>
 
 <span class="c">// A Assembly -&gt; FSharpEntity mapping (extension) function</span>
-<span class="k">let</span> <span class="i">fsAssembly</span> <span class="o">=</span> <span class="i">FSharpAssembly</span><span class="o">.</span><span class="i">FromAssembly</span> <span onmouseout="hideTip(event, 'fs6', 7)" onmouseover="showTip(event, 'fs6', 7)" class="i">typeof</span><span class="o">&lt;</span><span class="i">MyType</span><span class="o">&gt;</span><span class="o">.</span><span class="i">Assembly</span>
+<span class="k">let</span> <span class="i">fsAssembly</span> <span class="o">=</span> <span class="i">FSharpAssembly</span><span class="o">.</span><span class="i">FromAssembly</span> <span onmouseout="hideTip(event, 'fs6', 8)" onmouseover="showTip(event, 'fs6', 8)" class="i">typeof</span><span class="o">&lt;</span><span class="i">MyType</span><span class="o">&gt;</span><span class="o">.</span><span class="i">Assembly</span>
 
 <span class="c">// A extension method to find the entity type</span>
-<span class="k">let</span> <span class="i">fsType</span> <span class="o">=</span> <span class="i">fsAssembly</span><span class="o">.</span><span class="i">Value</span><span class="o">.</span><span class="i">FindType</span> <span onmouseout="hideTip(event, 'fs6', 8)" onmouseover="showTip(event, 'fs6', 8)" class="i">typeof</span><span class="o">&lt;</span><span class="i">MyType</span><span class="o">&gt;</span>
+<span class="k">let</span> <span class="i">fsType</span> <span class="o">=</span> <span class="i">fsAssembly</span><span class="o">.</span><span class="i">Value</span><span class="o">.</span><span class="i">FindType</span> <span onmouseout="hideTip(event, 'fs6', 9)" onmouseover="showTip(event, 'fs6', 9)" class="i">typeof</span><span class="o">&lt;</span><span class="i">MyType</span><span class="o">&gt;</span>
 </pre>
 </td>
 </tr>
@@ -228,7 +258,7 @@ to add a nuget dependency (<code>Yaaf.FSharp.Scripting</code>) to your final pac
 </td>
 <td class="snippet"><pre class="fssnip">
 <span class="c">// with concrete types.</span>
-<span class="k">let</span> <span class="i">def</span> <span class="o">=</span> <span onmouseout="hideTip(event, 'fs6', 9)" onmouseover="showTip(event, 'fs6', 9)" class="i">typeof</span><span class="o">&lt;</span><span onmouseout="hideTip(event, 'fs7', 10)" onmouseover="showTip(event, 'fs7', 10)" class="i">option</span><span class="o">&lt;</span><span onmouseout="hideTip(event, 'fs1', 11)" onmouseover="showTip(event, 'fs1', 11)" class="i">int</span><span class="o">&gt;</span><span class="o">&gt;</span>
+<span class="k">let</span> <span class="i">def</span> <span class="o">=</span> <span onmouseout="hideTip(event, 'fs6', 10)" onmouseover="showTip(event, 'fs6', 10)" class="i">typeof</span><span class="o">&lt;</span><span onmouseout="hideTip(event, 'fs7', 11)" onmouseover="showTip(event, 'fs7', 11)" class="i">option</span><span class="o">&lt;</span><span onmouseout="hideTip(event, 'fs1', 12)" onmouseover="showTip(event, 'fs1', 12)" class="i">int</span><span class="o">&gt;</span><span class="o">&gt;</span>
 <span class="i">test</span> &lt;@ <span class="i">def</span><span class="o">.</span><span class="i">Name</span> <span class="o">=</span> <span class="s">&quot;FSharpOption`1&quot;</span> @&gt;
 <span class="i">test</span> &lt;@ <span class="i">def</span><span class="o">.</span><span class="i">Namespace</span> <span class="o">=</span> <span class="s">&quot;Microsoft.FSharp.Core&quot;</span> @&gt;
 
@@ -238,7 +268,7 @@ to add a nuget dependency (<code>Yaaf.FSharp.Scripting</code>) to your final pac
 <span class="i">test</span> &lt;@ <span class="i">def</span><span class="o">.</span><span class="i">FSharpName</span> <span class="o">=</span> <span class="s">&quot;Option&quot;</span> @&gt;
 
 <span class="c">// With typedefs.</span>
-<span class="k">let</span> <span class="i">def</span> <span class="o">=</span> <span onmouseout="hideTip(event, 'fs8', 12)" onmouseover="showTip(event, 'fs8', 12)" class="i">typedefof</span><span class="o">&lt;</span><span onmouseout="hideTip(event, 'fs7', 13)" onmouseover="showTip(event, 'fs7', 13)" class="i">option</span><span class="o">&lt;</span><span onmouseout="hideTip(event, 'fs1', 14)" onmouseover="showTip(event, 'fs1', 14)" class="i">int</span><span class="o">&gt;</span><span class="o">&gt;</span>
+<span class="k">let</span> <span class="i">def</span> <span class="o">=</span> <span onmouseout="hideTip(event, 'fs8', 13)" onmouseover="showTip(event, 'fs8', 13)" class="i">typedefof</span><span class="o">&lt;</span><span onmouseout="hideTip(event, 'fs7', 14)" onmouseover="showTip(event, 'fs7', 14)" class="i">option</span><span class="o">&lt;</span><span onmouseout="hideTip(event, 'fs1', 15)" onmouseover="showTip(event, 'fs1', 15)" class="i">int</span><span class="o">&gt;</span><span class="o">&gt;</span>
 <span class="i">test</span> &lt;@ <span class="i">def</span><span class="o">.</span><span class="i">Name</span> <span class="o">=</span> <span class="s">&quot;FSharpOption`1&quot;</span> @&gt;
 <span class="i">test</span> &lt;@ <span class="i">def</span><span class="o">.</span><span class="i">FullName</span> <span class="o">=</span> <span class="s">&quot;Microsoft.FSharp.Core.FSharpOption`1&quot;</span> @&gt;
 
