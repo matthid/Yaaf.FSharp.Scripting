@@ -1,4 +1,8 @@
-﻿### 1.1.2
+﻿### 1.1.3
+
+ * Added "Load" to load script files
+
+### 1.1.2
 
  * Revert the redirect when using CreateForwardWriter (otherwise users run into unexpected StackOverflowExceptions when printing to stdout or stderr)
    See https://github.com/fsharp/FAKE/pull/771

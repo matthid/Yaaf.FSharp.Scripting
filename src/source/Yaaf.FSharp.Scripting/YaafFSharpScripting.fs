@@ -354,6 +354,8 @@ module internal Extensions =
           x.EvalInteraction (sprintf "open %s" ns)
       member x.Reference file = 
           x.EvalInteraction (sprintf "#r @\"%s\"" file)
+      member x.Load file =
+          x.EvalInteraction (sprintf "#load @\"%s\" " file)
 
       /// Change the current directory (so that relative paths within scripts work properly).
       /// Returns a handle to change the current directory back to it's initial state 
