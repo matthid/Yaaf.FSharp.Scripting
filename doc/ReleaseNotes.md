@@ -1,4 +1,9 @@
-﻿### 1.1.2
+﻿### 1.1.3
+
+ * Added "Load" to load script files (see https://github.com/matthid/Yaaf.FSharp.Scripting/issues/1).
+ * Added "Handle" function to make the usage a bit easier. (see https://github.com/matthid/Yaaf.FSharp.Scripting/issues/2)
+
+### 1.1.2
 
  * Revert the redirect when using CreateForwardWriter (otherwise users run into unexpected StackOverflowExceptions when printing to stdout or stderr)
    See https://github.com/fsharp/FAKE/pull/771

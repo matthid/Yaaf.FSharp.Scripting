@@ -77,6 +77,21 @@ fsiSession.Let "test" 25
 let v = fsiSession.EvalExpression<int> "test"
 assert (v = 25)
 
+// Try to get a value (with handling error cases)
+match fsiSession.Handle<int> fsiSession.EvalExpression "test" with
+| InvalidExpressionType e -> 
+  // not of type int
+  // e.Value contains the result object, e.ExpectedType the expected type (int in this case)
+  ()
+| InvalidCode e -> 
+  // couldn't get app value (compiler error, not defined or exception in the running code)
+  // e.Input is the given text, e.Result is the compiler or the script output
+  // Note: script exceptions are written as strings within e.Result
+  ()
+| Result r -> 
+  // r is the value.
+  ()
+
 // Get the output of the snippet
 let v = fsiSession.EvalInteractionWithOutput """printf "test" """
 assert (v.Output.ScriptOutput = "test")
