@@ -1,6 +1,7 @@
 ﻿### 1.1.3
 
- * Added "Load" to load script files
+ * Added "Load" to load script files (see https://github.com/matthid/Yaaf.FSharp.Scripting/issues/1).
+ * Added "Handle" function to make the usage a bit easier. (see https://github.com/matthid/Yaaf.FSharp.Scripting/issues/2)
 
 ### 1.1.2
 

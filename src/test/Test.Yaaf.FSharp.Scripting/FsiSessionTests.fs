@@ -101,3 +101,20 @@ eprintfn "%s" "test" """)
     test <@ fixNewLines res.Error.ScriptOutput = "test\n" @>)
   test <@ fixNewLines out = "test\n" @>
   test <@ fixNewLines err = "test\n" @>
+
+[<Test>]
+let ``test Handle method`` () =
+  match fsiSession.Handle<int> fsiSession.EvalExpression "5 + 4" with
+  | InvalidExpressionType _
+  | InvalidCode _ -> Assert.Fail "expected 9"
+  | Result r -> test <@ r = 9 @>
+  
+  match fsiSession.Handle<string> fsiSession.EvalExpression "5 + 4" with
+  | InvalidExpressionType e -> test <@ e.Value.IsSome @>
+  | InvalidCode _ 
+  | Result _ -> Assert.Fail "expected InvalidExpressionType failure"
+  
+  match fsiSession.Handle<string> fsiSession.EvalExpression """failwith "test" : int """ with
+  | InvalidCode e -> ()
+  | InvalidExpressionType _
+  | Result _ -> Assert.Fail "expected InvalidCode failure"

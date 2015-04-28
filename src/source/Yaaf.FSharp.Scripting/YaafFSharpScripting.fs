@@ -308,6 +308,37 @@ type internal FsiEvaluationException =
         "FsiEvaluationException:\n\nError: %s\n\nOutput: %s\n\nInput: %s\n\nException: %s"
         (nl x.Result.Error.Merged) (nl x.Result.Output.Merged) (nl x.Input) (base.ToString())
 
+/// Exception for invalid expression types
+[<System.Serializable>]
+#if YAAF_FSHARP_SCRIPTING_PUBLIC
+type FsiExpressionTypeException =
+#else 
+type internal FsiEvaluationException =
+#endif
+    val private value : obj option
+    val private expected : System.Type
+    inherit FsiEvaluationException
+    new (msg:string, input:string, result: InteractionResult, expect : System.Type, ?value : obj) = { 
+      inherit FsiEvaluationException(msg, input, result, null)
+      expected = expect
+      value = value }
+    new (info:System.Runtime.Serialization.SerializationInfo, context:System.Runtime.Serialization.StreamingContext) = {
+      inherit FsiEvaluationException(info, context)
+      expected = null
+      value = None
+    }
+    member x.Value with get () = x.value
+    member x.ExpectedType with get () = x.expected
+    
+#if YAAF_FSHARP_SCRIPTING_PUBLIC
+type HandledResult<'a> =
+#else 
+type internal HandledResult<'a> =
+#endif
+  | InvalidExpressionType of FsiExpressionTypeException
+  | InvalidCode of FsiEvaluationException
+  | Result of 'a
+
 /// Represents a simple F# interactive session.
 #if YAAF_FSHARP_SCRIPTING_PUBLIC
 type IFsiSession =
@@ -337,8 +368,13 @@ module internal Extensions =
         | int, Some (value, _) ->
           match value with
           | :? 'a as v -> int, v
-          | o -> failwithf "the returned value (%O) doesn't match the expected type (%A) but has type %A" o (typeof<'a>) (o.GetType())
-        | _ -> failwith "no value was returned by expression: %s" text  
+          | o -> 
+            let msg = sprintf "the returned value (%O) doesn't match the expected type (%A) but has type %A" o (typeof<'a>) (o.GetType())
+            raise <| new FsiExpressionTypeException(msg, text, int, typeof<'a>, o)
+        | int, _ -> 
+          let msg = sprintf "no value was returned by expression: %s" text
+          raise <| new FsiExpressionTypeException(msg, text, int, typeof<'a>)
+
       /// Evaluate the given expression and return its result.
       member x.EvalExpression<'a> text = 
         x.EvalExpressionWithOutput<'a> text |> snd
@@ -377,6 +413,14 @@ module internal Extensions =
       member x.WithCurrentDirectory dir f =
           use __ = x.ChangeCurrentDirectory dir
           f ()
+
+      /// Handle the given evaluation function
+      member x.Handle f (text:string) =
+        try Result <| f text
+        with
+        | :? FsiExpressionTypeException as e -> InvalidExpressionType e
+        | :? FsiEvaluationException as e -> InvalidCode e
+        
 
 #if YAAF_FSHARP_SCRIPTING_PUBLIC
 module Shell =
