@@ -2,7 +2,7 @@
 <html lang="en">
   <head>
     <meta charset="utf-8">
-    <title>OutputData - Yaaf.FSharp.Scripting</title>
+    <title>ScriptHost - Yaaf.FSharp.Scripting</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="">
     <meta name="author" content="Matthias Dittrich">
@@ -39,70 +39,79 @@
 
 
 
-<h1>OutputData </h1>
+<h1>ScriptHost </h1>
 <div class="xmldoc">
     Defined in Yaaf.FSharp.Scripting.dll.
 </div>
 <div class="xmldoc">
 </div>
-  <h3>Record Fields</h3>
+  <h3>Static members</h3>
   <table class="table table-bordered member-list">
     <thead>
-      <tr><td>Record Field</td><td>Description</td></tr>
+      <tr><td>Static member</td><td>Description</td></tr>
     </thead>
     <tbody>
       <tr>
         <td class="member-name">
 
-          <code onmouseout="hideTip(event, '117', 117)" onmouseover="showTip(event, '117', 117)">
-            FsiOutput
+          <code onmouseout="hideTip(event, '120', 120)" onmouseover="showTip(event, '120', 120)">
+            Create(...)
           </code>
-          <div class="tip" id="117">
-            <strong>Signature:</strong> string<br />
+          <div class="tip" id="120">
+            <strong>Signature:</strong> (opts:FsiOptions * fsiObj:obj option * reportGlobal:bool option * outWriter:TextWriter option * fsiOutWriter:TextWriter option * errWriter:TextWriter option * fsiErrWriter:TextWriter option * preventStdOut:bool option) -&gt; IFsiSession<br />
                       </div>
         </td>
         <td class="xmldoc">
-            <a href="https://github.com/matthid/Yaaf.FSharp.Scripting/blob/master/src/source/Yaaf.FSharp.Scripting/YaafFSharpScripting.fs#L275-275" class="github-link">
+            <a href="https://github.com/matthid/Yaaf.FSharp.Scripting/blob/master/src/source/Yaaf.FSharp.Scripting/YaafFSharpScripting.fs#L1112-1112" class="github-link">
               <img src="../content/img/github.png" class="normal" />
               <img src="../content/img/github-blue.png" class="hover" />
             </a>
           
+ Create a new IFsiSession by specifying all fsi arguments manually. 
+</br>
         </td>
       </tr>
       <tr>
         <td class="member-name">
 
-          <code onmouseout="hideTip(event, '118', 118)" onmouseover="showTip(event, '118', 118)">
-            Merged
+          <code onmouseout="hideTip(event, '121', 121)" onmouseover="showTip(event, '121', 121)">
+            CreateForwardWriter(...)
           </code>
-          <div class="tip" id="118">
-            <strong>Signature:</strong> string<br />
+          <div class="tip" id="121">
+            <strong>Signature:</strong> (f:(string -&gt; unit) * revertRedirect:bool option * removeNewLines:bool option) -&gt; TextWriter<br />
                       </div>
         </td>
         <td class="xmldoc">
-            <a href="https://github.com/matthid/Yaaf.FSharp.Scripting/blob/master/src/source/Yaaf.FSharp.Scripting/YaafFSharpScripting.fs#L275-275" class="github-link">
+            <a href="https://github.com/matthid/Yaaf.FSharp.Scripting/blob/master/src/source/Yaaf.FSharp.Scripting/YaafFSharpScripting.fs#L1083-1083" class="github-link">
               <img src="../content/img/github.png" class="normal" />
               <img src="../content/img/github-blue.png" class="hover" />
             </a>
           
+ Creates a forwarder Textwriter, which forwards all output to the given function.
+ Set revertRedirect only to "false" if you know that f doesn't print anything to the stdout.
+ When revertRedirect is true we capture the Console.Out property and set it before calling f.
+ RemoveNewLines
+</br>
         </td>
       </tr>
       <tr>
         <td class="member-name">
 
-          <code onmouseout="hideTip(event, '119', 119)" onmouseover="showTip(event, '119', 119)">
-            ScriptOutput
+          <code onmouseout="hideTip(event, '122', 122)" onmouseover="showTip(event, '122', 122)">
+            CreateNew(...)
           </code>
-          <div class="tip" id="119">
-            <strong>Signature:</strong> string<br />
+          <div class="tip" id="122">
+            <strong>Signature:</strong> (defines:string list option * fsiObj:obj option * reportGlobal:bool option * outWriter:TextWriter option * fsiOutWriter:TextWriter option * errWriter:TextWriter option * fsiErrWriter:TextWriter option * preventStdOut:bool option) -&gt; IFsiSession<br />
                       </div>
         </td>
         <td class="xmldoc">
-            <a href="https://github.com/matthid/Yaaf.FSharp.Scripting/blob/master/src/source/Yaaf.FSharp.Scripting/YaafFSharpScripting.fs#L275-275" class="github-link">
+            <a href="https://github.com/matthid/Yaaf.FSharp.Scripting/blob/master/src/source/Yaaf.FSharp.Scripting/YaafFSharpScripting.fs#L1123-1123" class="github-link">
               <img src="../content/img/github.png" class="normal" />
               <img src="../content/img/github-blue.png" class="hover" />
             </a>
           
+ Quickly create a new IFsiSession with some sane defaults
+</br>
         </td>
       </tr>
     </tbody>
