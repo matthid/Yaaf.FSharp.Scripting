@@ -80,10 +80,14 @@ module internal CompilerServiceExtensions =
           let libDirs = defaultArg libDirs Seq.empty |> Seq.toList
           let dllFiles = dllFiles |> Seq.toList
           let hasAssembly asm = 
+            // we are explicitely requested
             dllFiles |> Seq.exists (fun a -> Path.GetFileNameWithoutExtension a =? asm) ||
             libDirs |> Seq.exists (fun lib ->
               Directory.EnumerateFiles(lib)
               |> Seq.filter (fun file -> Path.GetExtension file =? ".dll")
+              |> Seq.filter (fun file ->
+                  // If we find a FSharp.Core in a lib path, we check if is suited for us...
+                  Path.GetFileNameWithoutExtension file <> "FSharp.Core" || (tryCheckFsCore file |> Option.isSome))
               |> Seq.exists (fun file -> Path.GetFileNameWithoutExtension file =? asm))
           let hasFsCoreLib = hasAssembly "FSharp.Core"
           let fsCoreLib =
