@@ -313,7 +313,7 @@ type internal FsiEvaluationException =
 #if YAAF_FSHARP_SCRIPTING_PUBLIC
 type FsiExpressionTypeException =
 #else 
-type internal FsiEvaluationException =
+type internal FsiExpressionTypeException =
 #endif
     val private value : obj option
     val private expected : System.Type
