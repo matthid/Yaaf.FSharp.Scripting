@@ -68,13 +68,13 @@ let buildConfig =
           // The default build
           PlatformName = "Net40"
           SimpleBuildName = "net40" }
-       { BuildParams.WithSolution with
-          // The generated templates
-          PlatformName = "Net45"
-          SimpleBuildName = "net45" }
        // Test if it actually compiles without YAAF_FSHARP_SCRIPTING_PUBLIC defined.
        { BuildParams.WithSolution with
           // The generated templates
           PlatformName = "IncludeTest"
-          SimpleBuildName = "include_test" } ]
+          SimpleBuildName = "include_test" }
+       { BuildParams.WithSolution with
+          // The generated templates
+          PlatformName = "Net45"
+          SimpleBuildName = "net45" } ]
   }
