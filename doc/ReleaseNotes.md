@@ -1,4 +1,10 @@
-﻿### 1.1.3
+﻿### 1.1.4
+
+ * Fixed a build failure when YAAF_FSHARP_SCRIPTING_PUBLIC is not defined.
+ * Ignore FSharp.Core.dll in lib-path, when there is no .optdata and .sigdata alongside.
+ * Don't use a loaded FSharp.Core when it has no .optdata and .sigdata alongside.
+
+### 1.1.3
 
  * Added "Load" to load script files (see https://github.com/matthid/Yaaf.FSharp.Scripting/issues/1).
  * Added "Handle" function to make the usage a bit easier. (see https://github.com/matthid/Yaaf.FSharp.Scripting/issues/2)

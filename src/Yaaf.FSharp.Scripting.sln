@@ -65,24 +65,32 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "img", "img", "{0248EE74-229
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|IncludeTest = Debug|IncludeTest
 		Debug|Net40 = Debug|Net40
 		Debug|Net45 = Debug|Net45
+		Release|IncludeTest = Release|IncludeTest
 		Release|Net40 = Release|Net40
 		Release|Net45 = Release|Net45
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{2D4E0476-7D33-449B-B895-FF1CAF9DD712}.Debug|IncludeTest.ActiveCfg = Debug|IncludeTest
+		{2D4E0476-7D33-449B-B895-FF1CAF9DD712}.Debug|IncludeTest.Build.0 = Debug|IncludeTest
 		{2D4E0476-7D33-449B-B895-FF1CAF9DD712}.Debug|Net40.ActiveCfg = Debug|Net40
 		{2D4E0476-7D33-449B-B895-FF1CAF9DD712}.Debug|Net40.Build.0 = Debug|Net40
 		{2D4E0476-7D33-449B-B895-FF1CAF9DD712}.Debug|Net45.ActiveCfg = Debug|Net45
 		{2D4E0476-7D33-449B-B895-FF1CAF9DD712}.Debug|Net45.Build.0 = Debug|Net45
+		{2D4E0476-7D33-449B-B895-FF1CAF9DD712}.Release|IncludeTest.ActiveCfg = Release|IncludeTest
+		{2D4E0476-7D33-449B-B895-FF1CAF9DD712}.Release|IncludeTest.Build.0 = Release|IncludeTest
 		{2D4E0476-7D33-449B-B895-FF1CAF9DD712}.Release|Net40.ActiveCfg = Release|Net40
 		{2D4E0476-7D33-449B-B895-FF1CAF9DD712}.Release|Net40.Build.0 = Release|Net40
 		{2D4E0476-7D33-449B-B895-FF1CAF9DD712}.Release|Net45.ActiveCfg = Release|Net45
 		{2D4E0476-7D33-449B-B895-FF1CAF9DD712}.Release|Net45.Build.0 = Release|Net45
+		{ED6905ED-539D-43FA-A48D-15BF4D6A1F80}.Debug|IncludeTest.ActiveCfg = Debug|Net45
 		{ED6905ED-539D-43FA-A48D-15BF4D6A1F80}.Debug|Net40.ActiveCfg = Debug|Net40
 		{ED6905ED-539D-43FA-A48D-15BF4D6A1F80}.Debug|Net40.Build.0 = Debug|Net40
 		{ED6905ED-539D-43FA-A48D-15BF4D6A1F80}.Debug|Net45.ActiveCfg = Debug|Net45
 		{ED6905ED-539D-43FA-A48D-15BF4D6A1F80}.Debug|Net45.Build.0 = Debug|Net45
+		{ED6905ED-539D-43FA-A48D-15BF4D6A1F80}.Release|IncludeTest.ActiveCfg = Release|Net45
 		{ED6905ED-539D-43FA-A48D-15BF4D6A1F80}.Release|Net40.ActiveCfg = Release|Net40
 		{ED6905ED-539D-43FA-A48D-15BF4D6A1F80}.Release|Net40.Build.0 = Release|Net40
 		{ED6905ED-539D-43FA-A48D-15BF4D6A1F80}.Release|Net45.ActiveCfg = Release|Net45
