@@ -61,7 +61,7 @@ let buildConfig =
           Attribute.FileVersion config.Version
           Attribute.InformationalVersion config.Version]
       CreateFSharpAssemblyInfo "./src/SharedAssemblyInfo.fs" info)
-    EnableDebugSymbolConversion = true
+    EnableDebugSymbolConversion = false
     RestrictReleaseToWindows = false
     BuildTargets =
      [ { BuildParams.WithSolution with
