@@ -10,6 +10,34 @@ let liveOut = new StringBuilder()
 let liveErr = new StringBuilder()
 let liveOutStream = new StringWriter(liveOut)
 let liveErrStream = new StringWriter(liveErr)
+let fixNewLines (l:string) = l.Replace("\r\n", "\n") 
+
+[<Test>]
+let ``Check if we don't call the forwarder`` () =
+  let called = ref false
+  ( use forwarder = ScriptHost.CreateForwardWriter ((fun s -> called := true), removeNewLines = true)
+    ())
+  test <@ (not !called) @>
+  
+[<Test>]
+let ``Check if get the last input`` () =
+  let sb = new StringBuilder()
+  ( use forwarder = ScriptHost.CreateForwardWriter ((fun s -> sb.AppendLine s |> ignore), removeNewLines = true)
+    forwarder.Write "test"
+    ())
+  test <@ fixNewLines (sb.ToString()) = "test\n" @>
+  
+[<Test>]
+let ``Check if get the multiple inputs`` () =
+  let sb = new StringBuilder()
+  ( use forwarder = ScriptHost.CreateForwardWriter ((fun s -> sb.AppendLine s |> ignore), removeNewLines = true)
+    forwarder.Write "test"
+    forwarder.Write "test1"
+    forwarder.WriteLine ()
+    forwarder.Write "test2"
+    ())
+  test <@ fixNewLines (sb.ToString()) = "testtest1\ntest2\n" @>
+
 let preventFsiSession = 
   ScriptHost.CreateNew(
     ["MYDEFINE"], 
@@ -22,7 +50,6 @@ let forwardFsiSession =
     preventStdOut = true,
     outWriter = ScriptHost.CreateForwardWriter (fun s -> liveOut.Append s |> ignore),
     errWriter = ScriptHost.CreateForwardWriter (fun s -> liveErr.Append s |> ignore))
-let fixNewLines (l:string) = l.Replace("\r\n", "\n") 
 let withOutput f =
   liveOut.Clear() |> ignore
   liveErr.Clear() |> ignore
