@@ -4,6 +4,10 @@
 
 module internal Env =
   let isMono = try System.Type.GetType("Mono.Runtime") <> null with _ -> false 
+  
+  let (++) a b = System.IO.Path.Combine(a,b)
+  let (=?) s1 s2 = System.String.Equals(s1, s2, System.StringComparison.InvariantCultureIgnoreCase)
+  let (<>?) s1 s2 = not (s1 =? s2)
 
 open Env
 [<AutoOpen>]
@@ -22,8 +26,6 @@ module internal CompilerServiceExtensions =
       open System.IO
       let checker = FSharpChecker.Create()
       
-      let (++) a b = System.IO.Path.Combine(a,b)
-      let (=?) s1 s2 = System.String.Equals(s1, s2, System.StringComparison.InvariantCultureIgnoreCase)
       let sysDir =
         if System.Environment.OSVersion.Platform = System.PlatformID.Win32NT then
           @"C:\Program Files (x86)\Reference Assemblies\Microsoft\Framework\.NETFramework\v4.0"
@@ -87,7 +89,7 @@ module internal CompilerServiceExtensions =
               |> Seq.filter (fun file -> Path.GetExtension file =? ".dll")
               |> Seq.filter (fun file ->
                   // If we find a FSharp.Core in a lib path, we check if is suited for us...
-                  Path.GetFileNameWithoutExtension file <> "FSharp.Core" || (tryCheckFsCore file |> Option.isSome))
+                  Path.GetFileNameWithoutExtension file <>? "FSharp.Core" || (tryCheckFsCore file |> Option.isSome))
               |> Seq.exists (fun file -> Path.GetFileNameWithoutExtension file =? asm))
           let hasFsCoreLib = hasAssembly "FSharp.Core"
           let fsCoreLib =
@@ -98,7 +100,7 @@ module internal CompilerServiceExtensions =
             Directory.EnumerateFiles(sysDir)
             |> Seq.filter (fun file -> Path.GetExtension file =? ".dll")
             |> Seq.map Path.GetFileNameWithoutExtension
-            |> Seq.filter (fun f -> not (f =? "FSharp.Core"))
+            |> Seq.filter (fun f -> f <>? "FSharp.Core")
             |> Seq.filter (not << hasAssembly)
           let base1 = Path.GetTempFileName()
           let dllName = Path.ChangeExtension(base1, ".dll")
@@ -130,8 +132,10 @@ module internal CompilerServiceExtensions =
                yield! otherFlags
                yield fileName1
             |]
+#if DEBUG
           for arg in args do
             printfn "Checker Arg: %A" arg
+#endif
           let options = checker.GetProjectOptionsFromCommandLineArgs(projFileName, args)
           
           let results = checker.ParseAndCheckProject(options) |> Async.RunSynchronously
@@ -141,9 +145,11 @@ module internal CompilerServiceExtensions =
                   builder.AppendLine(sprintf "**** %s: %s" (if err.Severity = Microsoft.FSharp.Compiler.FSharpErrorSeverity.Error then "error" else "warning") err.Message)
                   |> ignore
               failwith (builder.ToString())
+#if DEBUG
           else
               for err in results.Errors do 
                   printfn "**** %s: %s" (if err.Severity = Microsoft.FSharp.Compiler.FSharpErrorSeverity.Error then "error" else "warning") err.Message
+#endif
 
           let references = results.ProjectContext.GetReferencedAssemblies()
           references
@@ -205,10 +211,9 @@ module internal CompilerServiceExtensions =
             
 
       static member FromAssembly (assembly:Assembly) =
-          let isWindows = System.Environment.OSVersion.Platform = System.PlatformID.Win32NT
           let loc =
-              if isWindows && assembly.GetName().Name = "FSharp.Core" then
-                  FSharpAssemblyHelper.findFSCore [] []
+              if assembly.GetName().Name =? "FSharp.Core" then
+                  FSharpAssemblyHelper.findFSCore [assembly.Location] []
               else
                   assembly.Location
           if loc = null then None
