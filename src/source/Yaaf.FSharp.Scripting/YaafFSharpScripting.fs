@@ -1100,7 +1100,9 @@ type internal ScriptHost private() =
       (fun (data:string) ->
         if data = null then
           // finished.
-          f (builder.ToString())
+          let last = builder.ToString()
+          if not (System.String.IsNullOrEmpty last) then
+            f last
         else
         builder.Append data |> ignore
         clearBuilder())
