@@ -1,4 +1,8 @@
-﻿### 1.1.5
+﻿### 1.1.6
+
+ * Fix https://github.com/fsharp/FAKE/issues/777.
+
+### 1.1.5
 
  * Use case insensitive comparison and compare file-names when manually resolving references.
 
