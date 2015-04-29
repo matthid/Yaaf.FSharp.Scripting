@@ -110,7 +110,7 @@ module internal CompilerServiceExtensions =
           File.WriteAllText(fileName1, """module M""")
           let args =
             [| //yield "--debug:full" 
-               yield "--define:DEBUG" 
+               //yield "--define:DEBUG" 
                //yield "--optimize-" 
                yield "--nooptimizationdata"
                yield "--noframework"
@@ -191,7 +191,7 @@ module internal CompilerServiceExtensions =
         let findReferences libDir =
           Directory.EnumerateFiles(libDir, "*.dll")
           |> Seq.map Path.GetFullPath
-          |> Seq.filter (fun file -> dllFiles |> List.exists (fun binary -> binary = file) |> not)
+          |> Seq.filter (fun file -> dllFiles |> Seq.map Path.GetFileName |> Seq.exists ((=?) (Path.GetFileName file)) |> not)
         
         // See https://github.com/tpetricek/FSharp.Formatting/commit/22ffb8ec3c743ceaf069893a46a7521667c6fc9d
         let blacklist =
@@ -203,7 +203,7 @@ module internal CompilerServiceExtensions =
             libDirs
             |> Seq.collect findReferences
             |> Seq.append dllFiles
-            |> Seq.filter (fun file -> blacklist |> List.exists (fun black -> black = Path.GetFileName file) |> not),
+            |> Seq.filter (fun file -> blacklist |> List.exists ((=?) (Path.GetFileName file)) |> not),
             Seq.empty
           else dllFiles |> List.toSeq, libDirs
         FSharpAssemblyHelper.getProjectReferences otherFlags (Some _libDirs) _dllFiles

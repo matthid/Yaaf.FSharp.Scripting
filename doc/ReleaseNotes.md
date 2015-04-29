@@ -1,4 +1,8 @@
-﻿### 1.1.4
+﻿### 1.1.5
+
+ * Use case insensitive comparison and compare file-names when manually resolving references.
+
+### 1.1.4
 
  * Fixed a build failure when YAAF_FSHARP_SCRIPTING_PUBLIC is not defined.
  * Ignore FSharp.Core.dll in lib-path, when there is no .optdata and .sigdata alongside.
