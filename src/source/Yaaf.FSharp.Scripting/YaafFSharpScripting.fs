@@ -106,30 +106,34 @@ module internal CompilerServiceExtensions =
           let fileName1 = Path.ChangeExtension(base1, ".fs")
           let projFileName = Path.ChangeExtension(base1, ".fsproj")
           File.WriteAllText(fileName1, """module M""")
-          let options =
-              checker.GetProjectOptionsFromCommandLineArgs(projFileName,
-                  [| //yield "--debug:full" 
-                      yield "--define:DEBUG" 
-                      //yield "--optimize-" 
-                      yield "--nooptimizationdata"
-                      yield "--noframework"
-                      yield sprintf "-I:%s" sysDir
-                      for ref in defaultReferences do
-                        yield sprintf "-r:%s" (sysLib ref)
-                      if fsCoreLib.IsSome then
-                        yield sprintf "-r:%s" fsCoreLib.Value
-                      yield "--out:" + dllName
-                      yield "--doc:" + xmlName
-                      yield "--warn:3" 
-                      yield "--fullpaths" 
-                      yield "--flaterrors" 
-                      yield "--target:library" 
-                      for dllFile in dllFiles do
-                          yield "-r:"+dllFile
-                      for libDir in libDirs do
-                          yield "-I:"+libDir
-                      yield! otherFlags
-                      yield fileName1 |])
+          let args =
+            [| //yield "--debug:full" 
+               yield "--define:DEBUG" 
+               //yield "--optimize-" 
+               yield "--nooptimizationdata"
+               yield "--noframework"
+               yield sprintf "-I:%s" sysDir
+               for ref in defaultReferences do
+                 yield sprintf "-r:%s" (sysLib ref)
+               if fsCoreLib.IsSome then
+                 yield sprintf "-r:%s" fsCoreLib.Value
+               yield "--out:" + dllName
+               yield "--doc:" + xmlName
+               yield "--warn:3" 
+               yield "--fullpaths" 
+               yield "--flaterrors" 
+               yield "--target:library" 
+               for dllFile in dllFiles do
+                   yield "-r:"+dllFile
+               for libDir in libDirs do
+                   yield "-I:"+libDir
+               yield! otherFlags
+               yield fileName1
+            |]
+          for arg in args do
+            printfn "Checker Arg: %A" arg
+          let options = checker.GetProjectOptionsFromCommandLineArgs(projFileName, args)
+          
           let results = checker.ParseAndCheckProject(options) |> Async.RunSynchronously
           if results.HasCriticalErrors then
               let builder = new System.Text.StringBuilder()
@@ -137,6 +141,9 @@ module internal CompilerServiceExtensions =
                   builder.AppendLine(sprintf "**** %s: %s" (if err.Severity = Microsoft.FSharp.Compiler.FSharpErrorSeverity.Error then "error" else "warning") err.Message)
                   |> ignore
               failwith (builder.ToString())
+          else
+              for err in results.Errors do 
+                  printfn "**** %s: %s" (if err.Severity = Microsoft.FSharp.Compiler.FSharpErrorSeverity.Error then "error" else "warning") err.Message
 
           let references = results.ProjectContext.GetReferencedAssemblies()
           references
