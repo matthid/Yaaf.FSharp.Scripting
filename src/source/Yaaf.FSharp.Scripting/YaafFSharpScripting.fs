@@ -431,7 +431,7 @@ module internal Extensions =
           f ()
 
       /// Handle the given evaluation function
-      member x.Handle f (text:string) =
+      member __.Handle f (text:string) =
         try Result <| f text
         with
         | :? FsiExpressionTypeException as e -> InvalidExpressionType e
