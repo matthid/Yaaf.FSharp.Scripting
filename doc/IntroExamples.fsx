@@ -37,29 +37,29 @@ Return values will be constant no matter the configuration options!
 ### Example usage ("Live Output"):
 
 *)
-// (*** define-output: liveRedirect ***)
+(*** define-output: liveRedirect ***)
 open Yaaf.FSharp.Scripting
 
 // Setup for all future interactions
 let liveSession =
     try ScriptHost.CreateNew
           (preventStdOut = true,
-           outWriter = ScriptHost.CreateForwardWriter (printf "Script stdout: %s"),
-           errWriter = ScriptHost.CreateForwardWriter (printf "Script stderr: %s"))
+           outWriter = ScriptHost.CreateForwardWriter (printfn "Script stdout: %s"),
+           errWriter = ScriptHost.CreateForwardWriter (printfn "Script stderr: %s"))
     with :? FsiEvaluationException as e ->
         printf "FsiEvaluationSession could not be created."
         printf "%s" e.Result.Error.Merged
         reraise ()
 liveSession.EvalInteraction """printf "Some test" """
-// (** The standard output is: *)
-// (*** include-output:test ***)
+(** The standard output is: *)
+(*** include-output:liveRedirect ***)
 (**
 
 ### Example usage ("Return values"):
 
 *)
 
-// (*** define-output: direct ***)
+(*** define-output: direct ***)
 // Use the "WithOutput" members and work with the return type
 let directSession =
     try ScriptHost.CreateNew(preventStdOut = true)
@@ -67,14 +67,23 @@ let directSession =
         printf "FsiEvaluationSession could not be created."
         printf "%s" e.Result.Error.Merged
         reraise ()
-let v = directSession.EvalInteractionWithOutput """printf "direct result" """
+let v = directSession.EvalInteractionWithOutput """printfn "direct result" """
 printfn "And We have: %s" v.Output.ScriptOutput
-//(** The standard output is: *)
-//(*** include-output:test ***)
-//(** The value v is: *)
-//(*** include-value: v ***)
+(** The standard output is: *)
+(*** include-output:direct ***)
+(** The value v is: *)
+(*** include-value: v ***)
 (** 
-Note that you can use both systems at the same time as well (the return values are always available).
 
+### Example usage ("Use both"):
+
+Note that you can use both systems at the same time as well (the return values are always available).
 *)
 
+(*** define-output: both ***)
+let b = liveSession.EvalInteractionWithOutput """printfn "both is possible" """
+printfn "The returned result: %s" b.Output.ScriptOutput
+(** The standard output is: *)
+(*** include-output:both ***)
+(** The value b is: *)
+(*** include-value: b ***)

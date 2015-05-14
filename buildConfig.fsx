@@ -49,8 +49,9 @@ let buildConfig =
               Version = config.Version
               ReleaseNotes = toLines release.Notes
               Dependencies = 
-                [ "FSharp.Compiler.Service", "0.0.84"
-                  "FSharp.Core", "3.1.2.1" ] }) ]
+                [ "FSharp.Compiler.Service"
+                  "FSharp.Core" ]
+                |> List.map (fun name -> name, (GetPackageVersion "packages" name)) }) ]
     UseNuget = false
     SetAssemblyFileVersions = (fun config ->
       let info =
@@ -61,7 +62,7 @@ let buildConfig =
           Attribute.FileVersion config.Version
           Attribute.InformationalVersion config.Version]
       CreateFSharpAssemblyInfo "./src/SharedAssemblyInfo.fs" info)
-    EnableDebugSymbolConversion = true
+    EnableDebugSymbolConversion = false
     RestrictReleaseToWindows = false
     BuildTargets =
      [ { BuildParams.WithSolution with

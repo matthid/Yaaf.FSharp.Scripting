@@ -75,15 +75,10 @@ let rec replaceCodeBlocks ctx = function
 let editLiterateDocument ctx (doc:LiterateDocument) =
   doc.With(paragraphs = List.choose (replaceCodeBlocks ctx) doc.Paragraphs)
 
-//let evalutator = lazy (Some <| (FsiEvaluator() :> IFsiEvaluator))
-let evalutator = lazy None
-let fullLayoutRoots = config.LayoutRoots |> List.map Path.GetFullPath
+let evalutator = lazy (Some <| (FsiEvaluator() :> IFsiEvaluator))
+//let evalutator = lazy None
 
 let buildAllDocumentation outDocDir website_root =
-    let outDocDir = Path.GetFullPath outDocDir
-    let resetPwd = 
-      let pwd =  System.IO.Directory.GetCurrentDirectory()
-      (fun () -> System.IO.Directory.SetCurrentDirectory pwd)
     let references = config.DocRazorReferences
     
     let projInfo =
@@ -114,15 +109,13 @@ let buildAllDocumentation outDocDir website_root =
         match outputKind with
         | OutputKind.Html -> "docpage-index.cshtml", "docpage.cshtml", "html", "index.html", ".html"
         | OutputKind.Latex -> 
-          Path.GetFullPath(config.DocTemplatesDir @@ "template-color.tex"), 
-          Path.GetFullPath(config.DocTemplatesDir @@ "template-color.tex"), 
+          config.DocTemplatesDir @@ "template-color.tex", config.DocTemplatesDir @@ "template-color.tex", 
           "latex", "Readme.tex", ".tex"
       let outDir = outDocDir @@ outDirName
       let handleDoc template (doc:LiterateDocument) outfile =
         // prismjs support
-        let ctx = formattingContext (Some template) (Some outputKind) (Some true) (Some projInfo) (Some fullLayoutRoots)
+        let ctx = formattingContext (Some template) (Some outputKind) (Some true) (Some projInfo) (Some config.LayoutRoots)
         Templating.processFile references (editLiterateDocument ctx doc) outfile ctx 
-        resetPwd()
 
       let processMarkdown template infile outfile =
         let doc = Literate.ParseMarkdownFile( infile, ?fsiEvaluator = evalutator.Value )
@@ -134,10 +127,9 @@ let buildAllDocumentation outDocDir website_root =
       let rec processDirectory template indir outdir = 
         Literate.ProcessDirectory(
           indir, template, outdir, outputKind, generateAnchors = true, replacements = projInfo, 
-          layoutRoots = fullLayoutRoots, customizeDocument = editLiterateDocument,
+          layoutRoots = config.LayoutRoots, customizeDocument = editLiterateDocument,
           processRecursive = true, includeSource = true, ?fsiEvaluator = evalutator.Value,
           ?assemblyReferences = references)
-        resetPwd()
 
       processDirectory template (Path.GetFullPath "./doc") outDir
       let processFile template inFile outFile =
@@ -172,26 +164,12 @@ let buildAllDocumentation outDocDir website_root =
         let libDir = config.BuildDir @@ (config.BuildTargets |> Seq.last).SimpleBuildName
         let binaries =
             referenceBinaries
-            |> List.map (fun lib -> Path.GetFullPath( libDir @@ lib ))
-        let blacklist = [ "FSharp.Core.dll"; "mscorlib.dll" ]
-        let libraries =
-            Directory.EnumerateFiles(libDir, "*.dll")
-            |> Seq.map Path.GetFullPath
-            |> Seq.filter (fun file -> binaries |> List.exists (fun binary -> binary = file) |> not)
-            |> Seq.append [ "System";"System.Core";"System.Xml";"System.Xml.Linq" ]
-            |> Seq.filter (fun file ->
-                let name = Path.GetFileName file
-                let isBlacklisted = blacklist |> List.exists (fun b -> b = name)
-                if isBlacklisted then
-                  trace (sprintf "WARNING: Reference to \"%s\" is ignored because it is blacklisted!" file)
-                not isBlacklisted)
-            |> Seq.map (sprintf "-r:%s")
-            |> Seq.toList
+            |> List.map (fun lib -> libDir @@ lib)
         MetadataFormat.Generate
-           (binaries, Path.GetFullPath outDir, fullLayoutRoots,
+           (binaries, Path.GetFullPath outDir, config.LayoutRoots,
             parameters = projInfo,
-            libDirs = [ ],
-            otherFlags = libraries,
+            libDirs = [ libDir ],
+            otherFlags = [],
             sourceRepo = config.SourceReproUrl,
             sourceFolder = "./",
             publicOnly = true, 
