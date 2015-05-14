@@ -1,4 +1,8 @@
-﻿### 1.1.6
+﻿### 1.1.7
+
+ * Fix https://github.com/fsharp/FAKE/issues/790 and https://github.com/fsharp/FAKE/issues/794.
+
+### 1.1.6
 
  * Fix https://github.com/fsharp/FAKE/issues/777.
 

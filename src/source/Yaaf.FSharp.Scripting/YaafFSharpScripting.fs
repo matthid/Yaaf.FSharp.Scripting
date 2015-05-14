@@ -27,18 +27,21 @@ module internal CompilerServiceExtensions =
       let checker = FSharpChecker.Create()
       
       let sysDir =
-        if System.Environment.OSVersion.Platform = System.PlatformID.Win32NT then
-          @"C:\Program Files (x86)\Reference Assemblies\Microsoft\Framework\.NETFramework\v4.0"
-        else
-          System.Runtime.InteropServices.RuntimeEnvironment.GetRuntimeDirectory()
+        let isWindows = System.Environment.OSVersion.Platform = System.PlatformID.Win32NT
+        let refDir = @"C:\Program Files (x86)\Reference Assemblies\Microsoft\Framework\.NETFramework\v4.0"
+        match isWindows, Directory.Exists refDir with
+        | true, true -> refDir
+        | _ -> System.Runtime.InteropServices.RuntimeEnvironment.GetRuntimeDirectory()
+
       let getLib dir nm = 
           dir ++ nm + ".dll" 
       let sysLib = getLib sysDir
-      let fsCore4300Dir = 
-          if System.Environment.OSVersion.Platform = System.PlatformID.Win32NT then // file references only valid on Windows 
-              @"C:\Program Files (x86)\Reference Assemblies\Microsoft\FSharp\.NETFramework\v4.0\4.3.0.0"  
-          else 
-              sysDir
+      let fsCore4300Dir =
+        let isWindows = System.Environment.OSVersion.Platform = System.PlatformID.Win32NT
+        let refDir = @"C:\Program Files (x86)\Reference Assemblies\Microsoft\FSharp\.NETFramework\v4.0\4.3.0.0"
+        match isWindows, Directory.Exists refDir with
+        | true, true -> refDir
+        | _ -> sysDir
       
       let fscoreResolveDirs libDirs =
         [ yield System.AppDomain.CurrentDomain.BaseDirectory
