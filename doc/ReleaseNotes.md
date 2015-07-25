@@ -1,4 +1,8 @@
-﻿### 1.1.9
+﻿### 1.1.10
+
+ * Improve logging output.
+
+### 1.1.9
 
  * Bugfix: Correctly log large argument lists.
 
