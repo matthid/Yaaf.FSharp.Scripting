@@ -1,4 +1,8 @@
-﻿### 1.1.7
+﻿### 1.1.8
+
+ * Add logging with System.Diagnostics.TraceSource (configure in app.config with the name "Yaaf.FSharp.Scripting")
+
+### 1.1.7
 
  * Fix https://github.com/fsharp/FAKE/issues/790 and https://github.com/fsharp/FAKE/issues/794.
 
