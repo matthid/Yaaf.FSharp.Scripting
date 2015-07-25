@@ -1,4 +1,8 @@
-﻿### 1.1.10
+﻿### 1.1.11
+
+ * Improve logging output.
+ 
+ ### 1.1.10
 
  * Improve logging output.
 
