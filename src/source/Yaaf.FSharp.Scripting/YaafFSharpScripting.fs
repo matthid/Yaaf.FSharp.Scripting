@@ -28,9 +28,12 @@ module Log =
   let critf f = traceEventf TraceEventType.Critical f
   let verbf f = traceEventf TraceEventType.Verbose f
 
-  let formatArgs (args:_ seq) = System.String.Join(" ", args)
+  let formatArgs (args:_ seq) = 
+    System.String.Join("\n  ", args)
+    |> sprintf "\n  %s" 
   let formatPaths paths =
-    System.String.Join(", ", paths |> Seq.map (sprintf "\"%s\""))
+    System.String.Join("\n  ", paths |> Seq.map (sprintf "\"%s\""))
+    |> sprintf "\n[ %s ]"
 
 open Env
 [<AutoOpen>]
@@ -48,7 +51,7 @@ module internal CompilerServiceExtensions =
   module internal FSharpAssemblyHelper =
       open System.IO
       let checker = FSharpChecker.Create()
-      
+
       let sysDir =
         let isWindows = System.Environment.OSVersion.Platform = System.PlatformID.Win32NT
         let refDir = @"C:\Program Files (x86)\Reference Assemblies\Microsoft\Framework\.NETFramework\v4.0"
@@ -167,18 +170,16 @@ module internal CompilerServiceExtensions =
           let options = checker.GetProjectOptionsFromCommandLineArgs(projFileName, args)
           
           let results = checker.ParseAndCheckProject(options) |> Async.RunSynchronously
+          let mapError (err:FSharpErrorInfo) =
+            sprintf "**** %s: %s" (if err.Severity = Microsoft.FSharp.Compiler.FSharpErrorSeverity.Error then "error" else "warning") err.Message
           if results.HasCriticalErrors then
-              let builder = new System.Text.StringBuilder()
-              for err in results.Errors do
-                  builder.AppendLine(sprintf "**** %s: %s" (if err.Severity = Microsoft.FSharp.Compiler.FSharpErrorSeverity.Error then "error" else "warning") err.Message)
-                  |> ignore
-              let errorMsg = builder.ToString()
-              Log.errorf "Parsing and checking project failed: %s" errorMsg
+              let errors = results.Errors |> Seq.map mapError
+              let errorMsg = sprintf "Parsing and checking project failed: \n\t%s" (System.String.Join("\n\t", errors))
+              Log.errorf "%s" errorMsg
               failwith errorMsg
           else
-              for err in results.Errors do
-                  Log.warnf "**** %s: %s" (if err.Severity = Microsoft.FSharp.Compiler.FSharpErrorSeverity.Error then "error" else "warning") err.Message
-
+              let warnings = results.Errors |> Seq.map mapError
+              Log.warnf "Parsing and checking warnings: \n\t%s" (System.String.Join("\n\t", warnings))
           let references = results.ProjectContext.GetReferencedAssemblies()
           references
       let referenceMap references =
