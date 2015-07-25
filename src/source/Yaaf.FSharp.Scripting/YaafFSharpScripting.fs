@@ -28,6 +28,10 @@ module Log =
   let critf f = traceEventf TraceEventType.Critical f
   let verbf f = traceEventf TraceEventType.Verbose f
 
+  let formatArgs (args:_ seq) = System.String.Join(" ", args)
+  let formatPaths paths =
+    System.String.Join(", ", paths |> Seq.map (sprintf "\"%s\""))
+
 open Env
 [<AutoOpen>]
 #if YAAF_FSHARP_SCRIPTING_PUBLIC
@@ -98,8 +102,9 @@ module internal CompilerServiceExtensions =
         match tried |> Seq.tryPick tryCheckFsCore with
         | Some s -> s
         | None -> 
-            Log.critf "Could not find a FSharp.Core.dll (with bundled .optdata and .sigdata) in %A" tried
-            failwithf "Could not find a FSharp.Core.dll (with bundled .optdata and .sigdata) in %A" tried
+            let paths = Log.formatPaths tried
+            Log.critf "Could not find a FSharp.Core.dll (with bundled .optdata and .sigdata) in %s" paths
+            failwithf "Could not find a FSharp.Core.dll (with bundled .optdata and .sigdata) in %s" paths
 
       let getProjectReferences otherFlags libDirs dllFiles =
           let otherFlags = defaultArg otherFlags Seq.empty
@@ -157,11 +162,8 @@ module internal CompilerServiceExtensions =
                yield fileName1
             |]
 
-          Log.verbf "Checker Arguments: %A" args
-#if DEBUG
-          for arg in args do
-            printfn "Checker Arg: %A" arg
-#endif
+          Log.verbf "Checker Arguments: %O" (Log.formatArgs args)
+
           let options = checker.GetProjectOptionsFromCommandLineArgs(projFileName, args)
           
           let results = checker.ParseAndCheckProject(options) |> Async.RunSynchronously
@@ -927,7 +929,7 @@ module internal Helper =
       let args =
         [| yield "C:\\fsi.exe"
            yield! options.AsArgs |]
-      Log.verbf "Starting nested fsi.exe with args %A" args
+      Log.verbf "Starting nested fsi.exe with args: %s" (Log.formatArgs args)
       let saveOutput () =
         let out = out.SaveOutput()
         let err = err.SaveOutput()
@@ -959,7 +961,7 @@ module internal Helper =
           raise <| 
             new FsiEvaluationException(
               "Error while creating a fsi session.",
-              sprintf "Fsi Arguments: %A" args,
+              sprintf "Fsi Arguments: %s" (Log.formatArgs args),
               { Output = out; Error = err },
               e)
     

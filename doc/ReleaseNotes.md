@@ -1,4 +1,8 @@
-﻿### 1.1.8
+﻿### 1.1.9
+
+ * Bugfix: Correctly log large argument lists.
+
+### 1.1.8
 
  * Add logging with System.Diagnostics.TraceSource (configure in app.config with the name "Yaaf.FSharp.Scripting")
 
