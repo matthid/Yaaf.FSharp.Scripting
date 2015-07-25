@@ -178,6 +178,7 @@ module internal CompilerServiceExtensions =
               Log.errorf "%s" errorMsg
               failwith errorMsg
           else
+            if results.Errors.Length > 0 then
               let warnings = results.Errors |> Seq.map mapError
               Log.warnf "Parsing and checking warnings: \n\t%s" (System.String.Join("\n\t", warnings))
           let references = results.ProjectContext.GetReferencedAssemblies()
