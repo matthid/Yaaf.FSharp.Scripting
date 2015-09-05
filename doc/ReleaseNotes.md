@@ -1,4 +1,4 @@
-﻿﻿### 1.1.12
+﻿### 1.1.12
 
  * Ignore System.EnterpriseServices.Thunk.dll, see https://github.com/matthid/Yaaf.FSharp.Scripting/issues/4
 
@@ -117,4 +117,3 @@
 ### 1.0.0
 
  * Initial release
-
