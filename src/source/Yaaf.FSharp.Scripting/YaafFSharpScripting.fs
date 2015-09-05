@@ -104,6 +104,7 @@ module internal CompilerServiceExtensions =
             |> Seq.filter (fun file -> Path.GetExtension file =? ".dll")
             |> Seq.map Path.GetFileNameWithoutExtension
             |> Seq.filter (fun f -> f <>? "FSharp.Core")
+            |> Seq.filter (fun f -> f <>? "System.EnterpriseServices.Thunk") // See #4
             |> Seq.filter (not << hasAssembly)
           let base1 = Path.GetTempFileName()
           let dllName = Path.ChangeExtension(base1, ".dll")
