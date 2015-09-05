@@ -108,21 +108,22 @@ module internal CompilerServiceExtensions =
             let paths = Log.formatPaths tried
             Log.critf "Could not find a FSharp.Core.dll (with bundled .optdata and .sigdata) in %s" paths
             failwithf "Could not find a FSharp.Core.dll (with bundled .optdata and .sigdata) in %s" paths
-
+      let hasAssembly asm l =
+        l |> Seq.exists (fun a -> Path.GetFileNameWithoutExtension a =? asm)
       let getProjectReferences otherFlags libDirs dllFiles =
           let otherFlags = defaultArg otherFlags Seq.empty
           let libDirs = defaultArg libDirs Seq.empty |> Seq.toList
           let dllFiles = dllFiles |> Seq.toList
           let hasAssembly asm = 
             // we are explicitely requested
-            dllFiles |> Seq.exists (fun a -> Path.GetFileNameWithoutExtension a =? asm) ||
+            hasAssembly asm dllFiles ||
             libDirs |> Seq.exists (fun lib ->
               Directory.EnumerateFiles(lib)
               |> Seq.filter (fun file -> Path.GetExtension file =? ".dll")
               |> Seq.filter (fun file ->
                   // If we find a FSharp.Core in a lib path, we check if is suited for us...
                   Path.GetFileNameWithoutExtension file <>? "FSharp.Core" || (tryCheckFsCore file |> Option.isSome))
-              |> Seq.exists (fun file -> Path.GetFileNameWithoutExtension file =? asm))
+              |> hasAssembly asm)
           let hasFsCoreLib = hasAssembly "FSharp.Core"
           let fsCoreLib =
             if not hasFsCoreLib then
@@ -619,17 +620,22 @@ type internal FsiOptions =
       WarnAsErrorList = []
       ScriptArgs  = [] } 
   static member Default =
+    // find a FSharp.Core.dll with optdata and sigdata
+    let runtimeDir = System.Runtime.InteropServices.RuntimeEnvironment.GetRuntimeDirectory()
     let includes =
       if isMono then
         // Workaround that FSC doesn't find a FSharp.Core.dll
-        let runtimeDir = System.Runtime.InteropServices.RuntimeEnvironment.GetRuntimeDirectory()
         let monoDir = System.IO.Path.GetDirectoryName runtimeDir
         // prefer current runtime (which FSC would find anyway, but fallback to 4.0 if nothing is found in 4.5 or higher)
         // See also https://github.com/fsharp/fsharp/pull/389, https://github.com/fsharp/fsharp/pull/388
         [ runtimeDir; System.IO.Path.Combine (monoDir, "4.0") ]
-      else []
+      else [ runtimeDir ]
+    let fsCore = FSharpAssemblyHelper.findFSCore [] includes
+    Log.verbf "Using FSharp.Core: %s" fsCore
     { FsiOptions.Empty with
         LibDirs = includes
+        NoFramework = true
+        References = [ fsCore ]
         NonInteractive = true }
   static member ofArgs args =
     args 
@@ -928,7 +934,6 @@ module internal Helper =
       let inStream = new StringReader("")
 
       // Build command line arguments & start FSI session
-
       let args =
         [| yield "C:\\fsi.exe"
            yield! options.AsArgs |]

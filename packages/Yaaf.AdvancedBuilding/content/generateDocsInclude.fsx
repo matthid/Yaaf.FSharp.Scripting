@@ -194,9 +194,64 @@ let doLocal () =
     buildAllDocumentation (config.OutDocDir @@ "local") ("file://" + Path.GetFullPath (config.OutDocDir @@ "local" @@ "html"))
     trace (sprintf "Local documentation has been finished, you can view it by opening %s in your browser!" (Path.GetFullPath (config.OutDocDir @@ "local" @@ "html" @@ "index.html")))
 
+let watch () =
+  printfn "Starting watching by initial building..."
+  let rebuildDocs () =
+    CleanDir (config.OutDocDir @@ "local") // Just in case the template changed (buildDocumentation is caching internally, maybe we should remove that)
+    doLocal()
+  rebuildDocs()
+  printfn "Watching for changes..."
+
+  let full s = Path.GetFullPath s
+  let queue = new System.Collections.Concurrent.ConcurrentQueue<_>()
+  let processTask () =
+    async {
+      let! tok = Async.CancellationToken
+      while not tok.IsCancellationRequested do
+        try
+          if queue.IsEmpty then
+            do! Async.Sleep 1000
+          else
+            let data = ref []
+            let hasData = ref true
+            while !hasData do
+              match queue.TryDequeue() with
+              | true, d ->
+                data := d :: !data
+              | _ ->
+                hasData := false
+
+            printfn "Detected changes (%A). Invalidate cache and rebuild." !data
+            //global.FSharp.MetadataFormat.RazorEngineCache.InvalidateCache (!data |> Seq.map (fun change -> change.FullPath))
+            //global.FSharp.Literate.RazorEngineCache.InvalidateCache (!data |> Seq.map (fun change -> change.FullPath))
+            rebuildDocs()
+            printfn "Documentation generation finished."
+        with e ->
+          printfn "Documentation generation failed: %O" e
+    }
+  use watcher =
+    !! (full "." + "/**/*.*")
+    |> WatchChanges (fun changes ->
+      changes
+      |> Seq.filter (fun change ->
+        change.Name.StartsWith("doc" @@ "") || 
+        change.Name = "README.md" ||
+        change.Name = "CONTRIBUTING.md" ||
+        change.Name = "LICENSE.md")
+      |> Seq.iter queue.Enqueue
+    )
+  use source = new System.Threading.CancellationTokenSource()
+  Async.Start(processTask (), source.Token)
+  printfn "Press enter to exit watching..."
+  System.Console.ReadLine() |> ignore
+  watcher.Dispose()
+  source.Cancel()
+
 MyTarget "GithubDoc" (fun _ -> doGithub())
 
 MyTarget "LocalDoc" (fun _ -> doLocal())
+
+MyTarget "WatchDocs" (fun _ -> watch())
 
 MyTarget "AllDocs" (fun _ ->
     if config.EnableGithub then doGithub()

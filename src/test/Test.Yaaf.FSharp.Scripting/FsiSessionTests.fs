@@ -15,7 +15,7 @@ let fixNewLines (l:string) = l.Replace("\r\n", "\n")
 [<Test>]
 let ``Check if we don't call the forwarder`` () =
   let called = ref false
-  ( use forwarder = ScriptHost.CreateForwardWriter ((fun s -> called := true), removeNewLines = true)
+  ( use __ = ScriptHost.CreateForwardWriter ((fun _ -> called := true), removeNewLines = true)
     ())
   test <@ (not !called) @>
   
@@ -142,6 +142,28 @@ let ``test Handle method`` () =
   | Result _ -> Assert.Fail "expected InvalidExpressionType failure"
   
   match fsiSession.Handle<string> fsiSession.EvalExpression """failwith "test" : int """ with
-  | InvalidCode e -> ()
+  | InvalidCode _ -> ()
   | InvalidExpressionType _
   | Result _ -> Assert.Fail "expected InvalidCode failure"
+
+[<Test>]
+let ``check that we can access System.IO`` () =
+    File.WriteAllText("Test.txt", "content")
+    try
+        let res = fsiSession.EvalInteractionWithOutput ("""
+printf "%s" <| System.IO.File.ReadAllText("Test.txt") """)
+        test <@ res.Output.ScriptOutput = "content" @>
+    finally
+        File.Delete("Test.txt")
+    
+[<Test>]
+let ``check that we can access System.Linq`` () =
+    let res = fsiSession.EvalInteractionWithOutput ("""
+System.Linq.Enumerable.Average([1; 3]) |> int |> printf "%d" """)
+    test <@ res.Output.ScriptOutput = "2" @>
+
+[<Test>]
+let ``check that we can access System.Numerics`` () =
+    let res = fsiSession.EvalInteractionWithOutput ("""
+typeof<System.Numerics.BigInteger>.Name |> printf "%s" """)
+    test <@ res.Output.ScriptOutput = "BigInteger" @>

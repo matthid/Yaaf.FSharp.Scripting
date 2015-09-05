@@ -1,4 +1,10 @@
-﻿### 1.1.12
+﻿### 1.2.0
+
+ * Update to latest FSharp.Compiler.Service & FSharp.Core
+ * ScriptHost: Change default args to find a FSharp.Core.dll with optdata and sigdata alongside.
+ * ScriptHost: Throw early when no FSharp.Core (with sigdata and optdata) can be found when using the default config.
+
+### 1.1.12
 
  * Ignore System.EnterpriseServices.Thunk.dll, see https://github.com/matthid/Yaaf.FSharp.Scripting/issues/4
 
