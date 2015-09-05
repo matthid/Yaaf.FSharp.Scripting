@@ -36,12 +36,22 @@
       <div class="row">
         <div class="span9" id="main">
           
-<h3><a name="1-1-11" class="anchor" href="#1-1-11">1.1.11</a></h3>
+<h3><a name="1-1-12" class="anchor" href="#1-1-12">1.1.12</a></h3>
 
 <ul>
-<li><p>Improve logging output.</p>
-<h3><a name="1-1-10" class="anchor" href="#1-1-10">1.1.10</a></h3></li>
-<li><p>Improve logging output.</p></li>
+<li>Ignore System.EnterpriseServices.Thunk.dll, see <a href="https://github.com/matthid/Yaaf.FSharp.Scripting/issues/4">https://github.com/matthid/Yaaf.FSharp.Scripting/issues/4</a></li>
+</ul>
+
+<p>﻿### 1.1.11</p>
+
+<ul>
+<li>Improve logging output.</li>
+</ul>
+
+<h3><a name="1-1-10" class="anchor" href="#1-1-10">1.1.10</a></h3>
+
+<ul>
+<li>Improve logging output.</li>
 </ul>
 
 <h3><a name="1-1-9" class="anchor" href="#1-1-9">1.1.9</a></h3>
@@ -59,33 +69,33 @@
 <h3><a name="1-1-7" class="anchor" href="#1-1-7">1.1.7</a></h3>
 
 <ul>
-<li>Fix <a href="https://github.com/fsharp/FAKE/issues/790">https://github.com/fsharp/FAKE/issues/790</a> and <a href="https://github.com/fsharp/FAKE/issues/794.">https://github.com/fsharp/FAKE/issues/794.</a></li>
+<li>Fix <a href="https://github.com/fsharp/FAKE/issues/790">https://github.com/fsharp/FAKE/issues/790</a> and <a href="https://github.com/fsharp/FAKE/issues/794">https://github.com/fsharp/FAKE/issues/794</a></li>
 </ul>
 
 <h3><a name="1-1-6" class="anchor" href="#1-1-6">1.1.6</a></h3>
 
 <ul>
-<li>Fix <a href="https://github.com/fsharp/FAKE/issues/777.">https://github.com/fsharp/FAKE/issues/777.</a></li>
+<li>Fix <a href="https://github.com/fsharp/FAKE/issues/777">https://github.com/fsharp/FAKE/issues/777</a></li>
 </ul>
 
 <h3><a name="1-1-5" class="anchor" href="#1-1-5">1.1.5</a></h3>
 
 <ul>
-<li>Use case insensitive comparison and compare file-names when manually resolving references.</li>
+<li>Use case insensitive comparison and compare file-names when manually resolving references</li>
 </ul>
 
 <h3><a name="1-1-4" class="anchor" href="#1-1-4">1.1.4</a></h3>
 
 <ul>
-<li>Fixed a build failure when YAAF<em>FSHARP</em>SCRIPTING_PUBLIC is not defined.</li>
-<li>Ignore FSharp.Core.dll in lib-path, when there is no .optdata and .sigdata alongside.</li>
-<li>Don't use a loaded FSharp.Core when it has no .optdata and .sigdata alongside.</li>
+<li>Fixed a build failure when YAAF<em>FSHARP</em>SCRIPTING_PUBLIC is not defined</li>
+<li>Ignore FSharp.Core.dll in lib-path, when there is no .optdata and .sigdata alongside</li>
+<li>Don't use a loaded FSharp.Core when it has no .optdata and .sigdata alongside</li>
 </ul>
 
 <h3><a name="1-1-3" class="anchor" href="#1-1-3">1.1.3</a></h3>
 
 <ul>
-<li>Added "Load" to load script files (see <a href="https://github.com/matthid/Yaaf.FSharp.Scripting/issues/1).">https://github.com/matthid/Yaaf.FSharp.Scripting/issues/1).</a></li>
+<li>Added "Load" to load script files (see <a href="https://github.com/matthid/Yaaf.FSharp.Scripting/issues/1)">https://github.com/matthid/Yaaf.FSharp.Scripting/issues/1)</a></li>
 <li>Added "Handle" function to make the usage a bit easier. (see <a href="https://github.com/matthid/Yaaf.FSharp.Scripting/issues/2)">https://github.com/matthid/Yaaf.FSharp.Scripting/issues/2)</a></li>
 </ul>
 
@@ -94,55 +104,55 @@
 <ul>
 <li>Revert the redirect when using CreateForwardWriter (otherwise users run into unexpected StackOverflowExceptions when printing to stdout or stderr)
 See <a href="https://github.com/fsharp/FAKE/pull/771">https://github.com/fsharp/FAKE/pull/771</a></li>
-<li>Add an option to remove NewLines when using a forward function (the function will be called whenever a line as been finished).
-Note: You must Dispose the TextWrapper to get the last output (if it wasn't finished with a NewLine character).</li>
+<li>Add an option to remove NewLines when using a forward function (the function will be called whenever a line as been finished)
+Note: You must Dispose the TextWrapper to get the last output (if it wasn't finished with a NewLine character)</li>
 <li>Add the AppDomain.BaseDirectory to the base path when searching for a FSharp.Core.dll</li>
 </ul>
 
 <h3><a name="1-1-1" class="anchor" href="#1-1-1">1.1.1</a></h3>
 
 <ul>
-<li>Add ScriptHost.CreateForwardWriter which creates a new TextWriter that forwards everything to a simple (string -&gt; unit) function.</li>
-<li>Add session.ChangeCurrentDirectory and session.WithCurrentDirectory, to take care of relative paths within executed snippets.</li>
-<li>Some more docs.</li>
+<li>Add ScriptHost.CreateForwardWriter which creates a new TextWriter that forwards everything to a simple (string -&gt; unit) function</li>
+<li>Add session.ChangeCurrentDirectory and session.WithCurrentDirectory, to take care of relative paths within executed snippets</li>
+<li>Some more docs</li>
 </ul>
 
 <h3><a name="1-1-0" class="anchor" href="#1-1-0">1.1.0</a></h3>
 
 <ul>
 <li>Redirect of stdout and stderr, see <a href="https://github.com/fsharp/FSharp.Compiler.Service/issues/201">https://github.com/fsharp/FSharp.Compiler.Service/issues/201</a></li>
-<li>added an option prevent writing to stdout and stderr.</li>
+<li>added an option prevent writing to stdout and stderr</li>
 </ul>
 
 <h3><a name="1-0-13" class="anchor" href="#1-0-13">1.0.13</a></h3>
 
 <ul>
-<li>Introduce FsiEvaluationException when something goes wrong.</li>
+<li>Introduce FsiEvaluationException when something goes wrong</li>
 </ul>
 
 <h3><a name="1-0-12" class="anchor" href="#1-0-12">1.0.12</a></h3>
 
 <ul>
 <li>Add overloaded methods which return the FSI output and error text</li>
-<li>Support for running from within FSI.exe.</li>
+<li>Support for running from within FSI.exe</li>
 </ul>
 
 <h3><a name="1-0-11" class="anchor" href="#1-0-11">1.0.11</a></h3>
 
 <ul>
-<li>Add FsiOptions record.</li>
+<li>Add FsiOptions record</li>
 </ul>
 
 <h3><a name="1-0-10" class="anchor" href="#1-0-10">1.0.10</a></h3>
 
 <ul>
-<li>Improve FSharp.Core resolution.</li>
+<li>Improve FSharp.Core resolution</li>
 </ul>
 
 <h3><a name="1-0-9" class="anchor" href="#1-0-9">1.0.9</a></h3>
 
 <ul>
-<li>added FSharpAssembly.LoadFiles API.</li>
+<li>added FSharpAssembly.LoadFiles API</li>
 </ul>
 
 <h3><a name="1-0-8" class="anchor" href="#1-0-8">1.0.8</a></h3>
@@ -154,44 +164,44 @@ Note: You must Dispose the TextWrapper to get the last output (if it wasn't fini
 <h3><a name="1-0-7" class="anchor" href="#1-0-7">1.0.7</a></h3>
 
 <ul>
-<li>Add TryEvalExpression to get the type of the expression (not the runtime type).</li>
+<li>Add TryEvalExpression to get the type of the expression (not the runtime type)</li>
 </ul>
 
 <h3><a name="1-0-6" class="anchor" href="#1-0-6">1.0.6</a></h3>
 
 <ul>
-<li>Add support for using the source code files directly (via paket and nuget).</li>
+<li>Add support for using the source code files directly (via paket and nuget)</li>
 </ul>
 
 <h3><a name="1-0-5" class="anchor" href="#1-0-5">1.0.5</a></h3>
 
 <ul>
-<li>Add workaround to make scripting work on a clean gentoo install.</li>
-<li>Improve error messages when session creation fails.</li>
+<li>Add workaround to make scripting work on a clean gentoo install</li>
+<li>Improve error messages when session creation fails</li>
 </ul>
 
 <h3><a name="1-0-4" class="anchor" href="#1-0-4">1.0.4</a></h3>
 
 <ul>
-<li>Add FSharp.Core nuget package.</li>
+<li>Add FSharp.Core nuget package</li>
 </ul>
 
 <h3><a name="1-0-3" class="anchor" href="#1-0-3">1.0.3</a></h3>
 
 <ul>
-<li>Includes a net45 build.</li>
+<li>Includes a net45 build</li>
 </ul>
 
 <h3><a name="1-0-2" class="anchor" href="#1-0-2">1.0.2</a></h3>
 
 <ul>
-<li>You can now set custom defined symbols.</li>
+<li>You can now set custom defined symbols</li>
 </ul>
 
 <h3><a name="1-0-1" class="anchor" href="#1-0-1">1.0.1</a></h3>
 
 <ul>
-<li>NuGet dependency FSharp.Compiler.Service added.</li>
+<li>NuGet dependency FSharp.Compiler.Service added</li>
 </ul>
 
 <h3><a name="1-0-0" class="anchor" href="#1-0-0">1.0.0</a></h3>
