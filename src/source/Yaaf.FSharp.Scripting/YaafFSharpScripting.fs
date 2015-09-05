@@ -9,6 +9,32 @@ module internal Env =
   let (=?) s1 s2 = System.String.Equals(s1, s2, System.StringComparison.InvariantCultureIgnoreCase)
   let (<>?) s1 s2 = not (s1 =? s2)
 
+open System.Diagnostics
+module Log =
+  let source = new TraceSource("Yaaf.FSharp.Scriping")
+
+  let LogConsole levels =
+    let consoleListener = new ConsoleTraceListener();
+    consoleListener.TraceOutputOptions <- TraceOptions.DateTime
+    consoleListener.Filter <- new EventTypeFilter(levels)
+    source.Listeners.Add consoleListener |> ignore
+
+  let traceEventf t f =
+    Printf.kprintf (fun s -> source.TraceEvent(t, 0, s)) f
+
+  let infof f = traceEventf TraceEventType.Information f
+  let errorf f = traceEventf TraceEventType.Error f
+  let warnf f = traceEventf TraceEventType.Warning f
+  let critf f = traceEventf TraceEventType.Critical f
+  let verbf f = traceEventf TraceEventType.Verbose f
+
+  let formatArgs (args:_ seq) = 
+    System.String.Join("\n  ", args)
+    |> sprintf "\n  %s" 
+  let formatPaths paths =
+    System.String.Join("\n  ", paths |> Seq.map (sprintf "\"%s\""))
+    |> sprintf "\n[ %s ]"
+
 open Env
 [<AutoOpen>]
 #if YAAF_FSHARP_SCRIPTING_PUBLIC
@@ -25,7 +51,7 @@ module internal CompilerServiceExtensions =
   module internal FSharpAssemblyHelper =
       open System.IO
       let checker = FSharpChecker.Create()
-      
+
       let sysDir =
         let isWindows = System.Environment.OSVersion.Platform = System.PlatformID.Win32NT
         let refDir = @"C:\Program Files (x86)\Reference Assemblies\Microsoft\Framework\.NETFramework\v4.0"
@@ -78,7 +104,10 @@ module internal CompilerServiceExtensions =
                       |> List.map (fun (l:string) -> getLib l "FSharp.Core"))
         match tried |> Seq.tryPick tryCheckFsCore with
         | Some s -> s
-        | None -> failwithf "Could not find a FSharp.Core.dll (with bundled .optdata and .sigdata) in %A" tried
+        | None -> 
+            let paths = Log.formatPaths tried
+            Log.critf "Could not find a FSharp.Core.dll (with bundled .optdata and .sigdata) in %s" paths
+            failwithf "Could not find a FSharp.Core.dll (with bundled .optdata and .sigdata) in %s" paths
 
       let getProjectReferences otherFlags libDirs dllFiles =
           let otherFlags = defaultArg otherFlags Seq.empty
@@ -136,25 +165,23 @@ module internal CompilerServiceExtensions =
                yield! otherFlags
                yield fileName1
             |]
-#if DEBUG
-          for arg in args do
-            printfn "Checker Arg: %A" arg
-#endif
+
+          Log.verbf "Checker Arguments: %O" (Log.formatArgs args)
+
           let options = checker.GetProjectOptionsFromCommandLineArgs(projFileName, args)
           
           let results = checker.ParseAndCheckProject(options) |> Async.RunSynchronously
+          let mapError (err:FSharpErrorInfo) =
+            sprintf "**** %s: %s" (if err.Severity = Microsoft.FSharp.Compiler.FSharpErrorSeverity.Error then "error" else "warning") err.Message
           if results.HasCriticalErrors then
-              let builder = new System.Text.StringBuilder()
-              for err in results.Errors do
-                  builder.AppendLine(sprintf "**** %s: %s" (if err.Severity = Microsoft.FSharp.Compiler.FSharpErrorSeverity.Error then "error" else "warning") err.Message)
-                  |> ignore
-              failwith (builder.ToString())
-#if DEBUG
+              let errors = results.Errors |> Seq.map mapError
+              let errorMsg = sprintf "Parsing and checking project failed: \n\t%s" (System.String.Join("\n\t", errors))
+              Log.errorf "%s" errorMsg
+              failwith errorMsg
           else
-              for err in results.Errors do 
-                  printfn "**** %s: %s" (if err.Severity = Microsoft.FSharp.Compiler.FSharpErrorSeverity.Error then "error" else "warning") err.Message
-#endif
-
+            if results.Errors.Length > 0 then
+              let warnings = results.Errors |> Seq.map mapError
+              Log.warnf "Parsing and checking warnings: \n\t%s" (System.String.Join("\n\t", warnings))
           let references = results.ProjectContext.GetReferencedAssemblies()
           references
       let referenceMap references =
@@ -905,6 +932,7 @@ module internal Helper =
       let args =
         [| yield "C:\\fsi.exe"
            yield! options.AsArgs |]
+      Log.verbf "Starting nested fsi.exe with args: %s" (Log.formatArgs args)
       let saveOutput () =
         let out = out.SaveOutput()
         let err = err.SaveOutput()
@@ -936,7 +964,7 @@ module internal Helper =
           raise <| 
             new FsiEvaluationException(
               "Error while creating a fsi session.",
-              sprintf "Fsi Arguments: %A" args,
+              sprintf "Fsi Arguments: %s" (Log.formatArgs args),
               { Output = out; Error = err },
               e)
     
