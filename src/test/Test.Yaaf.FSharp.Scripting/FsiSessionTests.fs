@@ -40,13 +40,13 @@ let ``Check if get the multiple inputs`` () =
 
 let preventFsiSession = 
   ScriptHost.CreateNew(
-    ["MYDEFINE"], 
+    ["MYDEFINE"],
     preventStdOut = true,
     outWriter = liveOutStream,
     errWriter = liveErrStream)
 let forwardFsiSession = 
   ScriptHost.CreateNew(
-    ["MYDEFINE"], 
+    ["MYDEFINE"],
     preventStdOut = true,
     outWriter = ScriptHost.CreateForwardWriter (fun s -> liveOut.Append s |> ignore),
     errWriter = ScriptHost.CreateForwardWriter (fun s -> liveErr.Append s |> ignore))
@@ -69,6 +69,17 @@ let ``test that we get the correct output`` () =
 let ``let with a given integer option type works`` () =
     fsiSession.Let "test" (Some 25)
     test <@ fsiSession.EvalExpression<int option> "test" = Some 25 @>
+
+[<Test>]
+let ``check that default config produces no error output`` () =
+  let _, _, err =
+    withOutput (fun () ->
+      ScriptHost.CreateNew(
+        ["MYDEFINE"],
+        preventStdOut = true,
+        outWriter = ScriptHost.CreateForwardWriter (fun s -> liveOut.Append s |> ignore),
+        errWriter = ScriptHost.CreateForwardWriter (fun s -> liveErr.Append s |> ignore)))
+  test <@ System.String.IsNullOrWhiteSpace(err) @>
 
 [<Test>]
 let ``check that defines work works`` () =

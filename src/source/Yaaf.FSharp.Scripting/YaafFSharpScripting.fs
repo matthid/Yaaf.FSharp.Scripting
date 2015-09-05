@@ -110,32 +110,18 @@ module internal CompilerServiceExtensions =
             failwithf "Could not find a FSharp.Core.dll (with bundled .optdata and .sigdata) in %s" paths
       let hasAssembly asm l =
         l |> Seq.exists (fun a -> Path.GetFileNameWithoutExtension a =? asm)
-      let getProjectReferences otherFlags libDirs dllFiles =
-          let otherFlags = defaultArg otherFlags Seq.empty
-          let libDirs = defaultArg libDirs Seq.empty |> Seq.toList
-          let dllFiles = dllFiles |> Seq.toList
-          let hasAssembly asm = 
-            // we are explicitely requested
-            hasAssembly asm dllFiles ||
-            libDirs |> Seq.exists (fun lib ->
-              Directory.EnumerateFiles(lib)
-              |> Seq.filter (fun file -> Path.GetExtension file =? ".dll")
-              |> Seq.filter (fun file ->
-                  // If we find a FSharp.Core in a lib path, we check if is suited for us...
-                  Path.GetFileNameWithoutExtension file <>? "FSharp.Core" || (tryCheckFsCore file |> Option.isSome))
-              |> hasAssembly asm)
-          let hasFsCoreLib = hasAssembly "FSharp.Core"
-          let fsCoreLib =
-            if not hasFsCoreLib then
-              Some (findFSCore dllFiles libDirs)
-            else None
-          let defaultReferences = 
-            Directory.EnumerateFiles(sysDir)
-            |> Seq.filter (fun file -> Path.GetExtension file =? ".dll")
-            |> Seq.map Path.GetFileNameWithoutExtension
-            |> Seq.filter (fun f -> f <>? "FSharp.Core")
-            |> Seq.filter (fun f -> f <>? "System.EnterpriseServices.Thunk") // See #4
-            |> Seq.filter (not << hasAssembly)
+      let sysLibBlackList =
+        [ "FSharp.Core"
+          "System.EnterpriseServices.Thunk" // See #4
+          "System.EnterpriseServices.Wrapper" ] // See #4
+      let getDefaultSystemReferences () =
+        Directory.EnumerateFiles(sysDir)
+        |> Seq.filter (fun file -> Path.GetExtension file =? ".dll")
+        |> Seq.map Path.GetFileNameWithoutExtension
+        |> Seq.filter (fun f ->
+            sysLibBlackList |> Seq.forall (fun backListed -> f <>? backListed))
+
+      let getCheckerArguments defaultReferences (fsCoreLib: _ option) dllFiles libDirs otherFlags =
           let base1 = Path.GetTempFileName()
           let dllName = Path.ChangeExtension(base1, ".dll")
           let xmlName = Path.ChangeExtension(base1, ".xml")
@@ -167,6 +153,32 @@ module internal CompilerServiceExtensions =
                yield fileName1
             |]
 
+          projFileName, args
+
+      let getProjectReferences otherFlags libDirs dllFiles =
+          let otherFlags = defaultArg otherFlags Seq.empty
+          let libDirs = defaultArg libDirs Seq.empty |> Seq.toList
+          let dllFiles = dllFiles |> Seq.toList
+          let hasAssembly asm =
+            // we are explicitely requested
+            hasAssembly asm dllFiles ||
+            libDirs |> Seq.exists (fun lib ->
+              Directory.EnumerateFiles(lib)
+              |> Seq.filter (fun file -> Path.GetExtension file =? ".dll")
+              |> Seq.filter (fun file ->
+                  // If we find a FSharp.Core in a lib path, we check if is suited for us...
+                  Path.GetFileNameWithoutExtension file <>? "FSharp.Core" || (tryCheckFsCore file |> Option.isSome))
+              |> hasAssembly asm)
+          let hasFsCoreLib = hasAssembly "FSharp.Core"
+          let fsCoreLib =
+            if not hasFsCoreLib then
+              Some (findFSCore dllFiles libDirs)
+            else None
+          let defaultReferences =
+            getDefaultSystemReferences ()
+            |> Seq.filter (not << hasAssembly)
+
+          let projFileName, args = getCheckerArguments defaultReferences (fsCoreLib: _ option) dllFiles libDirs otherFlags
           Log.verbf "Checker Arguments: %O" (Log.formatArgs args)
 
           let options = checker.GetProjectOptionsFromCommandLineArgs(projFileName, args)
