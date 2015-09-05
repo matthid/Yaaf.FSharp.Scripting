@@ -36,6 +36,7 @@ open System
 
 open Fake
 open Fake.Git
+open Fake.MSTest
 open Fake.FSharpFormatting
 open AssemblyInfoFile
 
@@ -124,6 +125,13 @@ let runTests (buildParams:BuildParams) =
                 DisableShadowCopy = true;
                 OutputFile = "logs/TestResults.xml" } |> config.SetupNUnit)
 
+      if not isLinux then
+        files
+          |> MSTest (fun p ->
+              {p with
+                  WorkingDir = testDir
+                  ResultsDir = "logs" } |> config.SetupMSTest)
+
 let buildAll (buildParams:BuildParams) =
     buildParams.BeforeBuild ()
     buildSolution buildParams
@@ -150,6 +158,15 @@ let buildDocumentationTarget target =
         failwith "documentation failed"
     ()
 
+let tryDelete dir =
+    try
+        CleanDirs [ dir ]
+    with
+    | :? System.IO.IOException as e ->
+        traceImportant (sprintf "Cannot access: %s\nTry closing Visual Studio!" e.Message)
+    | :? System.UnauthorizedAccessException as e ->
+        traceImportant (sprintf "Cannot access: %s\nTry closing Visual Studio!" e.Message)
+
 let MyTarget name body =
     Target name (fun _ -> body false)
     let single = (sprintf "%s_single" name)
@@ -157,6 +174,9 @@ let MyTarget name body =
 
 // Targets
 MyTarget "Clean" (fun _ ->
+    tryDelete config.BuildDir
+    tryDelete config.TestDir
+
     CleanDirs [ config.BuildDir; config.TestDir; config.OutLibDir; config.OutDocDir; config.OutNugetDir ]
 )
 
@@ -307,6 +327,8 @@ MyTarget "GithubDoc" (fun _ -> buildDocumentationTarget "GithubDoc")
 
 MyTarget "LocalDoc" (fun _ -> buildDocumentationTarget "LocalDoc")
 
+MyTarget "WatchDocs" (fun _ -> buildDocumentationTarget "WatchDocs")
+
 // its just faster to generate all at the same time...
 MyTarget "AllDocs" (fun _ -> buildDocumentationTarget "AllDocs")
 
@@ -386,6 +408,7 @@ Target "Release" (fun _ ->
 )
 
 Target "ReadyForBuild" ignore
+Target "AfterBuild" ignore
 
 // Clean all
 "Clean" 
@@ -406,12 +429,12 @@ config.BuildTargets
           ==> buildName
           |> ignore
         buildName
-          ==> "All"
+          ==> "AfterBuild"
           |> ignore
     )
 
 // Dependencies
-"Clean" 
+"AfterBuild" 
   ==> "CopyToRelease"
   =?> ("CreateReleaseSymbolFiles", config.EnableDebugSymbolConversion)
   ==> "NuGetPack"
