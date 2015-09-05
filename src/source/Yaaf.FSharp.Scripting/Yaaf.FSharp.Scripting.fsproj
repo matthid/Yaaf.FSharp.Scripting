@@ -81,6 +81,7 @@
     <Compile Include="..\..\SharedAssemblyInfo.fs">
       <Link>SharedAssemblyInfo.fs</Link>
     </Compile>
+    <Compile Include="AssemblyInfo.fs" />
     <Compile Include="YaafFSharpScripting.fs" />
     <None Include="Script.fsx" />
   </ItemGroup>

@@ -1,14 +1,31 @@
 ﻿module Test.Yaaf.FSharp.Scripting.ExtensionMethodTests
 type T () =
-    let t = ()
+    let _ = ()
 type TGen<'a> () =
-    let t = ()
+    let _ = ()
 open System.IO
 open NUnit.Framework
 open Test.Yaaf.FSharp.Scripting.FsiUnquote
 open Yaaf.FSharp.Scripting
 open Microsoft.FSharp.Compiler.SourceCodeServices
+
+let withNoWarnings f =
+    let builder = new System.Text.StringBuilder()
+    use writer = new StringWriter(builder)
+    Log.source.Switch.Level <- System.Diagnostics.SourceLevels.Warning
+    use listener =
+        new System.Diagnostics.TextWriterTraceListener(
+            writer,
+            Filter = new System.Diagnostics.EventTypeFilter(System.Diagnostics.SourceLevels.Warning))
+    let listenerIndex = Log.source.Listeners.Add(listener)
+    f ()
+    Log.source.Listeners.RemoveAt(listenerIndex)
+    writer.Flush()
+    let logText = builder.ToString()
+    test <@ System.String.IsNullOrWhiteSpace logText @>
+
 let testType<'a> () =
+  withNoWarnings (fun () ->
     // A Assembly -> FSharpEntity mapping (extension) function
     let fsAssembly = FSharpAssembly.FromAssembly typeof<'a>.Assembly
     test <@ fsAssembly.IsSome @>
@@ -20,7 +37,18 @@ let testType<'a> () =
     let fsType = fsAssembly.Value.FindType typeof<'a>
     test <@ fsType.IsSome @>
     test <@ fsType.Value.FullName = typeof<'a>.NamespaceName.Replace("+", ".") @>
-    ()
+    ())
+
+[<Test>]
+let ``check that default assemblies generate no warnings`` () =
+    let sysLibs = FSharpAssemblyHelper.getDefaultSystemReferences()
+    let fsCore = FSharpAssemblyHelper.findFSCore [] []
+    //for sysLib in sysLibs do
+    let projFileName, args = FSharpAssemblyHelper.getCheckerArguments sysLibs (Some fsCore) [] [] []
+    let options = FSharpAssemblyHelper.checker.GetProjectOptionsFromCommandLineArgs(projFileName, args)
+    let results = FSharpAssemblyHelper.checker.ParseAndCheckProject(options) |> Async.RunSynchronously
+    test <@ results.Errors.Length = 0 @>
+
 [<Test>]
 let ``check that we can get the fsassembly and fstype of a custom nested type`` () =
     testType<T>()

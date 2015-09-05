@@ -1,4 +1,8 @@
-﻿### 1.2.0
+﻿### 1.2.1
+
+ * Blacklist System.EnterpriseServices.Wrapper as well to fix another warning, see https://github.com/matthid/Yaaf.FSharp.Scripting/issues/4
+
+### 1.2.0
 
  * Update to latest FSharp.Compiler.Service & FSharp.Core
  * ScriptHost: Change default args to find a FSharp.Core.dll with optdata and sigdata alongside.
