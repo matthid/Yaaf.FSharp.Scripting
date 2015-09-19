@@ -235,19 +235,25 @@ module internal CompilerServiceExtensions =
         let findReferences libDir =
           Directory.EnumerateFiles(libDir, "*.dll")
           |> Seq.map Path.GetFullPath
+          // Filter files already referenced directly
           |> Seq.filter (fun file -> dllFiles |> Seq.map Path.GetFileName |> Seq.exists ((=?) (Path.GetFileName file)) |> not)
-        
+          // Filter FSharp.Core.dll when there is no sigdata and optdata
+          |> Seq.filter (fun file ->
+            if Path.GetFileName file =? "FSharp.Core.dll" then
+              FSharpAssemblyHelper.tryCheckFsCore file |> Option.isSome
+            else true)
+
         // See https://github.com/tpetricek/FSharp.Formatting/commit/22ffb8ec3c743ceaf069893a46a7521667c6fc9d
-        let blacklist =
-          [ "FSharp.Core.dll"; "mscorlib.dll" ]
+        //let blacklist =
+        //  [ "FSharp.Core.dll"; "mscorlib.dll" ]
 
         // See https://github.com/tpetricek/FSharp.Formatting/commit/5d14f45cd7e70c2164a7448ea50a6b9995166489
         let _dllFiles, _libDirs =
           if resolveDirs then
             libDirs
             |> Seq.collect findReferences
-            |> Seq.append dllFiles
-            |> Seq.filter (fun file -> blacklist |> List.exists ((=?) (Path.GetFileName file)) |> not),
+            |> Seq.append dllFiles,
+            //|> Seq.filter (fun file -> blacklist |> List.exists ((=?) (Path.GetFileName file)) |> not),
             Seq.empty
           else dllFiles |> List.toSeq, libDirs
         FSharpAssemblyHelper.getProjectReferences otherFlags (Some _libDirs) _dllFiles
