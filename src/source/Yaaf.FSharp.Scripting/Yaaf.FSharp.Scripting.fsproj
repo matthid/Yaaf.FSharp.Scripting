@@ -21,7 +21,7 @@
     <Optimize>false</Optimize>
     <Tailcalls>false</Tailcalls>
     <OutputPath>bin</OutputPath>
-    <DefineConstants>DEBUG;TRACE;YAAF_FSHARP_SCRIPTING_PUBLIC</DefineConstants>
+    <DefineConstants>DEBUG;TRACE;NET40;YAAF_FSHARP_SCRIPTING_PUBLIC</DefineConstants>
     <WarningLevel>3</WarningLevel>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|Net40' ">
@@ -29,7 +29,7 @@
     <Optimize>true</Optimize>
     <Tailcalls>true</Tailcalls>
     <OutputPath>$(SolutionDir)/../build/net40</OutputPath>
-    <DefineConstants>TRACE;YAAF_FSHARP_SCRIPTING_PUBLIC</DefineConstants>
+    <DefineConstants>TRACE;NET40;YAAF_FSHARP_SCRIPTING_PUBLIC</DefineConstants>
     <WarningLevel>3</WarningLevel>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|Net45' ">

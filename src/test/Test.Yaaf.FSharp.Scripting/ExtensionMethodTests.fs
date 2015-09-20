@@ -41,10 +41,11 @@ let testType<'a> () =
 
 [<Test>]
 let ``check that default assemblies generate no warnings`` () =
-    let sysLibs = FSharpAssemblyHelper.getDefaultSystemReferences()
+    let frameworkVersion = FSharpAssemblyHelper.defaultFrameworkVersion
+    let sysLibs = FSharpAssemblyHelper.getDefaultSystemReferences frameworkVersion
     let fsCore = FSharpAssemblyHelper.findFSCore [] []
     //for sysLib in sysLibs do
-    let projFileName, args = FSharpAssemblyHelper.getCheckerArguments sysLibs (Some fsCore) [] [] []
+    let projFileName, args = FSharpAssemblyHelper.getCheckerArguments frameworkVersion sysLibs (Some fsCore) [] [] []
     let options = FSharpAssemblyHelper.checker.GetProjectOptionsFromCommandLineArgs(projFileName, args)
     let results = FSharpAssemblyHelper.checker.ParseAndCheckProject(options) |> Async.RunSynchronously
     test <@ results.Errors.Length = 0 @>

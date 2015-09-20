@@ -9,6 +9,12 @@ module internal Env =
   let (=?) s1 s2 = System.String.Equals(s1, s2, System.StringComparison.InvariantCultureIgnoreCase)
   let (<>?) s1 s2 = not (s1 =? s2)
 
+#if NET40
+  open System.Reflection
+  type CustomAttributeData with
+    member x.AttributeType = x.Constructor.DeclaringType
+#endif
+
 open System.Diagnostics
 module Log =
   let source = new TraceSource("Yaaf.FSharp.Scriping")
@@ -51,30 +57,56 @@ module internal CompilerServiceExtensions =
   module internal FSharpAssemblyHelper =
       open System.IO
       let checker = FSharpChecker.Create()
+#if NET40
+      let defaultFrameworkVersion = "4.0"
+#else
+      let defaultFrameworkVersion = "4.5"
+#endif
 
-      let sysDir =
+      let referenceAssemblyDirectory frameworkVersion =
         let isWindows = System.Environment.OSVersion.Platform = System.PlatformID.Win32NT
-        let refDir = @"C:\Program Files (x86)\Reference Assemblies\Microsoft\Framework\.NETFramework\v4.0"
-        match isWindows, Directory.Exists refDir with
-        | true, true -> refDir
-        | _ -> System.Runtime.InteropServices.RuntimeEnvironment.GetRuntimeDirectory()
+        let baseDir =
+          if isWindows then
+            Path.Combine(
+                System.Environment.GetFolderPath(System.Environment.SpecialFolder.ProgramFilesX86),
+                @"Reference Assemblies\Microsoft\Framework\.NETFramework")
+          else Path.GetDirectoryName <| System.Runtime.InteropServices.RuntimeEnvironment.GetRuntimeDirectory()
+        let dirName =
+          if isWindows then sprintf "v%s" frameworkVersion
+          else frameworkVersion
+        let refDir = Path.Combine(baseDir, dirName)
+        if Directory.Exists refDir then refDir
+        else System.Runtime.InteropServices.RuntimeEnvironment.GetRuntimeDirectory()
 
       let getLib dir nm = 
           dir ++ nm + ".dll" 
-      let sysLib = getLib sysDir
-      let fsCore4300Dir =
+      let referenceAssembly frameworkVersion = getLib (referenceAssemblyDirectory frameworkVersion)
+      let fsCore frameworkVersion fsharpVersion =
         let isWindows = System.Environment.OSVersion.Platform = System.PlatformID.Win32NT
-        let refDir = @"C:\Program Files (x86)\Reference Assemblies\Microsoft\FSharp\.NETFramework\v4.0\4.3.0.0"
+        let refDir = sprintf @"C:\Program Files (x86)\Reference Assemblies\Microsoft\FSharp\.NETFramework\v%s\%s" frameworkVersion fsharpVersion
         match isWindows, Directory.Exists refDir with
         | true, true -> refDir
-        | _ -> sysDir
+        | _ -> referenceAssemblyDirectory defaultFrameworkVersion
+
+      let fsCore4300Dir = fsCore "4.0" "4.3.0.0"
+      let fsCore4310Dir = fsCore "4.0" "4.3.1.0"
+      let fsCore4400Dir = fsCore "4.0" "4.4.0.0"
       
+      let loadedFsCoreVersion =
+        let ass = typedefof<option<_>>.Assembly
+        let name = ass.GetName()
+        name.Version.ToString()
+
       let fscoreResolveDirs libDirs =
         [ yield System.AppDomain.CurrentDomain.BaseDirectory
-          yield sysDir
+          yield referenceAssemblyDirectory defaultFrameworkVersion
           yield System.Runtime.InteropServices.RuntimeEnvironment.GetRuntimeDirectory()
           yield! libDirs
           yield Environment.CurrentDirectory
+          // Prefer the currently loaded version
+          yield fsCore "4.0" loadedFsCoreVersion
+          yield fsCore4400Dir
+          yield fsCore4310Dir
           yield fsCore4300Dir
           yield! try Path.GetDirectoryName (Assembly.GetExecutingAssembly().Location)
                      |> Seq.singleton
@@ -86,7 +118,7 @@ module internal CompilerServiceExtensions =
                  with :? NotSupportedException -> Seq.empty
           if isMono then
             // See https://github.com/fsharp/FSharp.Compiler.Service/issues/317
-            yield Path.GetDirectoryName sysDir ++ "4.0"
+            yield referenceAssemblyDirectory "4.0"
         ]
 
       let tryCheckFsCore fscorePath =
@@ -114,29 +146,30 @@ module internal CompilerServiceExtensions =
         [ "FSharp.Core"
           "System.EnterpriseServices.Thunk" // See #4
           "System.EnterpriseServices.Wrapper" ] // See #4
-      let getDefaultSystemReferences () =
-        Directory.EnumerateFiles(sysDir)
+      let getDefaultSystemReferences frameworkVersion =
+        Directory.EnumerateFiles(referenceAssemblyDirectory frameworkVersion)
         |> Seq.filter (fun file -> Path.GetExtension file =? ".dll")
         |> Seq.map Path.GetFileNameWithoutExtension
         |> Seq.filter (fun f ->
             sysLibBlackList |> Seq.forall (fun backListed -> f <>? backListed))
 
-      let getCheckerArguments defaultReferences (fsCoreLib: _ option) dllFiles libDirs otherFlags =
+      let getCheckerArguments frameworkVersion defaultReferences (fsCoreLib: _ option) dllFiles libDirs otherFlags =
           let base1 = Path.GetTempFileName()
           let dllName = Path.ChangeExtension(base1, ".dll")
           let xmlName = Path.ChangeExtension(base1, ".xml")
           let fileName1 = Path.ChangeExtension(base1, ".fs")
           let projFileName = Path.ChangeExtension(base1, ".fsproj")
           File.WriteAllText(fileName1, """module M""")
+
           let args =
             [| //yield "--debug:full" 
                //yield "--define:DEBUG" 
                //yield "--optimize-" 
                yield "--nooptimizationdata"
                yield "--noframework"
-               yield sprintf "-I:%s" sysDir
+               yield sprintf "-I:%s" (referenceAssemblyDirectory frameworkVersion)
                for ref in defaultReferences do
-                 yield sprintf "-r:%s" (sysLib ref)
+                 yield sprintf "-r:%s" (referenceAssembly frameworkVersion ref)
                if fsCoreLib.IsSome then
                  yield sprintf "-r:%s" fsCoreLib.Value
                yield "--out:" + dllName
@@ -155,10 +188,36 @@ module internal CompilerServiceExtensions =
 
           projFileName, args
 
-      let getProjectReferences otherFlags libDirs dllFiles =
+      let findAssemblyVersion (assembly:Assembly) =
+          let customAttributes = assembly.GetCustomAttributesData()
+          let targetFramework =
+            customAttributes
+            |> Seq.tryFind (fun attr -> attr.AttributeType.Equals(typeof<System.Runtime.Versioning.TargetFrameworkAttribute>))
+            |> Option.map (fun attr -> attr.ConstructorArguments |> Seq.toList)
+          // ".NETFramework,Version=v4.5.1"
+          let frameworkName =
+              match targetFramework with
+              | Some (h :: _) -> Some (h.Value :?> string)
+              | _ -> None
+          match frameworkName with
+          | Some fName ->
+            let splits = fName.Split([|','|])
+            if splits.Length <> 2 then
+              Log.warnf "Expected a target framework formatted string and got: %s" fName
+              None
+            else
+              let framework = splits.[0]
+              let versionString = splits.[1]
+              assert (versionString.StartsWith "Version=v")
+              let version = versionString.Substring ("Version=v".Length)
+              Some (framework, version)
+          | None -> None
+
+      let getProjectReferences frameworkVersion otherFlags libDirs dllFiles =
           let otherFlags = defaultArg otherFlags Seq.empty
           let libDirs = defaultArg libDirs Seq.empty |> Seq.toList
           let dllFiles = dllFiles |> Seq.toList
+
           let hasAssembly asm =
             // we are explicitely requested
             hasAssembly asm dllFiles ||
@@ -174,11 +233,12 @@ module internal CompilerServiceExtensions =
             if not hasFsCoreLib then
               Some (findFSCore dllFiles libDirs)
             else None
+
           let defaultReferences =
-            getDefaultSystemReferences ()
+            getDefaultSystemReferences frameworkVersion
             |> Seq.filter (not << hasAssembly)
 
-          let projFileName, args = getCheckerArguments defaultReferences (fsCoreLib: _ option) dllFiles libDirs otherFlags
+          let projFileName, args = getCheckerArguments frameworkVersion defaultReferences (fsCoreLib: _ option) dllFiles libDirs otherFlags
           Log.verbf "Checker Arguments: %O" (Log.formatArgs args)
 
           let options = checker.GetProjectOptionsFromCommandLineArgs(projFileName, args)
@@ -206,13 +266,13 @@ module internal CompilerServiceExtensions =
             |> dict
           dllFiles |> Seq.map (fun file -> file, if referenceMap.ContainsKey file then Some referenceMap.[file] else None)
         
-      let getProjectReferencesSimple dllFiles = 
+      let getProjectReferencesSimple frameworkVersion dllFiles =
         let dllFiles = dllFiles |> Seq.toList
-        getProjectReferences None None dllFiles
+        getProjectReferences frameworkVersion None None dllFiles
         |> resolve dllFiles
         
-      let getProjectReferenceFromFile dllFile = 
-          getProjectReferencesSimple [ dllFile ]
+      let getProjectReferenceFromFile frameworkVersion dllFile =
+          getProjectReferencesSimple frameworkVersion [ dllFile ]
           |> Seq.exactlyOne
           |> snd
 
@@ -256,7 +316,8 @@ module internal CompilerServiceExtensions =
             //|> Seq.filter (fun file -> blacklist |> List.exists ((=?) (Path.GetFileName file)) |> not),
             Seq.empty
           else dllFiles |> List.toSeq, libDirs
-        FSharpAssemblyHelper.getProjectReferences otherFlags (Some _libDirs) _dllFiles
+        let frameworkVersion = FSharpAssemblyHelper.defaultFrameworkVersion
+        FSharpAssemblyHelper.getProjectReferences frameworkVersion otherFlags (Some _libDirs) _dllFiles
         |> FSharpAssemblyHelper.resolve dllFiles
             
 
@@ -267,7 +328,12 @@ module internal CompilerServiceExtensions =
               else
                   assembly.Location
           if loc = null then None
-          else FSharpAssemblyHelper.getProjectReferenceFromFile loc
+          else
+              let frameworkVersion =
+                  match FSharpAssemblyHelper.findAssemblyVersion assembly with
+                  | Some (_, ver) -> ver
+                  | _ -> FSharpAssemblyHelper.defaultFrameworkVersion
+              FSharpAssemblyHelper.getProjectReferenceFromFile frameworkVersion loc
 
       member x.FindType (t:Type) =
           x.Contents.Entities 
