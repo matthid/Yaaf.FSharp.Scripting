@@ -178,3 +178,20 @@ let ``check that we can access System.Numerics`` () =
     let res = fsiSession.EvalInteractionWithOutput ("""
 typeof<System.Numerics.BigInteger>.Name |> printf "%s" """)
     test <@ res.Output.ScriptOutput = "BigInteger" @>
+
+[<Test>]
+let ``Test that we can use objects after dispose`` () =
+  let incFunc, getFunc =
+    ( use fsiSession = ScriptHost.CreateNew(["MYDEFINE"])
+      fsiSession.EvalInteraction("""let mutable t = 0""")
+      fsiSession.EvalExpression<unit -> unit>("fun () -> t <- t + 1"),
+      fsiSession.EvalExpression<unit -> int>("fun () -> t"))
+
+  test <@ getFunc() = 0 @>
+  test <@ getFunc() = 0 @>
+  incFunc()
+  test <@ getFunc() = 1 @>
+  incFunc()
+  incFunc()
+  test <@ getFunc() = 3 @>
+  test <@ getFunc() = 3 @>

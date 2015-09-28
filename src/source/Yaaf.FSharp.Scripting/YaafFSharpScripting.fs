@@ -15,6 +15,7 @@ module internal Env =
     member x.AttributeType = x.Constructor.DeclaringType
 #endif
 
+open System
 open System.Diagnostics
 module Log =
   let source = new TraceSource("Yaaf.FSharp.Scriping")
@@ -475,6 +476,7 @@ type IFsiSession =
 #else
 type internal IFsiSession =
 #endif
+    inherit IDisposable
     /// Evaluate the given interaction.
     abstract member EvalInteractionWithOutput : string -> InteractionResult
     /// Try to evaluate the given expression and return its result.
@@ -1089,6 +1091,8 @@ module internal Helper =
             member __.TryEvalExpressionWithOutput text =
               let i, r = evalExpression text
               i, r |> Option.map (fun r -> r.ReflectionValue, r.ReflectionType)
+            member __.Dispose() =
+              (fsiSession :> IDisposable).Dispose()
         }
       // This works around a FCS bug, I would expect "fsi" to be defined already...
       // This is probably not the case because we do not have any type with the correct signature loaded
