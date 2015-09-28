@@ -10,7 +10,7 @@ let liveOut = new StringBuilder()
 let liveErr = new StringBuilder()
 let liveOutStream = new StringWriter(liveOut)
 let liveErrStream = new StringWriter(liveErr)
-let fixNewLines (l:string) = l.Replace("\r\n", "\n") 
+let fixNewLines (l:string) = l.Replace("\r\n", "\n")
 
 [<Test>]
 let ``Check if we don't call the forwarder`` () =
@@ -18,7 +18,7 @@ let ``Check if we don't call the forwarder`` () =
   ( use __ = ScriptHost.CreateForwardWriter ((fun _ -> called := true), removeNewLines = true)
     ())
   test <@ (not !called) @>
-  
+
 [<Test>]
 let ``Check if get the last input`` () =
   let sb = new StringBuilder()
@@ -26,7 +26,7 @@ let ``Check if get the last input`` () =
     forwarder.Write "test"
     ())
   test <@ fixNewLines (sb.ToString()) = "test\n" @>
-  
+
 [<Test>]
 let ``Check if get the multiple inputs`` () =
   let sb = new StringBuilder()
@@ -38,13 +38,13 @@ let ``Check if get the multiple inputs`` () =
     ())
   test <@ fixNewLines (sb.ToString()) = "testtest1\ntest2\n" @>
 
-let preventFsiSession = 
+let preventFsiSession =
   ScriptHost.CreateNew(
     ["MYDEFINE"],
     preventStdOut = true,
     outWriter = liveOutStream,
     errWriter = liveErrStream)
-let forwardFsiSession = 
+let forwardFsiSession =
   ScriptHost.CreateNew(
     ["MYDEFINE"],
     preventStdOut = true,
@@ -59,7 +59,7 @@ let withOutput f =
 let ``let with a given integer type works`` () =
     fsiSession.Let "test" 25
     test <@ fsiSession.EvalExpression<int> "test" = 25 @>
-    
+
 [<Test>]
 let ``test that we get the correct output`` () =
     let inter = fsiSession.EvalInteractionWithOutput "3 + 4"
@@ -119,7 +119,7 @@ let ``check that we get print output`` () =
     let res = fsiSession.EvalInteractionWithOutput ("""
 printf "%s" "test" """)
     test <@ res.Output.ScriptOutput = "test" @>
-    
+
 [<Test>]
 let ``check that we can work with live output`` () =
   let _, out, err = withOutput (fun () ->
@@ -146,12 +146,12 @@ let ``test Handle method`` () =
   | InvalidExpressionType _
   | InvalidCode _ -> Assert.Fail "expected 9"
   | Result r -> test <@ r = 9 @>
-  
+
   match fsiSession.Handle<string> fsiSession.EvalExpression "5 + 4" with
   | InvalidExpressionType e -> test <@ e.Value.IsSome @>
-  | InvalidCode _ 
+  | InvalidCode _
   | Result _ -> Assert.Fail "expected InvalidExpressionType failure"
-  
+
   match fsiSession.Handle<string> fsiSession.EvalExpression """failwith "test" : int """ with
   | InvalidCode _ -> ()
   | InvalidExpressionType _
@@ -166,7 +166,7 @@ printf "%s" <| System.IO.File.ReadAllText("Test.txt") """)
         test <@ res.Output.ScriptOutput = "content" @>
     finally
         File.Delete("Test.txt")
-    
+
 [<Test>]
 let ``check that we can access System.Linq`` () =
     let res = fsiSession.EvalInteractionWithOutput ("""
@@ -178,3 +178,20 @@ let ``check that we can access System.Numerics`` () =
     let res = fsiSession.EvalInteractionWithOutput ("""
 typeof<System.Numerics.BigInteger>.Name |> printf "%s" """)
     test <@ res.Output.ScriptOutput = "BigInteger" @>
+
+[<Test>]
+let ``Test that we can use objects after dispose`` () =
+  let incFunc, getFunc =
+    ( use fsiSession = ScriptHost.CreateNew(["MYDEFINE"])
+      fsiSession.EvalInteraction("""let mutable t = 0""")
+      fsiSession.EvalExpression<unit -> unit>("fun () -> t <- t + 1"),
+      fsiSession.EvalExpression<unit -> int>("fun () -> t"))
+
+  test <@ getFunc() = 0 @>
+  test <@ getFunc() = 0 @>
+  incFunc()
+  test <@ getFunc() = 1 @>
+  incFunc()
+  incFunc()
+  test <@ getFunc() = 3 @>
+  test <@ getFunc() = 3 @>

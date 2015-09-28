@@ -3,8 +3,8 @@
 #nowarn "25" // Binding incomplete: let [ t ] = list
 
 module internal Env =
-  let isMono = try System.Type.GetType("Mono.Runtime") <> null with _ -> false 
-  
+  let isMono = try System.Type.GetType("Mono.Runtime") <> null with _ -> false
+
   let (++) a b = System.IO.Path.Combine(a,b)
   let (=?) s1 s2 = System.String.Equals(s1, s2, System.StringComparison.InvariantCultureIgnoreCase)
   let (<>?) s1 s2 = not (s1 =? s2)
@@ -15,6 +15,7 @@ module internal Env =
     member x.AttributeType = x.Constructor.DeclaringType
 #endif
 
+open System
 open System.Diagnostics
 module Log =
   let source = new TraceSource("Yaaf.FSharp.Scriping")
@@ -34,9 +35,9 @@ module Log =
   let critf f = traceEventf TraceEventType.Critical f
   let verbf f = traceEventf TraceEventType.Verbose f
 
-  let formatArgs (args:_ seq) = 
+  let formatArgs (args:_ seq) =
     System.String.Join("\n  ", args)
-    |> sprintf "\n  %s" 
+    |> sprintf "\n  %s"
   let formatPaths paths =
     System.String.Join("\n  ", paths |> Seq.map (sprintf "\"%s\""))
     |> sprintf "\n[ %s ]"
@@ -78,8 +79,8 @@ module internal CompilerServiceExtensions =
         if Directory.Exists refDir then refDir
         else System.Runtime.InteropServices.RuntimeEnvironment.GetRuntimeDirectory()
 
-      let getLib dir nm = 
-          dir ++ nm + ".dll" 
+      let getLib dir nm =
+          dir ++ nm + ".dll"
       let referenceAssembly frameworkVersion = getLib (referenceAssemblyDirectory frameworkVersion)
       let fsCore frameworkVersion fsharpVersion =
         let isWindows = System.Environment.OSVersion.Platform = System.PlatformID.Win32NT
@@ -91,7 +92,7 @@ module internal CompilerServiceExtensions =
       let fsCore4300Dir = fsCore "4.0" "4.3.0.0"
       let fsCore4310Dir = fsCore "4.0" "4.3.1.0"
       let fsCore4400Dir = fsCore "4.0" "4.4.0.0"
-      
+
       let loadedFsCoreVersion =
         let ass = typedefof<option<_>>.Assembly
         let name = ass.GetName()
@@ -111,7 +112,7 @@ module internal CompilerServiceExtensions =
           yield! try Path.GetDirectoryName (Assembly.GetExecutingAssembly().Location)
                      |> Seq.singleton
                  with :? NotSupportedException -> Seq.empty
-          yield! try Path.GetDirectoryName 
+          yield! try Path.GetDirectoryName
                         (typeof<Microsoft.FSharp.Compiler.Interactive
                          .Shell.Settings.InteractiveSettings>.Assembly.Location)
                      |> Seq.singleton
@@ -132,11 +133,11 @@ module internal CompilerServiceExtensions =
       let findFSCore dllFiles libDirs =
         // lets find ourself some FSharp.Core.dll
         let tried =
-          dllFiles @ (fscoreResolveDirs libDirs 
+          dllFiles @ (fscoreResolveDirs libDirs
                       |> List.map (fun (l:string) -> getLib l "FSharp.Core"))
         match tried |> Seq.tryPick tryCheckFsCore with
         | Some s -> s
-        | None -> 
+        | None ->
             let paths = Log.formatPaths tried
             Log.critf "Could not find a FSharp.Core.dll (with bundled .optdata and .sigdata) in %s" paths
             failwithf "Could not find a FSharp.Core.dll (with bundled .optdata and .sigdata) in %s" paths
@@ -162,9 +163,9 @@ module internal CompilerServiceExtensions =
           File.WriteAllText(fileName1, """module M""")
 
           let args =
-            [| //yield "--debug:full" 
-               //yield "--define:DEBUG" 
-               //yield "--optimize-" 
+            [| //yield "--debug:full"
+               //yield "--define:DEBUG"
+               //yield "--optimize-"
                yield "--nooptimizationdata"
                yield "--noframework"
                yield sprintf "-I:%s" (referenceAssemblyDirectory frameworkVersion)
@@ -174,10 +175,10 @@ module internal CompilerServiceExtensions =
                  yield sprintf "-r:%s" fsCoreLib.Value
                yield "--out:" + dllName
                yield "--doc:" + xmlName
-               yield "--warn:3" 
-               yield "--fullpaths" 
-               yield "--flaterrors" 
-               yield "--target:library" 
+               yield "--warn:3"
+               yield "--fullpaths"
+               yield "--flaterrors"
+               yield "--target:library"
                for dllFile in dllFiles do
                    yield "-r:"+dllFile
                for libDir in libDirs do
@@ -242,7 +243,7 @@ module internal CompilerServiceExtensions =
           Log.verbf "Checker Arguments: %O" (Log.formatArgs args)
 
           let options = checker.GetProjectOptionsFromCommandLineArgs(projFileName, args)
-          
+
           let results = checker.ParseAndCheckProject(options) |> Async.RunSynchronously
           let mapError (err:FSharpErrorInfo) =
             sprintf "**** %s: %s" (if err.Severity = Microsoft.FSharp.Compiler.FSharpErrorSeverity.Error then "error" else "warning") err.Message
@@ -261,16 +262,16 @@ module internal CompilerServiceExtensions =
           references
           |> Seq.choose (fun (r:FSharpAssembly) -> r.FileName |> Option.map (fun f -> f, r))
       let resolve dllFiles references =
-          let referenceMap = 
+          let referenceMap =
             referenceMap references
             |> dict
           dllFiles |> Seq.map (fun file -> file, if referenceMap.ContainsKey file then Some referenceMap.[file] else None)
-        
+
       let getProjectReferencesSimple frameworkVersion dllFiles =
         let dllFiles = dllFiles |> Seq.toList
         getProjectReferences frameworkVersion None None dllFiles
         |> resolve dllFiles
-        
+
       let getProjectReferenceFromFile frameworkVersion dllFile =
           getProjectReferencesSimple frameworkVersion [ dllFile ]
           |> Seq.exactlyOne
@@ -281,10 +282,10 @@ module internal CompilerServiceExtensions =
               yield e
               yield! e.NestedEntities |> Seq.collect enumerateEntities
           ]
-       
+
   type Type with
       /// The FullName but without any generic parameter types.
-      member x.NamespaceName = 
+      member x.NamespaceName =
           x.FullName.Substring(0, match x.FullName.IndexOf("[") with | -1 -> x.FullName.Length | _ as i -> i)
 
   type FSharpAssembly with
@@ -319,7 +320,6 @@ module internal CompilerServiceExtensions =
         let frameworkVersion = FSharpAssemblyHelper.defaultFrameworkVersion
         FSharpAssemblyHelper.getProjectReferences frameworkVersion otherFlags (Some _libDirs) _dllFiles
         |> FSharpAssemblyHelper.resolve dllFiles
-            
 
       static member FromAssembly (assembly:Assembly) =
           let loc =
@@ -336,21 +336,20 @@ module internal CompilerServiceExtensions =
               FSharpAssemblyHelper.getProjectReferenceFromFile frameworkVersion loc
 
       member x.FindType (t:Type) =
-          x.Contents.Entities 
-              |> Seq.collect FSharpAssemblyHelper.enumerateEntities 
+          x.Contents.Entities
+              |> Seq.collect FSharpAssemblyHelper.enumerateEntities
               |> Seq.tryPick (fun entity ->
                   let namespaceName = t.NamespaceName.Replace("+", ".")
                   match entity.TryFullName with
-                  | Some fullName when namespaceName = fullName -> 
+                  | Some fullName when namespaceName = fullName ->
                       Some entity
                   | _ -> None)
-
 
   module internal TypeNameHelper =
       let rec fallbackName (t:System.Type) =
           t.Name
       and getFSharpTypeName (t:System.Type) =
-          let optFsharpName = 
+          let optFsharpName =
               match FSharpAssembly.FromAssembly t.Assembly with
               | Some fsAssembly ->
                   match fsAssembly.FindType t with
@@ -365,8 +364,8 @@ module internal CompilerServiceExtensions =
       /// The name of the current type instance in F# source code.
       member x.FSharpName = TypeNameHelper.getFSharpTypeName x
       /// Gets the FullName of the current type in F# source code.
-      member x.FSharpFullName = x.Namespace + "." + x.FSharpName 
-      
+      member x.FSharpFullName = x.Namespace + "." + x.FSharpName
+
   module internal TypeParamHelper =
       let rec getFSharpTypeParameterList (t:System.Type) =
           let builder = new System.Text.StringBuilder()
@@ -379,7 +378,7 @@ module internal CompilerServiceExtensions =
                   args |> Seq.iter (fun t -> builder.Append (sprintf "%s," (t.FSharpFullName + getFSharpTypeParameterList t)) |> ignore)
               builder.Length <- builder.Length - 1
               builder.Append ">" |> ignore
-          builder.ToString() 
+          builder.ToString()
 
   type Type with
       /// The parameter list of the current type, sets "_" if the current instance is a generic definition.
@@ -392,7 +391,7 @@ type OutputData =
 
 #if YAAF_FSHARP_SCRIPTING_PUBLIC
 type InteractionResult =
-#else 
+#else
 type internal InteractionResult =
 #endif
   { Output : OutputData; Error : OutputData }
@@ -401,25 +400,25 @@ type internal InteractionResult =
 [<System.Serializable>]
 #if YAAF_FSHARP_SCRIPTING_PUBLIC
 type FsiEvaluationException =
-#else 
+#else
 type internal FsiEvaluationException =
-#endif    
+#endif
     inherit System.Exception
     val private result : InteractionResult
     val private input : string
-    new (msg:string, input:string, result: InteractionResult, inner:System.Exception) = { 
+    new (msg:string, input:string, result: InteractionResult, inner:System.Exception) = {
       inherit System.Exception(msg, inner)
       input = input
       result = result }
     new (info:System.Runtime.Serialization.SerializationInfo, context:System.Runtime.Serialization.StreamingContext) = {
         inherit System.Exception(info, context)
         input = info.GetString("Input")
-        result = 
-          { Output = 
+        result =
+          { Output =
               { FsiOutput = info.GetString("Result_Output_FsiOutput")
                 ScriptOutput = info.GetString "Result_Output_ScriptOutput"
                 Merged = info.GetString "Result_Output_Merged" }
-            Error = 
+            Error =
               { FsiOutput = info.GetString("Result_Error_FsiOutput")
                 ScriptOutput = info.GetString "Result_Error_ScriptOutput"
                 Merged = info.GetString "Result_Error_Merged" } }
@@ -444,13 +443,13 @@ type internal FsiEvaluationException =
 [<System.Serializable>]
 #if YAAF_FSHARP_SCRIPTING_PUBLIC
 type FsiExpressionTypeException =
-#else 
+#else
 type internal FsiExpressionTypeException =
 #endif
     val private value : obj option
     val private expected : System.Type
     inherit FsiEvaluationException
-    new (msg:string, input:string, result: InteractionResult, expect : System.Type, ?value : obj) = { 
+    new (msg:string, input:string, result: InteractionResult, expect : System.Type, ?value : obj) = {
       inherit FsiEvaluationException(msg, input, result, null)
       expected = expect
       value = value }
@@ -461,10 +460,10 @@ type internal FsiExpressionTypeException =
     }
     member x.Value with get () = x.value
     member x.ExpectedType with get () = x.expected
-    
+
 #if YAAF_FSHARP_SCRIPTING_PUBLIC
 type HandledResult<'a> =
-#else 
+#else
 type internal HandledResult<'a> =
 #endif
   | InvalidExpressionType of FsiExpressionTypeException
@@ -474,9 +473,10 @@ type internal HandledResult<'a> =
 /// Represents a simple F# interactive session.
 #if YAAF_FSHARP_SCRIPTING_PUBLIC
 type IFsiSession =
-#else 
+#else
 type internal IFsiSession =
 #endif
+    inherit IDisposable
     /// Evaluate the given interaction.
     abstract member EvalInteractionWithOutput : string -> InteractionResult
     /// Try to evaluate the given expression and return its result.
@@ -494,39 +494,39 @@ module internal Extensions =
       member x.EvalInteraction s = x.EvalInteractionWithOutput s |> ignore
       member x.TryEvalExpression s = x.TryEvalExpressionWithOutput s |> snd
       member x.EvalScript s = x.EvalScriptWithOutput s |> ignore
-      
+
       member x.EvalExpressionWithOutput<'a> text =
         match x.TryEvalExpressionWithOutput text with
         | int, Some (value, _) ->
           match value with
           | :? 'a as v -> int, v
-          | o -> 
+          | o ->
             let msg = sprintf "the returned value (%O) doesn't match the expected type (%A) but has type %A" o (typeof<'a>) (o.GetType())
             raise <| new FsiExpressionTypeException(msg, text, int, typeof<'a>, o)
-        | int, _ -> 
+        | int, _ ->
           let msg = sprintf "no value was returned by expression: %s" text
           raise <| new FsiExpressionTypeException(msg, text, int, typeof<'a>)
 
       /// Evaluate the given expression and return its result.
-      member x.EvalExpression<'a> text = 
+      member x.EvalExpression<'a> text =
         x.EvalExpressionWithOutput<'a> text |> snd
-      /// Assigns the given object to the given name (ie "let varName = obj") 
+      /// Assigns the given object to the given name (ie "let varName = obj")
       member x.Let<'a> varName obj =
           let typeName = typeof<'a>.FSharpFullNameWithTypeArgs
           x.EvalInteraction (sprintf "let mutable __hook = ref Unchecked.defaultof<%s>" typeName)
           let __hook = x.EvalExpression<'a ref> "__hook"
           __hook := obj
           x.EvalInteraction (sprintf "let %s = !__hook" varName)
-          
-      member x.Open ns = 
+
+      member x.Open ns =
           x.EvalInteraction (sprintf "open %s" ns)
-      member x.Reference file = 
+      member x.Reference file =
           x.EvalInteraction (sprintf "#r @\"%s\"" file)
       member x.Load file =
           x.EvalInteraction (sprintf "#load @\"%s\" " file)
 
       /// Change the current directory (so that relative paths within scripts work properly).
-      /// Returns a handle to change the current directory back to it's initial state 
+      /// Returns a handle to change the current directory back to it's initial state
       /// (Because this will change the current directory of the currently running code as well!).
       member x.ChangeCurrentDirectory dir =
           let oldDir = System.IO.Directory.GetCurrentDirectory()
@@ -536,7 +536,7 @@ module internal Extensions =
           cd dir
           let isDisposed = ref false
           { new System.IDisposable with
-              member __.Dispose() = 
+              member __.Dispose() =
                 if not !isDisposed then
                   cd oldDir
                   isDisposed := true }
@@ -552,7 +552,6 @@ module internal Extensions =
         with
         | :? FsiExpressionTypeException as e -> InvalidExpressionType e
         | :? FsiEvaluationException as e -> InvalidCode e
-        
 
 #if YAAF_FSHARP_SCRIPTING_PUBLIC
 module Shell =
@@ -560,14 +559,14 @@ module Shell =
 module internal Shell =
 #endif
   /// Represents a simple (fake) event loop for the 'fsi' object
-  type SimpleEventLoop () = 
+  type SimpleEventLoop () =
     member __.Run () = ()
     member __.Invoke<'T>(f:unit -> 'T) = f()
     member __.ScheduleRestart() = ()
 
   /// Implements a simple 'fsi' object to be passed to the FSI evaluator
   [<Sealed>]
-  type InteractiveSettings()  = 
+  type InteractiveSettings()  =
     let mutable evLoop = (new SimpleEventLoop())
     let mutable showIDictionary = true
     let mutable showDeclarationValues = true
@@ -609,7 +608,7 @@ module internal ArgParser =
     if s.StartsWith (start) then
       StartsWith(s.Substring(start.Length))
       |> Some
-    else 
+    else
       None
   let (|FsiBoolArg|_|) argName s =
     match s with
@@ -628,7 +627,7 @@ type internal DebugMode =
   | Full
   | PdbOnly
   | NoDebug
-  
+
 #if YAAF_FSHARP_SCRIPTING_PUBLIC
 type OptimizationType =
 #else
@@ -639,7 +638,7 @@ type internal OptimizationType =
   | NoLocalOptimize
   | NoCrossOptimize
   | NoTailCalls
- 
+
 /// See https://msdn.microsoft.com/en-us/library/dd233172.aspx
 #if YAAF_FSHARP_SCRIPTING_PUBLIC
 type FsiOptions =
@@ -702,7 +701,7 @@ type internal FsiOptions =
       WarnLevel= None
       WarnAsError = None
       WarnAsErrorList = []
-      ScriptArgs  = [] } 
+      ScriptArgs  = [] }
   static member Default =
     // find a FSharp.Core.dll with optdata and sigdata
     let runtimeDir = System.Runtime.InteropServices.RuntimeEnvironment.GetRuntimeDirectory()
@@ -722,7 +721,7 @@ type internal FsiOptions =
         References = [ fsCore ]
         NonInteractive = true }
   static member ofArgs args =
-    args 
+    args
     |> Seq.fold (fun (parsed, state) (arg:string) ->
       match state, arg with
       | (false, Some cont), _ when not (arg.StartsWith ("--")) ->
@@ -733,20 +732,20 @@ type internal FsiOptions =
       | _, FsiBoolArg "--checked" enabled ->
         { parsed with Checked = Some enabled }, state
       | _, StartsWith "--codepage:" res -> { parsed with Codepage = Some (int res) }, state
-      | _, FsiBoolArg "--crossoptimize" enabled -> 
+      | _, FsiBoolArg "--crossoptimize" enabled ->
         { parsed with CrossOptimize = Some enabled }, state
       | _, StartsWith "--debug:" "pdbonly"
       | _, StartsWith "-g:" "pdbonly" ->
         { parsed with Debug = Some DebugMode.PdbOnly }, state
       | _, StartsWith "--debug:" "full"
-      | _, StartsWith "-g:" "full" 
+      | _, StartsWith "-g:" "full"
       | _, FsiBoolArg "--debug" true
       | _, FsiBoolArg "-g" true ->
         { parsed with Debug = Some DebugMode.Full }, state
       | _, FsiBoolArg "--debug" false
       | _, FsiBoolArg "-g" false ->
         { parsed with Debug = Some DebugMode.NoDebug }, state
-      | _, StartsWith "-d:" def 
+      | _, StartsWith "-d:" def
       | _, StartsWith "--define:" def ->
         { parsed with Defines = def :: parsed.Defines }, state
       | _, "--exec" ->
@@ -757,7 +756,7 @@ type internal FsiOptions =
         { parsed with FullPaths = true }, state
       | _, FsiBoolArg "--gui" enabled ->
         { parsed with Gui = Some enabled }, state
-      | _, StartsWith "-I:" lib 
+      | _, StartsWith "-I:" lib
       | _, StartsWith "--lib:" lib ->
         { parsed with LibDirs = lib :: parsed.LibDirs }, state
       | _, StartsWith "--load:" load ->
@@ -811,17 +810,17 @@ type internal FsiOptions =
           |> Seq.map int
           |> Seq.toList
         match warnOpts.[0], if warnOpts.Length > 1 then Some warnOpts.[1] else None with
-        | ':', _ -> 
+        | ':', _ ->
           { parsed with WarnAsErrorList = (true, parseList (warnOpts.Substring 1)) :: parsed.WarnAsErrorList }, state
         | '+', Some ':' ->
-          { parsed with WarnAsErrorList = (true, parseList (warnOpts.Substring 2)) :: parsed.WarnAsErrorList }, state 
+          { parsed with WarnAsErrorList = (true, parseList (warnOpts.Substring 2)) :: parsed.WarnAsErrorList }, state
         | '-', Some ':' ->
           { parsed with WarnAsErrorList = (false, parseList (warnOpts.Substring 2)) :: parsed.WarnAsErrorList }, state
         | _ -> failwithf "invalid --warnaserror argument: %s" arg
       | _, unknown -> { parsed with ScriptArgs = unknown :: parsed.ScriptArgs }, (true, None)
     ) (FsiOptions.Empty, (false, None))
     |> fst
-    |> (fun p -> 
+    |> (fun p ->
       { p with
           ScriptArgs = p.ScriptArgs |> List.rev
           Defines = p.Defines |> List.rev
@@ -866,22 +865,22 @@ type internal FsiOptions =
       yield! getSimpleBoolArg "--noframework" x.NoFramework
       yield! getSimpleBoolArg "--nologo" x.NoLogo
       yield! getSimpleBoolArg "--noninteractive" x.NonInteractive
-      
+
       yield! (match x.NoWarns with
               | [] -> None
               | l ->
                 l
                 |> Seq.map string
-                |> String.concat "," 
+                |> String.concat ","
                 |> sprintf "--nowarn:%s"
                 |> Some)
-             |> maybeArg 
+             |> maybeArg
       yield!
         match x.Optimize with
         | [] -> Seq.empty
         | opts ->
           opts
-          |> Seq.map (fun (enable, types) -> 
+          |> Seq.map (fun (enable, types) ->
             seq {
               yield sprintf "--optimize%s" (getMinusPlus enable)
               match types with
@@ -899,26 +898,26 @@ type internal FsiOptions =
             }
           )
         |> Seq.concat
-        
+
       yield! getSimpleBoolArg "--quiet" x.Quiet
       yield! getSimpleBoolArg "--quotations-debug" x.QuotationsDebug
       yield! getFsiBoolArg "--readline" x.ReadLine
-      
+
       yield! x.References
              |> Seq.map (sprintf "-r:%s")
-             
+
       yield! getFsiBoolArg "--tailcalls" x.TailCalls
       yield! x.Uses
              |> Seq.map (sprintf "--use:%s")
-             
+
       yield! getSimpleBoolArg "--utf8output" x.Utf8Output
-      
-      yield! maybeArgMap x.WarnLevel (fun i -> sprintf "--warn:%d" i) 
-        
+
+      yield! maybeArgMap x.WarnLevel (fun i -> sprintf "--warn:%d" i)
+
       yield! getFsiBoolArg "--warnaserror" x.WarnAsError
 
-      yield! x.WarnAsErrorList 
-             |> Seq.map (fun (enable, warnNums) -> 
+      yield! x.WarnAsErrorList
+             |> Seq.map (fun (enable, warnNums) ->
                warnNums
                |> Seq.map string
                |> String.concat ","
@@ -929,7 +928,7 @@ type internal FsiOptions =
       | l ->
         yield "--"
         yield! l
-    |]  
+    |]
 
 module internal Helper =
   open System
@@ -942,8 +941,8 @@ module internal Helper =
     override __.Write(c:char) = f (string c)
     override __.Write(c:string) = if c <> null then f c
     override __.WriteLine(c:string) = f <| sprintf "%s%s" c Environment.NewLine
-    override __.WriteLine() = f Environment.NewLine 
-    override __.Dispose (r) = 
+    override __.WriteLine() = f Environment.NewLine
+    override __.Dispose (r) =
       base.Dispose r
       if r then f null
     override __.Encoding = Encoding.UTF8
@@ -951,14 +950,14 @@ module internal Helper =
   type CombineTextWriter (l : TextWriter list) =
     inherit TextWriter()
     do assert (l.Length > 0)
-    let doAll f = 
+    let doAll f =
       l |> Seq.iter f
     override __.Flush() = doAll (fun t -> t.Flush())
     override __.Write(c:char) = doAll (fun t -> t.Write c)
     override __.Write(c:string) = if not (System.String.IsNullOrEmpty c) then doAll (fun t -> t.Write c)
     override __.WriteLine(c:string) = doAll (fun t -> t.WriteLine c)
     override __.WriteLine() = doAll (fun t -> t.WriteLine ())
-    override __.Dispose (r) = 
+    override __.Dispose (r) =
       base.Dispose r
       if r then doAll (fun t -> t.Dispose())
     override __.Encoding = l.Head.Encoding
@@ -974,20 +973,20 @@ module internal Helper =
     let fsiOutStream = new StringWriter(fsiOut) :> TextWriter
     let stdOutStream = new StringWriter(stdOut) :> TextWriter
     let mergedOutStream = new StringWriter(mergedOut) :> TextWriter
-    let fsiOutWriter = 
-      CombineTextWriter.Create [ yield fsiOutStream; yield mergedOutStream; 
+    let fsiOutWriter =
+      CombineTextWriter.Create [ yield fsiOutStream; yield mergedOutStream;
                                  if liveFsiWriter.IsSome then yield liveFsiWriter.Value ]
-    let stdOutWriter = 
-      CombineTextWriter.Create [ yield stdOutStream; yield mergedOutStream; 
+    let stdOutWriter =
+      CombineTextWriter.Create [ yield stdOutStream; yield mergedOutStream;
                                  if liveOutWriter.IsSome then yield liveOutWriter.Value ]
     let all = [ globalFsiOut, fsiOut; globalStdOut, stdOut; globalMergedOut, mergedOut ]
     member __.FsiOutWriter = fsiOutWriter
     member __.StdOutWriter = stdOutWriter
     member __.SaveOutput () =
       let [ fsi; std; merged ] =
-        all 
+        all
         |> List.map (fun (global', local) ->
-          let data = local.ToString() 
+          let data = local.ToString()
           if saveGlobal then global'.Append(data) |> ignore
           local.Clear() |> ignore
           data)
@@ -996,24 +995,23 @@ module internal Helper =
       let [ fsi; std; merged ] =
         all
         |> List.map (fun (global', local) -> if saveGlobal then global'.ToString() else local.ToString() )
-      { FsiOutput = fsi; ScriptOutput = std; Merged = merged} 
-  
-  
+      { FsiOutput = fsi; ScriptOutput = std; Merged = merged}
+
   let consoleCapture out err f =
     let defOut = Console.Out
-    let defErr = Console.Error 
+    let defErr = Console.Error
     try
       Console.SetOut out
       Console.SetError err
       f ()
-    finally 
+    finally
       Console.SetOut defOut
-      Console.SetError defErr 
-  
+      Console.SetError defErr
+
   let getSession (fsi : obj, options : FsiOptions, reportGlobal, liveOut, liveOutFsi, liveErr, liveErrFsi, preventStdOut) =
       // Intialize output and input streams
       let out = new OutStreamHelper(reportGlobal, liveOut, liveOutFsi)
-      let err = new OutStreamHelper(reportGlobal, liveErr, liveErrFsi) 
+      let err = new OutStreamHelper(reportGlobal, liveErr, liveErrFsi)
       let sbInput = new StringBuilder()
       let inStream = new StringReader("")
 
@@ -1050,13 +1048,13 @@ module internal Helper =
             session)
         with e ->
           let err, out, _ = getMessages()
-          raise <| 
+          raise <|
             new FsiEvaluationException(
               "Error while creating a fsi session.",
               sprintf "Fsi Arguments: %s" (Log.formatArgs args),
               { Output = out; Error = err },
               e)
-    
+
       let save_ f text =
         try
           redirectOut (fun () ->
@@ -1064,25 +1062,25 @@ module internal Helper =
             saveOutput(), res)
         with e ->
           let err, out, inp = getMessages()
-          raise <| 
+          raise <|
             new FsiEvaluationException(
               "Error while compiling or executing fsharp snippet.",
               (if reportGlobal then inp else text),
               { Output = out; Error = err },
               e)
-      
-      let save f = 
+
+      let save f =
           save_ (fun text ->
               if reportGlobal then
                 sbInput.AppendLine(text) |> ignore
               f text)
-      let saveScript f = 
+      let saveScript f =
           save_ (fun path ->
               if reportGlobal then
                 sbInput.AppendLine(sprintf "#script %s" path) |> ignore
               f path)
 
-      let evalInteraction = save fsiSession.EvalInteraction 
+      let evalInteraction = save fsiSession.EvalInteraction
       let evalExpression = save fsiSession.EvalExpression
       let evalScript = saveScript fsiSession.EvalScript
 
@@ -1090,9 +1088,11 @@ module internal Helper =
         { new IFsiSession with
             member __.EvalInteractionWithOutput text = evalInteraction text |> fst
             member __.EvalScriptWithOutput path = evalScript path |> fst
-            member __.TryEvalExpressionWithOutput text = 
-              let i, r = evalExpression text 
+            member __.TryEvalExpressionWithOutput text =
+              let i, r = evalExpression text
               i, r |> Option.map (fun r -> r.ReflectionValue, r.ReflectionType)
+            member __.Dispose() =
+              (fsiSession :> IDisposable).Dispose()
         }
       // This works around a FCS bug, I would expect "fsi" to be defined already...
       // This is probably not the case because we do not have any type with the correct signature loaded
@@ -1106,10 +1106,10 @@ module __ReflectHelper =
   open System.Reflection
   let rec tryFindMember (name : string) (memberType : MemberTypes) (declaringType : Type) =
       match declaringType.GetMember
-        ( name, 
-          memberType, 
-          ( System.Reflection.BindingFlags.Instance ||| 
-            System.Reflection.BindingFlags.Public ||| 
+        ( name,
+          memberType,
+          ( System.Reflection.BindingFlags.Instance |||
+            System.Reflection.BindingFlags.Public |||
             System.Reflection.BindingFlags.NonPublic)) with
       | [||] -> declaringType.GetInterfaces() |> Array.tryPick (tryFindMember name memberType)
       | [|m|] -> Some m
@@ -1135,45 +1135,45 @@ module __ReflectHelper =
 
   type ForwardEventLoop(ev) =
     member x.Inner = ev
-    member x.Run () = 
+    member x.Run () =
       callInstanceMethod0 ev [||] "Run" : unit
-    member x.Invoke<'T>(f:unit -> 'T) = 
+    member x.Invoke<'T>(f:unit -> 'T) =
       callInstanceMethod1 ev [| typeof<'T> |] "Invoke" f : 'T
-    member x.ScheduleRestart() = 
+    member x.ScheduleRestart() =
       callInstanceMethod0 ev [||] "ScheduleRestart" : unit
 
   type ForwardingInteractiveSettings(fsiObj) =
-    member self.FloatingPointFormat 
+    member self.FloatingPointFormat
       with get() = getInstanceProperty fsiObj "FloatingPointFormat" : string
       and set (v:string) = setInstanceProperty fsiObj "FloatingPointFormat" v
-    member self.FormatProvider 
+    member self.FormatProvider
       with get() = getInstanceProperty fsiObj "FormatProvider"  : System.IFormatProvider
       and set (v: System.IFormatProvider) = setInstanceProperty fsiObj "FormatProvider" v
-    member self.PrintWidth  
+    member self.PrintWidth
       with get() = getInstanceProperty fsiObj "PrintWidth" :int
       and set (v:int) = setInstanceProperty fsiObj "PrintWidth" v
-    member self.PrintDepth 
+    member self.PrintDepth
       with get() = getInstanceProperty fsiObj "PrintDepth" :int
       and set (v:int) = setInstanceProperty fsiObj "PrintDepth" v
-    member self.PrintLength 
+    member self.PrintLength
       with get() = getInstanceProperty fsiObj "PrintLength"  :int
       and set (v:int) = setInstanceProperty fsiObj "PrintLength" v
-    member self.PrintSize 
+    member self.PrintSize
       with get() = getInstanceProperty fsiObj "PrintSize"  :int
       and set (v:int) = setInstanceProperty fsiObj "PrintSize" v
-    member self.ShowDeclarationValues 
+    member self.ShowDeclarationValues
       with get() = getInstanceProperty fsiObj "ShowDeclarationValues" :bool
       and set (v:bool) = setInstanceProperty fsiObj "ShowDeclarationValues" v
     member self.ShowProperties
       with get() = getInstanceProperty fsiObj "ShowProperties" :bool
       and set (v:bool) = setInstanceProperty fsiObj "ShowProperties" v
-    member self.ShowIEnumerable 
+    member self.ShowIEnumerable
       with get() = getInstanceProperty fsiObj "ShowIEnumerable" :bool
       and set (v:bool) = setInstanceProperty fsiObj "ShowIEnumerable" v
-    member self.ShowIDictionary 
+    member self.ShowIDictionary
       with get() = getInstanceProperty fsiObj "ShowIDictionary" :bool
       and set (v:bool) = setInstanceProperty fsiObj "ShowIDictionary" v
-    member self.AddedPrinters 
+    member self.AddedPrinters
       with get() = getInstanceProperty fsiObj "AddedPrinters" : Choice<System.Type * (obj -> string), System.Type * (obj -> obj)> list
       and set (v:Choice<System.Type * (obj -> string), System.Type * (obj -> obj)> list) = setInstanceProperty fsiObj "AddedPrinters" v
     member self.CommandLineArgs
@@ -1190,7 +1190,7 @@ module __ReflectHelper =
       callInstanceMethod1 fsiObj [|typeof<'T>|] "AddPrintTransformer" printer
 let fsi = __ReflectHelper.ForwardingInteractiveSettings(__rawfsi)"""
       session
-      
+
 open System.IO
 #if YAAF_FSHARP_SCRIPTING_PUBLIC
 type ScriptHost private() =
@@ -1227,26 +1227,26 @@ type internal ScriptHost private() =
         else
         builder.Append data |> ignore
         clearBuilder())
-    let withBuffer = if defaultArg removeNewLines false then bufferF else (fun s -> if s <> null then f s) 
+    let withBuffer = if defaultArg removeNewLines false then bufferF else (fun s -> if s <> null then f s)
     let myF data = Helper.consoleCapture captureOut captureErr (fun () -> withBuffer data)
-    Helper.ForwardTextWriter.Create 
+    Helper.ForwardTextWriter.Create
       (if defaultArg revertRedirect true then myF else withBuffer)
-  /// Create a new IFsiSession by specifying all fsi arguments manually. 
-  static member Create 
-   ( opts : FsiOptions, ?fsiObj : obj, ?reportGlobal, 
+  /// Create a new IFsiSession by specifying all fsi arguments manually.
+  static member Create
+   ( opts : FsiOptions, ?fsiObj : obj, ?reportGlobal,
      ?outWriter : TextWriter, ?fsiOutWriter : TextWriter,
      ?errWriter : TextWriter, ?fsiErrWriter : TextWriter,
      ?preventStdOut) =
     Helper.getSession(
-      defaultArg fsiObj (Microsoft.FSharp.Compiler.Interactive.Shell.Settings.fsi :> obj), 
+      defaultArg fsiObj (Microsoft.FSharp.Compiler.Interactive.Shell.Settings.fsi :> obj),
       opts,
       defaultArg reportGlobal false, outWriter, fsiOutWriter, errWriter, fsiErrWriter,
       defaultArg preventStdOut false)
   /// Quickly create a new IFsiSession with some sane defaults
-  static member CreateNew 
-   ( ?defines : string list, ?fsiObj : obj, ?reportGlobal, 
+  static member CreateNew
+   ( ?defines : string list, ?fsiObj : obj, ?reportGlobal,
      ?outWriter : TextWriter, ?fsiOutWriter : TextWriter,
-     ?errWriter : TextWriter, ?fsiErrWriter : TextWriter, 
+     ?errWriter : TextWriter, ?fsiErrWriter : TextWriter,
      ?preventStdOut) =
     let opts =
       { FsiOptions.Default with

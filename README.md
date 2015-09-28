@@ -65,7 +65,7 @@ It builds on top of FSharp.Compiler.Service but provides a nice an clean API:
 
 ```fsharp
 open Yaaf.FSharp.Scripting
-let fsiSession = ScriptHost.CreateNew()
+use fsiSession = ScriptHost.CreateNew()
 fsiSession.Reference (@"C:\MyAssembly.dll")
 fsiSession.Open ("MyAssembly")
 
