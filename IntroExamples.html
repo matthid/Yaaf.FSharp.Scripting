@@ -89,7 +89,7 @@ Return values will be constant no matter the configuration options!</p>
 <td class="snippet"><pre class="fssnip highlighted"><code lang="fsharp"><span class="k">open</span> <span onmouseout="hideTip(event, 'fs1', 1)" onmouseover="showTip(event, 'fs1', 1)" class="i">Yaaf</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs2', 2)" onmouseover="showTip(event, 'fs2', 2)" class="i">FSharp</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs3', 3)" onmouseover="showTip(event, 'fs3', 3)" class="i">Scripting</span>
 
 <span class="c">// Setup for all future interactions</span>
-<span class="k">let</span> <span onmouseout="hideTip(event, 'fs4', 4)" onmouseover="showTip(event, 'fs4', 4)" class="i">liveSession</span> <span class="o">=</span>
+<span class="k">use</span> <span onmouseout="hideTip(event, 'fs4', 4)" onmouseover="showTip(event, 'fs4', 4)" class="i">liveSession</span> <span class="o">=</span>
     <span class="k">try</span> <span onmouseout="hideTip(event, 'fs5', 5)" onmouseover="showTip(event, 'fs5', 5)" class="t">ScriptHost</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs6', 6)" onmouseover="showTip(event, 'fs6', 6)" class="f">CreateNew</span>
           (<span class="i">preventStdOut</span> <span class="o">=</span> <span class="k">true</span>,
            <span class="i">outWriter</span> <span class="o">=</span> <span onmouseout="hideTip(event, 'fs5', 7)" onmouseover="showTip(event, 'fs5', 7)" class="t">ScriptHost</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs7', 8)" onmouseover="showTip(event, 'fs7', 8)" class="f">CreateForwardWriter</span> (<span onmouseout="hideTip(event, 'fs8', 9)" onmouseover="showTip(event, 'fs8', 9)" class="f">printfn</span> <span class="s">&quot;Script stdout: </span><span class="pf">%s</span><span class="s">&quot;</span>),
@@ -120,7 +120,7 @@ Return values will be constant no matter the configuration options!</p>
 <span class="l">9: </span>
 </pre></td>
 <td class="snippet"><pre class="fssnip highlighted"><code lang="fsharp"><span class="c">// Use the &quot;WithOutput&quot; members and work with the return type</span>
-<span class="k">let</span> <span onmouseout="hideTip(event, 'fs17', 24)" onmouseover="showTip(event, 'fs17', 24)" class="i">directSession</span> <span class="o">=</span>
+<span class="k">use</span> <span onmouseout="hideTip(event, 'fs17', 24)" onmouseover="showTip(event, 'fs17', 24)" class="i">directSession</span> <span class="o">=</span>
     <span class="k">try</span> <span onmouseout="hideTip(event, 'fs5', 25)" onmouseover="showTip(event, 'fs5', 25)" class="t">ScriptHost</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs6', 26)" onmouseover="showTip(event, 'fs6', 26)" class="f">CreateNew</span>(<span class="i">preventStdOut</span> <span class="o">=</span> <span class="k">true</span>)
     <span class="k">with</span> <span class="o">:?</span> <span onmouseout="hideTip(event, 'fs9', 27)" onmouseover="showTip(event, 'fs9', 27)" class="t">FsiEvaluationException</span> <span class="k">as</span> <span onmouseout="hideTip(event, 'fs10', 28)" onmouseover="showTip(event, 'fs10', 28)" class="i">e</span> <span class="k">-&gt;</span>
         <span onmouseout="hideTip(event, 'fs11', 29)" onmouseover="showTip(event, 'fs11', 29)" class="f">printf</span> <span class="s">&quot;FsiEvaluationSession could not be created.&quot;</span>

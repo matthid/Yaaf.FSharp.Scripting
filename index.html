@@ -37,7 +37,7 @@
       <div class="row">
         <div class="span9" id="main">
           
-<!-- GENERATED FROM COMMIT: 3a5f2a0a1fa604c12ad2db91187fce51e2b8ad4f -->
+<!-- GENERATED FROM COMMIT: f81675d2fa1f33d8bb9b3b842965731c335b2892 -->
 <h1><a name="Yaaf-FSharp-Scripting" class="anchor" href="#Yaaf-FSharp-Scripting">Yaaf.FSharp.Scripting</a></h1>
 
 <h2><a name="Documentation" class="anchor" href="#Documentation"><a href="https://matthid.github.io/Yaaf.FSharp.Scripting/">Documentation</a></a></h2>
@@ -150,7 +150,7 @@ to add a nuget dependency (<code>Yaaf.FSharp.Scripting</code>) to your final pac
 <span class="l">40: </span>
 </pre></td>
 <td class="snippet"><pre class="fssnip highlighted"><code lang="fsharp"><span class="k">open</span> <span class="i">Yaaf</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs1', 3)" onmouseover="showTip(event, 'fs1', 3)" class="i">FSharp</span><span class="o">.</span><span class="i">Scripting</span>
-<span class="k">let</span> <span class="i">fsiSession</span> <span class="o">=</span> <span class="i">ScriptHost</span><span class="o">.</span><span class="i">CreateNew</span>()
+<span class="k">use</span> <span class="i">fsiSession</span> <span class="o">=</span> <span class="i">ScriptHost</span><span class="o">.</span><span class="i">CreateNew</span>()
 <span class="i">fsiSession</span><span class="o">.</span><span class="i">Reference</span> (<span class="s">@&quot;C:\MyAssembly.dll&quot;</span>)
 <span class="i">fsiSession</span><span class="o">.</span><span class="i">Open</span> (<span class="s">&quot;MyAssembly&quot;</span>)
 
