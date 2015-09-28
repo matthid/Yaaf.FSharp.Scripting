@@ -41,7 +41,7 @@ Return values will be constant no matter the configuration options!
 open Yaaf.FSharp.Scripting
 
 // Setup for all future interactions
-let liveSession =
+use liveSession =
     try ScriptHost.CreateNew
           (preventStdOut = true,
            outWriter = ScriptHost.CreateForwardWriter (printfn "Script stdout: %s"),
@@ -61,7 +61,7 @@ liveSession.EvalInteraction """printf "Some test" """
 
 (*** define-output: direct ***)
 // Use the "WithOutput" members and work with the return type
-let directSession =
+use directSession =
     try ScriptHost.CreateNew(preventStdOut = true)
     with :? FsiEvaluationException as e ->
         printf "FsiEvaluationSession could not be created."

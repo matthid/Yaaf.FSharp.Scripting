@@ -1,4 +1,8 @@
-﻿### 1.3.0
+### 1.4.0
+
+ * ScriptHost is now disposable to be able to dispose the underlying FsiEvaluationSession, fixes https://github.com/matthid/Yaaf.FSharp.Scripting/issues/5
+
+### 1.3.0
 
  * Use 4.5 reference assemblies in the net45 build.
    You can define NET40 if you include the source and want to continue to use the NET40 reference assemblies.
