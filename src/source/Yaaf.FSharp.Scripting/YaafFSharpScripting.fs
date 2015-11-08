@@ -316,7 +316,7 @@ module internal CompilerServiceExtensions =
             |> Seq.append dllFiles,
             //|> Seq.filter (fun file -> blacklist |> List.exists ((=?) (Path.GetFileName file)) |> not),
             Seq.empty
-          else dllFiles |> List.toSeq, libDirs
+          else dllFiles |> List.toSeq, libDirs |> Seq.map (fun l -> Path.GetFullPath (l))
         let frameworkVersion = FSharpAssemblyHelper.defaultFrameworkVersion
         FSharpAssemblyHelper.getProjectReferences frameworkVersion otherFlags (Some _libDirs) _dllFiles
         |> FSharpAssemblyHelper.resolve dllFiles
