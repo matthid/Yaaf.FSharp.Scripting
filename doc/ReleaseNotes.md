@@ -1,3 +1,7 @@
+### 1.5.1
+
+ * Fix forward function not being called with string.Empty if the last line ends with a new-line-character and removeEmptyLines = true (CreateForwardWriter).
+
 ### 1.5.0
 
  * Add a DynamicAssembly and a DynamicAssemblyBuilder property to IFSIEvaluationSession to be able to save the result.
