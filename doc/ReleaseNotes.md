@@ -1,3 +1,8 @@
+### 1.4.1
+
+ * Use ProgramFilesX86 instead on hard coded value.
+ * Minor code improvements.
+
 ### 1.4.0
 
  * ScriptHost is now disposable to be able to dispose the underlying FsiEvaluationSession, fixes https://github.com/matthid/Yaaf.FSharp.Scripting/issues/5

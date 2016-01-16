@@ -3,8 +3,8 @@
 #nowarn "25" // Binding incomplete: let [ t ] = list
 
 module internal Env =
-  let isMono = try System.Type.GetType("Mono.Runtime") <> null with _ -> false
-
+  let inline isNull o = obj.ReferenceEquals(null, o)
+  let isMono = try System.Type.GetType("Mono.Runtime") |> isNull |> not with _ -> false
   let (++) a b = System.IO.Path.Combine(a,b)
   let (=?) s1 s2 = System.String.Equals(s1, s2, System.StringComparison.InvariantCultureIgnoreCase)
   let (<>?) s1 s2 = not (s1 =? s2)
@@ -84,7 +84,10 @@ module internal CompilerServiceExtensions =
       let referenceAssembly frameworkVersion = getLib (referenceAssemblyDirectory frameworkVersion)
       let fsCore frameworkVersion fsharpVersion =
         let isWindows = System.Environment.OSVersion.Platform = System.PlatformID.Win32NT
-        let refDir = sprintf @"C:\Program Files (x86)\Reference Assemblies\Microsoft\FSharp\.NETFramework\v%s\%s" frameworkVersion fsharpVersion
+        let refDir =
+          Path.Combine(
+            System.Environment.GetFolderPath(System.Environment.SpecialFolder.ProgramFilesX86),
+            sprintf @"Reference Assemblies\Microsoft\FSharp\.NETFramework\v%s\%s" frameworkVersion fsharpVersion)
         match isWindows, Directory.Exists refDir with
         | true, true -> refDir
         | _ -> referenceAssemblyDirectory defaultFrameworkVersion
@@ -316,7 +319,7 @@ module internal CompilerServiceExtensions =
             |> Seq.append dllFiles,
             //|> Seq.filter (fun file -> blacklist |> List.exists ((=?) (Path.GetFileName file)) |> not),
             Seq.empty
-          else dllFiles |> List.toSeq, libDirs
+          else dllFiles |> List.toSeq, libDirs |> Seq.map (fun l -> Path.GetFullPath (l))
         let frameworkVersion = FSharpAssemblyHelper.defaultFrameworkVersion
         FSharpAssemblyHelper.getProjectReferences frameworkVersion otherFlags (Some _libDirs) _dllFiles
         |> FSharpAssemblyHelper.resolve dllFiles
@@ -327,7 +330,7 @@ module internal CompilerServiceExtensions =
                   FSharpAssemblyHelper.findFSCore [assembly.Location] []
               else
                   assembly.Location
-          if loc = null then None
+          if isNull loc then None
           else
               let frameworkVersion =
                   match FSharpAssemblyHelper.findAssemblyVersion assembly with
@@ -594,14 +597,14 @@ module internal Shell =
     member __.AddedPrinters with get() = addedPrinters and set v = addedPrinters <- v
     member __.CommandLineArgs with get() = args  and set v  = args <- v
     member __.AddPrinter(printer : 'T -> string) =
-      addedPrinters <- Choice1Of2 (typeof<'T>, (fun (x:obj) -> printer (unbox x))) :: addedPrinters
+      addedPrinters <- Choice1Of2 (typeof<'T>, unbox >> printer) :: addedPrinters
 
     member __.EventLoop
       with get () = evLoop
       and set (_:SimpleEventLoop)  = ()
 
     member __.AddPrintTransformer(printer : 'T -> obj) =
-      addedPrinters <- Choice2Of2 (typeof<'T>, (fun (x:obj) -> printer (unbox x))) :: addedPrinters
+      addedPrinters <- Choice2Of2 (typeof<'T>, unbox >> printer) :: addedPrinters
 
 module internal ArgParser =
   let (|StartsWith|_|) start (s:string) =
@@ -939,7 +942,7 @@ module internal Helper =
     inherit TextWriter()
     override __.Flush() = ()
     override __.Write(c:char) = f (string c)
-    override __.Write(c:string) = if c <> null then f c
+    override __.Write(c:string) = if isNull c |> not then f c
     override __.WriteLine(c:string) = f <| sprintf "%s%s" c Environment.NewLine
     override __.WriteLine() = f Environment.NewLine
     override __.Dispose (r) =
