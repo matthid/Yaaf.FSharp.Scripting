@@ -20,9 +20,21 @@ let ``Check if we don't call the forwarder`` () =
   test <@ (not !called) @>
 
 [<Test>]
+let ``Check if we can detect a newline charater at the end with removeNewLines`` () =
+  let called = ref 0
+  ( use forwarder = ScriptHost.CreateForwardWriter ((fun _ -> called := !called + 1), removeNewLines = true)
+    forwarder.WriteLine "test")
+  test <@ !called = 2 @>
+
+  called := 0
+  ( use forwarder = ScriptHost.CreateForwardWriter ((fun _ -> called := !called + 1), removeNewLines = true)
+    forwarder.Write "test")
+  test <@ !called = 1 @>
+
+[<Test>]
 let ``Check if get the last input`` () =
   let sb = new StringBuilder()
-  ( use forwarder = ScriptHost.CreateForwardWriter ((fun s -> sb.AppendLine s |> ignore), removeNewLines = true)
+  ( use forwarder = ScriptHost.CreateForwardWriter (sb.AppendLine >> ignore, removeNewLines = true)
     forwarder.Write "test"
     ())
   test <@ fixNewLines (sb.ToString()) = "test\n" @>
@@ -30,7 +42,7 @@ let ``Check if get the last input`` () =
 [<Test>]
 let ``Check if get the multiple inputs`` () =
   let sb = new StringBuilder()
-  ( use forwarder = ScriptHost.CreateForwardWriter ((fun s -> sb.AppendLine s |> ignore), removeNewLines = true)
+  ( use forwarder = ScriptHost.CreateForwardWriter (sb.AppendLine >> ignore, removeNewLines = true)
     forwarder.Write "test"
     forwarder.Write "test1"
     forwarder.WriteLine ()
@@ -48,8 +60,8 @@ let forwardFsiSession =
   ScriptHost.CreateNew(
     ["MYDEFINE"],
     preventStdOut = true,
-    outWriter = ScriptHost.CreateForwardWriter (fun s -> liveOut.Append s |> ignore),
-    errWriter = ScriptHost.CreateForwardWriter (fun s -> liveErr.Append s |> ignore))
+    outWriter = ScriptHost.CreateForwardWriter (liveOut.Append >> ignore),
+    errWriter = ScriptHost.CreateForwardWriter (liveErr.Append >> ignore))
 let withOutput f =
   liveOut.Clear() |> ignore
   liveErr.Clear() |> ignore
@@ -77,8 +89,8 @@ let ``check that default config produces no error output`` () =
       ScriptHost.CreateNew(
         ["MYDEFINE"],
         preventStdOut = true,
-        outWriter = ScriptHost.CreateForwardWriter (fun s -> liveOut.Append s |> ignore),
-        errWriter = ScriptHost.CreateForwardWriter (fun s -> liveErr.Append s |> ignore)))
+        outWriter = ScriptHost.CreateForwardWriter (liveOut.Append >> ignore),
+        errWriter = ScriptHost.CreateForwardWriter (liveErr.Append >> ignore)))
   test <@ System.String.IsNullOrWhiteSpace(err) @>
 
 [<Test>]
