@@ -1,3 +1,7 @@
+### 1.5.0
+
+ * Add a DynamicAssembly and a DynamicAssemblyBuilder property to IFSIEvaluationSession to be able to save the result.
+
 ### 1.4.1
 
  * Use ProgramFilesX86 instead on hard coded value.

@@ -486,6 +486,8 @@ type internal IFsiSession =
     abstract member TryEvalExpressionWithOutput : string -> InteractionResult * ((obj * System.Type) option)
     /// Evaluate the given script.
     abstract member EvalScriptWithOutput : string -> InteractionResult
+    /// Gets the currently build dynamic assembly.
+    abstract member DynamicAssembly : System.Reflection.Assembly
 
 [<AutoOpen>]
 #if YAAF_FSHARP_SCRIPTING_PUBLIC
@@ -555,6 +557,12 @@ module internal Extensions =
         with
         | :? FsiExpressionTypeException as e -> InvalidExpressionType e
         | :? FsiEvaluationException as e -> InvalidCode e
+
+      // Try to get the AssemblyBuilder
+      member x.DynamicAssemblyBuilder =
+        match x.DynamicAssembly with
+        | :? System.Reflection.Emit.AssemblyBuilder as builder -> builder
+        | _ -> failwith "The DynamicAssembly property is no AssemblyBuilder!"
 
 #if YAAF_FSHARP_SCRIPTING_PUBLIC
 module Shell =
@@ -1094,6 +1102,8 @@ module internal Helper =
             member __.TryEvalExpressionWithOutput text =
               let i, r = evalExpression text
               i, r |> Option.map (fun r -> r.ReflectionValue, r.ReflectionType)
+            member __.DynamicAssembly =
+              fsiSession.DynamicAssembly
             member __.Dispose() =
               (fsiSession :> IDisposable).Dispose()
         }
