@@ -62,7 +62,7 @@
                       </div>
         </td>
         <td class="xmldoc">
-            <a href="https://github.com/matthid/Yaaf.FSharp.Scripting/blob/master/src/source/Yaaf.FSharp.Scripting/YaafFSharpScripting.fs#L1248-1248" class="github-link">
+            <a href="https://github.com/matthid/Yaaf.FSharp.Scripting/blob/master/src/source/Yaaf.FSharp.Scripting/YaafFSharpScripting.fs#L1257-1257" class="github-link">
               <img src="../content/img/github.png" class="normal" />
               <img src="../content/img/github-blue.png" class="hover" />
             </a>
@@ -82,7 +82,7 @@
                       </div>
         </td>
         <td class="xmldoc">
-            <a href="https://github.com/matthid/Yaaf.FSharp.Scripting/blob/master/src/source/Yaaf.FSharp.Scripting/YaafFSharpScripting.fs#L1217-1217" class="github-link">
+            <a href="https://github.com/matthid/Yaaf.FSharp.Scripting/blob/master/src/source/Yaaf.FSharp.Scripting/YaafFSharpScripting.fs#L1221-1221" class="github-link">
               <img src="../content/img/github.png" class="normal" />
               <img src="../content/img/github-blue.png" class="hover" />
             </a>
@@ -90,7 +90,11 @@
  Creates a forwarder Textwriter, which forwards all output to the given function.
  Set revertRedirect only to "false" if you know that f doesn't print anything to the stdout.
  When revertRedirect is true we capture the Console.Out property and set it before calling f.
- RemoveNewLines
+ removeNewLines handles the newline characters properly and calls f for every new line instead of every call to
+ to the underlaying writers.
+ The difference is that with removeNewLines you should use printfn and get lines without newline characters.
+ On the other hand without removeNewLines you are called on every TextWriter.Write call,
+ so you might be called multiple times for a single lines or a single time for multiple lines.
 </br>
         </td>
       </tr>
@@ -105,7 +109,7 @@
                       </div>
         </td>
         <td class="xmldoc">
-            <a href="https://github.com/matthid/Yaaf.FSharp.Scripting/blob/master/src/source/Yaaf.FSharp.Scripting/YaafFSharpScripting.fs#L1259-1259" class="github-link">
+            <a href="https://github.com/matthid/Yaaf.FSharp.Scripting/blob/master/src/source/Yaaf.FSharp.Scripting/YaafFSharpScripting.fs#L1268-1268" class="github-link">
               <img src="../content/img/github.png" class="normal" />
               <img src="../content/img/github-blue.png" class="hover" />
             </a>
