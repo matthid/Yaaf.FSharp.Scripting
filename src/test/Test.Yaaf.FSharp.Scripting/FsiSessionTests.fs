@@ -207,3 +207,24 @@ let ``Test that we can use objects after dispose`` () =
   incFunc()
   test <@ getFunc() = 3 @>
   test <@ getFunc() = 3 @>
+
+[<Test>]
+let ``Test that we can call with full debug`` () =
+  ( use fsiSession = ScriptHost.Create({ FsiOptions.Default with Debug = Some DebugMode.Full })
+    let res = fsiSession.EvalInteractionWithOutput ("""
+System.Linq.Enumerable.Average([1; 3]) |> int |> printf "%d" """)
+    test <@ res.Output.ScriptOutput = "2" @>)
+
+[<Test>]
+let ``Test that we can call with no debug`` () =
+  ( use fsiSession = ScriptHost.Create({ FsiOptions.Default with Debug = Some DebugMode.NoDebug })
+    let res = fsiSession.EvalInteractionWithOutput ("""
+System.Linq.Enumerable.Average([1; 3]) |> int |> printf "%d" """)
+    test <@ res.Output.ScriptOutput = "2" @>)
+
+[<Test>]
+let ``Test that we can call with pdbonly debug`` () =
+  ( use fsiSession = ScriptHost.Create({ FsiOptions.Default with Debug = Some DebugMode.PdbOnly })
+    let res = fsiSession.EvalInteractionWithOutput ("""
+System.Linq.Enumerable.Average([1; 3]) |> int |> printf "%d" """)
+    test <@ res.Output.ScriptOutput = "2" @>)

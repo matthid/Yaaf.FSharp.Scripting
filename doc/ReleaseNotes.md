@@ -1,3 +1,7 @@
+### 1.5.2
+
+ * Workaround -g[+|-|:full|:pdbonly] not working as documented.
+
 ### 1.5.1
 
  * Fix forward function not being called with string.Empty if the last line ends with a new-line-character and removeEmptyLines = true (CreateForwardWriter).
