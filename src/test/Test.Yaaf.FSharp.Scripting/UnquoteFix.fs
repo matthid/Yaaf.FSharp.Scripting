@@ -41,7 +41,7 @@ let inline expectedExnButNoExnRaisedMsg ty1 = sprintf "Expected exception of typ
 let inline raises<'a when 'a :> exn> (expr:Expr) =
     let reducedExprs, lastExpr = reduceFullyAndGetLast expr
     match lastExpr with
-    | Patterns.Value(lastValue,lastValueTy) when lastValue <> null && typeof<exn>.IsAssignableFrom(lastValueTy) -> //it's an exception
+    | Patterns.Value(lastValue,lastValueTy) when isNull lastValue |> not && typeof<exn>.IsAssignableFrom(lastValueTy) -> //it's an exception
         if typeof<'a>.IsAssignableFrom(lastValueTy) then () //it's the correct exception
         else //it's not the correct exception
             //try
@@ -58,7 +58,7 @@ let inline raises<'a when 'a :> exn> (expr:Expr) =
 let inline raisesWith<'a when 'a :> exn> (expr:Expr) (exnWhen: 'a -> Expr<bool>) =
     let reducedExprs, lastExpr = reduceFullyAndGetLast expr
     match lastExpr with
-    | Patterns.Value(lastValue,lastValueTy) when lastValue <> null && typeof<exn>.IsAssignableFrom(lastValueTy) -> //it's an exception
+    | Patterns.Value(lastValue,lastValueTy) when isNull lastValue |> not && typeof<exn>.IsAssignableFrom(lastValueTy) -> //it's an exception
         if typeof<'a>.IsAssignableFrom(lastValueTy) then //it's the correct exception
             //but we also need to check the exnWhen condition is true
             let lastValue = lastValue :?> 'a

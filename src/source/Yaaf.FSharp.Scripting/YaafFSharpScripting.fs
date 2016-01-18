@@ -860,10 +860,11 @@ type internal FsiOptions =
       yield! getFsiBoolArg "--checked" x.Checked
       yield! maybeArgMap x.Codepage (fun i -> sprintf "--codepage:%d" i)
       yield! getFsiBoolArg "--crossoptimize" x.CrossOptimize
+      // ! -g[+|-|:full|:pdbonly] is not working, see https://github.com/Microsoft/visualfsharp/issues/311
       yield! maybeArgMap x.Debug (function
-        | Full -> "-g+"
-        | PdbOnly -> "-g:pdbonly"
-        | NoDebug -> "-g-")
+        | Full -> "--debug:full"
+        | PdbOnly -> "--debug:pdbonly"
+        | NoDebug -> "--debug-")
       yield! x.Defines
              |> Seq.map (sprintf "--define:%s")
       yield! getSimpleBoolArg "--exec" x.Exec
