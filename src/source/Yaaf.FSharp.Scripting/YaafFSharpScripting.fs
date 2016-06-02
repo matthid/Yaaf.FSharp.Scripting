@@ -18,7 +18,7 @@ module internal Env =
 open System
 open System.Diagnostics
 module Log =
-  let source = new TraceSource("Yaaf.FSharp.Scriping")
+  let source = new TraceSource("Yaaf.FSharp.Scripting")
 
   let LogConsole levels =
     let consoleListener = new ConsoleTraceListener();
