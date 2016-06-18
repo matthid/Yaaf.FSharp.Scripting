@@ -228,3 +228,20 @@ let ``Test that we can call with pdbonly debug`` () =
     let res = fsiSession.EvalInteractionWithOutput ("""
 System.Linq.Enumerable.Average([1; 3]) |> int |> printf "%d" """)
     test <@ res.Output.ScriptOutput = "2" @>)
+
+    
+[<Test>]
+let ``Test that report local works`` () =
+  ( use fsiSession = ScriptHost.CreateNew()
+    match fsiSession.Handle<string> fsiSession.EvalExpression "asdasdfasdffas" with
+    | InvalidCode  e -> test <@ e.Result.Error.FsiOutput.Contains "asdasdfasdffas" @>
+    | InvalidExpressionType _
+    | Result _ -> Assert.Fail "expected InvalidCode failure")
+
+[<Test>]
+let ``Test that report global works`` () =
+  ( use fsiSession = ScriptHost.CreateNew(reportGlobal = true)
+    match fsiSession.Handle<string> fsiSession.EvalExpression "asdasdfasdffas" with
+    | InvalidCode  e -> test <@ e.Result.Error.FsiOutput.Contains "asdasdfasdffas" @>
+    | InvalidExpressionType _
+    | Result _ -> Assert.Fail "expected InvalidCode failure")
