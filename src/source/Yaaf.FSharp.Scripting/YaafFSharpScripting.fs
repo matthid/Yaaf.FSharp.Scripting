@@ -22,7 +22,7 @@ module internal Env =
 open System
 open System.Diagnostics
 module Log =
-  let source = new TraceSource("Yaaf.FSharp.Scriping")
+  let source = new TraceSource("Yaaf.FSharp.Scripting")
 
 #if !NETSTANDARD1_5
   let LogConsole levels =
