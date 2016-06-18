@@ -1,3 +1,9 @@
+### 1.6.0
+
+ * Compatible with dotnet core (netstandard 1.5)
+ * Bugfix: 'reportGlobal' wasn't working as intended.
+ * Add arguments to `FsiEvaluationException` error message.
+
 ### 1.5.2
 
  * Workaround -g[+|-|:full|:pdbonly] not working as documented.
