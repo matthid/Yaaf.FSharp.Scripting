@@ -17,6 +17,7 @@ open BuildConfigDef
 let config = BuildConfig.buildConfig.FillDefaults()
 
 #load @"../../FSharp.Formatting/FSharp.Formatting.fsx"
+#r "System.Web"
 
 open System.Collections.Generic
 open System.IO
@@ -75,6 +76,14 @@ let rec replaceCodeBlocks ctx = function
 let editLiterateDocument ctx (doc:LiterateDocument) =
   doc.With(paragraphs = List.choose (replaceCodeBlocks ctx) doc.Paragraphs)
 
+let printAssemblies msg =
+  printfn "%s. Loaded Assemblies:" msg
+  System.AppDomain.CurrentDomain.GetAssemblies()
+    |> Seq.choose (fun a -> try Some (a.GetName().FullName, a.Location) with _ -> None)
+  //|> Seq.filter (fun l -> l.Contains ("Razor"))
+    |> Seq.iter (fun (n, l) -> printfn "\t- %s: %s" n l)
+
+// ITS VERY IMPORTANT TO CREATE THE EVALUATOR LAZY (see https://github.com/matthid/Yaaf.AdvancedBuilding/issues/5)
 let evalutator = lazy (Some <| (FsiEvaluator() :> IFsiEvaluator))
 //let evalutator = lazy None
 
@@ -103,7 +112,8 @@ let buildAllDocumentation outDocDir website_root =
       //CopyRecursive (formatting @@ "styles") (output @@ "content") true 
       //  |> Log "Copying styles and scripts: "
 
-      
+
+
     let processDocumentationFiles(outputKind) =
       let indexTemplate, template, outDirName, indexName, extension =
         match outputKind with
@@ -165,6 +175,7 @@ let buildAllDocumentation outDocDir website_root =
         let binaries =
             referenceBinaries
             |> List.map (fun lib -> libDir @@ lib)
+
         MetadataFormat.Generate
            (binaries, Path.GetFullPath outDir, config.LayoutRoots,
             parameters = projInfo,
@@ -178,9 +189,15 @@ let buildAllDocumentation outDocDir website_root =
 
     CleanDirs [ outDocDir ]
     copyDocContentFiles()
-    processDocumentationFiles OutputKind.Html
-    processDocumentationFiles OutputKind.Latex
-    buildReference()
+
+    try
+      // FIRST build the reference documentation, see https://github.com/matthid/Yaaf.AdvancedBuilding/issues/5
+      buildReference()
+      processDocumentationFiles OutputKind.Html
+      processDocumentationFiles OutputKind.Latex
+    with e ->
+      printAssemblies "(DIAGNOSTICS) Documentation failed"
+      reraise()
     
 let MyTarget name body =
     Target name (fun _ -> body false)
