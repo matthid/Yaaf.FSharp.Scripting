@@ -10,12 +10,13 @@ let argTest args =
   let toArgs = parsed.AsArgs
   let parsed2 = FsiOptions.ofArgs toArgs
   test <@ parsed = parsed2 @>
+  parsed
 
 [<Test>]
 let ``Check that fsi arg-parser works`` () =
-  argTest [| "--noninteractive"; "-g+"; "--warnaserror+:34,42" ; "--"; "test" ; "more" |]
+  argTest [| "--noninteractive"; "-g+"; "--warnaserror+:34,42" ; "--"; "test" ; "more" |] |> ignore
   
-  argTest [| "-I:first"; "-I:second" |]
-  argTest [| "-r:first"; "-r:second" |]
-  argTest [| "--load:first"; "--load:second" |]
-  argTest [| "--use:first"; "--use:second" |]
+  argTest [| "-I:first"; "-I:second" |]|> ignore
+  argTest [| "-r:first"; "-r:second" |]|> ignore
+  argTest [| "--load:first"; "--load:second" |]|> ignore
+  argTest [| "--use:first"; "--use:second" |]|> ignore

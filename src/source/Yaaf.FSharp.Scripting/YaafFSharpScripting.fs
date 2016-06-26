@@ -116,7 +116,9 @@ module internal CompilerServiceExtensions =
           yield System.Runtime.InteropServices.RuntimeEnvironment.GetRuntimeDirectory()
 #endif
           yield! libDirs
-#if !NETSTANDARD1_5
+#if NETSTANDARD1_5
+          yield @"C:\Users\dragon\.nuget\packages\Microsoft.FSharp.Core.netcore\1.0.0-alpha-160509\lib\netstandard1.5"
+#else
           yield Environment.CurrentDirectory
           // Prefer the currently loaded version
           yield fsCore "4.0" loadedFsCoreVersion
@@ -498,7 +500,7 @@ module internal StringHelpers =
   [<RequireQualifiedAccess>]
   module String = 
     /// Returns a new string by connecting the given strings with the given separator.
-    let concatEscape esc sep (strings:seq<_>) = 
+    let concatEscape (esc:char) sep (strings:seq<_>) = 
       Assert.notNull "strings" strings
       let sb = StringBuilder()
       
@@ -1301,6 +1303,7 @@ module internal Helper =
       // We just compile ourself a forwarder to fix that.
       //session.Reference (typeof<Microsoft.FSharp.Compiler.Interactive.Shell.Settings.InteractiveSettings>.Assembly.Location)
       //session.Let "fsi" fsi
+#if !NETSTANDARD1_5 // Currently this is broken on netcore
       session.Let "__rawfsi" (box fsi)
       session.EvalInteraction """
 module __ReflectHelper =
@@ -1391,6 +1394,7 @@ module __ReflectHelper =
     member self.AddPrintTransformer(printer : 'T -> obj) =
       callInstanceMethod1 fsiObj [|typeof<'T>|] "AddPrintTransformer" printer
 let fsi = __ReflectHelper.ForwardingInteractiveSettings(__rawfsi)"""
+#endif
       session
 
 open System.IO
