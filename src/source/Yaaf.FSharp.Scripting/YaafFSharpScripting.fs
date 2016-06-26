@@ -825,6 +825,7 @@ type internal DebugMode =
 #endif
   | Full
   | PdbOnly
+  | Portable
   | NoDebug
 
 #if YAAF_FSHARP_SCRIPTING_PUBLIC
@@ -940,6 +941,9 @@ type internal FsiOptions =
       | _, StartsWith "--debug:" "pdbonly"
       | _, StartsWith "-g:" "pdbonly" ->
         { parsed with Debug = Some DebugMode.PdbOnly }, state
+      | _, StartsWith "--debug:" "portable"
+      | _, StartsWith "-g:" "portable" ->
+        { parsed with Debug = Some DebugMode.Portable }, state
       | _, StartsWith "--debug:" "full"
       | _, StartsWith "-g:" "full"
       | _, FsiBoolArg "--debug" true
@@ -1056,6 +1060,7 @@ type internal FsiOptions =
       yield! maybeArgMap x.Debug (function
         | Full -> "--debug:full"
         | PdbOnly -> "--debug:pdbonly"
+        | Portable -> "--debug:portable"
         | NoDebug -> "--debug-")
       yield! x.Defines
              |> Seq.map (sprintf "--define:%s")
