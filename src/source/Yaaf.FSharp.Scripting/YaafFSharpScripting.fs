@@ -114,12 +114,12 @@ module internal CompilerServiceExtensions =
           yield System.AppDomain.CurrentDomain.BaseDirectory
           yield referenceAssemblyDirectory defaultFrameworkVersion
           yield System.Runtime.InteropServices.RuntimeEnvironment.GetRuntimeDirectory()
+#else
+          yield System.AppContext.BaseDirectory
 #endif
           yield! libDirs
-#if NETSTANDARD1_5
-          yield @"C:\Users\dragon\.nuget\packages\Microsoft.FSharp.Core.netcore\1.0.0-alpha-160509\lib\netstandard1.5"
-#else
-          yield Environment.CurrentDirectory
+          yield System.IO.Directory.GetCurrentDirectory()
+#if !NETSTANDARD1_5
           // Prefer the currently loaded version
           yield fsCore "4.0" loadedFsCoreVersion
           yield fsCore4400Dir
