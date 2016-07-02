@@ -1,3 +1,7 @@
+### 1.6.1
+
+ * On CoreCLR we can use the current directory and AppContext.BaseDirectory to resolve assemblies.
+
 ### 1.6.0
 
  * Compatible with dotnet core (netstandard 1.5)
