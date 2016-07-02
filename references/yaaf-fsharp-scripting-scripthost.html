@@ -54,39 +54,39 @@
       <tr>
         <td class="member-name">
 
-          <code onmouseout="hideTip(event, '134', 134)" onmouseover="showTip(event, '134', 134)">
+          <code onmouseout="hideTip(event, '135', 135)" onmouseover="showTip(event, '135', 135)">
             Create(...)
           </code>
-          <div class="tip" id="134">
+          <div class="tip" id="135">
             <strong>Signature:</strong> (opts:FsiOptions * fsiObj:obj option * reportGlobal:bool option * outWriter:TextWriter option * fsiOutWriter:TextWriter option * errWriter:TextWriter option * fsiErrWriter:TextWriter option * preventStdOut:bool option) -&gt; IFsiSession<br />
                       </div>
         </td>
         <td class="xmldoc">
-            <a href="https://github.com/matthid/Yaaf.FSharp.Scripting/blob/master/src/source/Yaaf.FSharp.Scripting/YaafFSharpScripting.fs#L1446-1446" class="github-link">
+            <a href="https://github.com/matthid/Yaaf.FSharp.Scripting/blob/master/src/source/Yaaf.FSharp.Scripting/YaafFSharpScripting.fs#L1455-1455" class="github-link">
               <img src="../content/img/github.png" class="normal" />
               <img src="../content/img/github-blue.png" class="hover" />
             </a>
-          
+          </br><p class='summary'>
  Create a new IFsiSession by specifying all fsi arguments manually.
-</br>
+</p>
         </td>
       </tr>
       <tr>
         <td class="member-name">
 
-          <code onmouseout="hideTip(event, '135', 135)" onmouseover="showTip(event, '135', 135)">
+          <code onmouseout="hideTip(event, '136', 136)" onmouseover="showTip(event, '136', 136)">
             CreateForwardWriter(...)
           </code>
-          <div class="tip" id="135">
+          <div class="tip" id="136">
             <strong>Signature:</strong> (f:(string -&gt; unit) * revertRedirect:bool option * removeNewLines:bool option) -&gt; TextWriter<br />
                       </div>
         </td>
         <td class="xmldoc">
-            <a href="https://github.com/matthid/Yaaf.FSharp.Scripting/blob/master/src/source/Yaaf.FSharp.Scripting/YaafFSharpScripting.fs#L1410-1410" class="github-link">
+            <a href="https://github.com/matthid/Yaaf.FSharp.Scripting/blob/master/src/source/Yaaf.FSharp.Scripting/YaafFSharpScripting.fs#L1419-1419" class="github-link">
               <img src="../content/img/github.png" class="normal" />
               <img src="../content/img/github-blue.png" class="hover" />
             </a>
-          
+          </br><p class='summary'>
  Creates a forwarder Textwriter, which forwards all output to the given function.
  Set revertRedirect only to "false" if you know that f doesn't print anything to the stdout.
  When revertRedirect is true we capture the Console.Out property and set it before calling f.
@@ -95,27 +95,27 @@
  The difference is that with removeNewLines you should use printfn and get lines without newline characters.
  On the other hand without removeNewLines you are called on every TextWriter.Write call,
  so you might be called multiple times for a single lines or a single time for multiple lines.
-</br>
+</p>
         </td>
       </tr>
       <tr>
         <td class="member-name">
 
-          <code onmouseout="hideTip(event, '136', 136)" onmouseover="showTip(event, '136', 136)">
+          <code onmouseout="hideTip(event, '137', 137)" onmouseover="showTip(event, '137', 137)">
             CreateNew(...)
           </code>
-          <div class="tip" id="136">
+          <div class="tip" id="137">
             <strong>Signature:</strong> (defines:string list option * fsiObj:obj option * reportGlobal:bool option * outWriter:TextWriter option * fsiOutWriter:TextWriter option * errWriter:TextWriter option * fsiErrWriter:TextWriter option * preventStdOut:bool option) -&gt; IFsiSession<br />
                       </div>
         </td>
         <td class="xmldoc">
-            <a href="https://github.com/matthid/Yaaf.FSharp.Scripting/blob/master/src/source/Yaaf.FSharp.Scripting/YaafFSharpScripting.fs#L1457-1457" class="github-link">
+            <a href="https://github.com/matthid/Yaaf.FSharp.Scripting/blob/master/src/source/Yaaf.FSharp.Scripting/YaafFSharpScripting.fs#L1466-1466" class="github-link">
               <img src="../content/img/github.png" class="normal" />
               <img src="../content/img/github-blue.png" class="hover" />
             </a>
-          
+          </br><p class='summary'>
  Quickly create a new IFsiSession with some sane defaults
-</br>
+</p>
         </td>
       </tr>
     </tbody>

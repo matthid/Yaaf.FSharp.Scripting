@@ -44,9 +44,9 @@
     Defined in Yaaf.FSharp.Scripting.dll.
 </div>
 <div class="xmldoc">
-
+</br><p class='summary'>
  Represents a simple F# interactive session.
-</br></div>
+</p></div>
   <h3>Instance members</h3>
   <table class="table table-bordered member-list">
     <thead>
@@ -56,74 +56,32 @@
       <tr>
         <td class="member-name">
 
-          <code onmouseout="hideTip(event, '120', 120)" onmouseover="showTip(event, '120', 120)">
+          <code onmouseout="hideTip(event, '121', 121)" onmouseover="showTip(event, '121', 121)">
             DynamicAssembly
           </code>
-          <div class="tip" id="120">
+          <div class="tip" id="121">
             <strong>Signature:</strong> Assembly<br />
               <strong>Modifiers:</strong> abstract<br />
                       </div>
         </td>
         <td class="xmldoc">
-            <a href="https://github.com/matthid/Yaaf.FSharp.Scripting/blob/master/src/source/Yaaf.FSharp.Scripting/YaafFSharpScripting.fs#L676-676" class="github-link">
+            <a href="https://github.com/matthid/Yaaf.FSharp.Scripting/blob/master/src/source/Yaaf.FSharp.Scripting/YaafFSharpScripting.fs#L678-678" class="github-link">
               <img src="../content/img/github.png" class="normal" />
               <img src="../content/img/github-blue.png" class="hover" />
             </a>
-          
+          </br><p class='summary'>
  Gets the currently build dynamic assembly.
-</br>
-        </td>
-      </tr>
-      <tr>
-        <td class="member-name">
-
-          <code onmouseout="hideTip(event, '121', 121)" onmouseover="showTip(event, '121', 121)">
-            EvalInteractionWithOutput(arg1)
-          </code>
-          <div class="tip" id="121">
-            <strong>Signature:</strong> string -&gt; InteractionResult<br />
-              <strong>Modifiers:</strong> abstract<br />
-                      </div>
-        </td>
-        <td class="xmldoc">
-            <a href="https://github.com/matthid/Yaaf.FSharp.Scripting/blob/master/src/source/Yaaf.FSharp.Scripting/YaafFSharpScripting.fs#L670-670" class="github-link">
-              <img src="../content/img/github.png" class="normal" />
-              <img src="../content/img/github-blue.png" class="hover" />
-            </a>
-          
- Evaluate the given interaction.
-</br>
+</p>
         </td>
       </tr>
       <tr>
         <td class="member-name">
 
           <code onmouseout="hideTip(event, '122', 122)" onmouseover="showTip(event, '122', 122)">
-            EvalScriptWithOutput(arg1)
+            EvalInteractionWithOutput(arg1)
           </code>
           <div class="tip" id="122">
             <strong>Signature:</strong> string -&gt; InteractionResult<br />
-              <strong>Modifiers:</strong> abstract<br />
-                      </div>
-        </td>
-        <td class="xmldoc">
-            <a href="https://github.com/matthid/Yaaf.FSharp.Scripting/blob/master/src/source/Yaaf.FSharp.Scripting/YaafFSharpScripting.fs#L674-674" class="github-link">
-              <img src="../content/img/github.png" class="normal" />
-              <img src="../content/img/github-blue.png" class="hover" />
-            </a>
-          
- Evaluate the given script.
-</br>
-        </td>
-      </tr>
-      <tr>
-        <td class="member-name">
-
-          <code onmouseout="hideTip(event, '123', 123)" onmouseover="showTip(event, '123', 123)">
-            TryEvalExpressionWithOutput(arg1)
-          </code>
-          <div class="tip" id="123">
-            <strong>Signature:</strong> string -&gt; InteractionResult * (obj * Type) option<br />
               <strong>Modifiers:</strong> abstract<br />
                       </div>
         </td>
@@ -132,9 +90,51 @@
               <img src="../content/img/github.png" class="normal" />
               <img src="../content/img/github-blue.png" class="hover" />
             </a>
-          
+          </br><p class='summary'>
+ Evaluate the given interaction.
+</p>
+        </td>
+      </tr>
+      <tr>
+        <td class="member-name">
+
+          <code onmouseout="hideTip(event, '123', 123)" onmouseover="showTip(event, '123', 123)">
+            EvalScriptWithOutput(arg1)
+          </code>
+          <div class="tip" id="123">
+            <strong>Signature:</strong> string -&gt; InteractionResult<br />
+              <strong>Modifiers:</strong> abstract<br />
+                      </div>
+        </td>
+        <td class="xmldoc">
+            <a href="https://github.com/matthid/Yaaf.FSharp.Scripting/blob/master/src/source/Yaaf.FSharp.Scripting/YaafFSharpScripting.fs#L676-676" class="github-link">
+              <img src="../content/img/github.png" class="normal" />
+              <img src="../content/img/github-blue.png" class="hover" />
+            </a>
+          </br><p class='summary'>
+ Evaluate the given script.
+</p>
+        </td>
+      </tr>
+      <tr>
+        <td class="member-name">
+
+          <code onmouseout="hideTip(event, '124', 124)" onmouseover="showTip(event, '124', 124)">
+            TryEvalExpressionWithOutput(arg1)
+          </code>
+          <div class="tip" id="124">
+            <strong>Signature:</strong> string -&gt; InteractionResult * (obj * Type) option<br />
+              <strong>Modifiers:</strong> abstract<br />
+                      </div>
+        </td>
+        <td class="xmldoc">
+            <a href="https://github.com/matthid/Yaaf.FSharp.Scripting/blob/master/src/source/Yaaf.FSharp.Scripting/YaafFSharpScripting.fs#L674-674" class="github-link">
+              <img src="../content/img/github.png" class="normal" />
+              <img src="../content/img/github-blue.png" class="hover" />
+            </a>
+          </br><p class='summary'>
  Try to evaluate the given expression and return its result.
-</br>
+</p>
         </td>
       </tr>
     </tbody>

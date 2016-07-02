@@ -37,27 +37,18 @@
       <div class="row">
         <div class="span9" id="main">
           
-<!-- GENERATED FROM COMMIT: 5824cf9cc7a567ba9342359d0e33b96baee0391b -->
+<!-- GENERATED FROM COMMIT: a8faffdadf8cde1101c1359c8f7965ee29eff097 -->
 <h1><a name="Yaaf-FSharp-Scripting" class="anchor" href="#Yaaf-FSharp-Scripting">Yaaf.FSharp.Scripting</a></h1>
-
 <h2><a name="Documentation" class="anchor" href="#Documentation"><a href="https://matthid.github.io/Yaaf.FSharp.Scripting/">Documentation</a></a></h2>
-
 <p><a href="https://gitter.im/matthid/Yaaf?utm_source=badge&amp;utm_medium=badge&amp;utm_campaign=pr-badge&amp;utm_content=badge"><img src="https://badges.gitter.im/Join%20Chat.svg" alt="Join the chat at https://gitter.im/matthid/Yaaf" /></a></p>
-
 <h2><a name="Build-status" class="anchor" href="#Build-status">Build status</a></h2>
-
 <p><strong>Development Branch</strong></p>
-
 <p><a href="https://travis-ci.org/matthid/Yaaf.FSharp.Scripting"><img src="https://travis-ci.org/matthid/Yaaf.FSharp.Scripting.svg?branch=develop" alt="Build Status" /></a>
 <a href="https://ci.appveyor.com/project/matthid/yaaf-fsharp/branch/develop"><img src="https://ci.appveyor.com/api/projects/status/od970xa4gvkh4tea/branch/develop?svg=true" alt="Build status" /></a></p>
-
 <p><strong>Master Branch</strong></p>
-
 <p><a href="https://travis-ci.org/matthid/Yaaf.FSharp.Scripting"><img src="https://travis-ci.org/matthid/Yaaf.FSharp.Scripting.svg?branch=master" alt="Build Status" /></a>
 <a href="https://ci.appveyor.com/project/matthid/yaaf-fsharp/branch/master"><img src="https://ci.appveyor.com/api/projects/status/od970xa4gvkh4tea/branch/master?svg=true" alt="Build status" /></a></p>
-
 <h2><a name="NuGet" class="anchor" href="#NuGet">NuGet</a></h2>
-
 <div class="row">
   <div class="span1"></div>
   <div class="span6">
@@ -68,46 +59,32 @@
   </div>
   <div class="span1"></div>
 </div>
-
 <h2><a name="Include-as-source-file" class="anchor" href="#Include-as-source-file">Include as source file</a></h2>
-
 <h3><a name="Paket" class="anchor" href="#Paket">Paket</a></h3>
-
 <p>You can include the functionality directly into your application by using paket source files:</p>
-
 <p><code>paket.dependencies</code>:</p>
-
 <table class="pre"><tr><td class="lines"><pre class="fssnip"><span class="l">1: </span>
 </pre></td>
 <td class="snippet"><pre class="fssnip highlighted"><code lang="fsharp"><span class="i">github</span> <span class="i">matthid</span><span class="o">/</span><span class="i">Yaaf</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs1', 1)" onmouseover="showTip(event, 'fs1', 1)" class="i">FSharp</span><span class="o">.</span><span class="i">Scripting</span> <span class="i">src</span><span class="o">/</span><span class="i">source</span><span class="o">/</span><span class="i">Yaaf</span><span class="o">.</span><span onmouseout="hideTip(event, 'fs1', 2)" onmouseover="showTip(event, 'fs1', 2)" class="i">FSharp</span><span class="o">.</span><span class="i">Scripting</span><span class="o">/</span><span class="i">YaafFSharpScripting</span><span class="o">.</span><span class="i">fs</span>
 </code></pre></td>
 </tr>
 </table>
-
 <p><code>paket.references</code>:</p>
-
 <table class="pre"><tr><td class="lines"><pre class="fssnip"><span class="l">1: </span>
 </pre></td>
 <td class="snippet"><pre class="fssnip highlighted"><code lang="fsharp"><span class="i">File</span><span class="o">:</span> <span class="i">YaafFSharpScripting</span><span class="o">.</span><span class="i">fs</span> 
 </code></pre></td>
 </tr>
 </table>
-
 <p>See <a href="http://fsprojects.github.io/Paket/github-dependencies.html">http://fsprojects.github.io/Paket/github-dependencies.html</a> for details.</p>
-
 <h3><a name="NuGet-1" class="anchor" href="#NuGet-1">NuGet</a></h3>
-
 <p>The <code>YaafFSharpScripting.fs</code> source code file is included in the nuget package as well.
 You can find it in <code>content/YaafFSharpScripting.fs</code>.
 By adding the source code file (as reference) to your project you don't need
 to add a nuget dependency (<code>Yaaf.FSharp.Scripting</code>) to your final package.</p>
-
 <h2><a name="Quick-intro" class="anchor" href="#Quick-intro">Quick intro</a></h2>
-
 <p>This library tries to improve the scripting capabilities of FSharp.</p>
-
 <p>It builds on top of FSharp.Compiler.Service but provides a nice an clean API:</p>
-
 <table class="pre"><tr><td class="lines"><pre class="fssnip"><span class="l"> 1: </span>
 <span class="l"> 2: </span>
 <span class="l"> 3: </span>
@@ -192,9 +169,7 @@ to add a nuget dependency (<code>Yaaf.FSharp.Scripting</code>) to your final pac
 </code></pre></td>
 </tr>
 </table>
-
 <p>The library also provides some nice members which are missing in FSharp.Compiler.Service:</p>
-
 <table class="pre"><tr><td class="lines"><pre class="fssnip"><span class="l">1: </span>
 <span class="l">2: </span>
 <span class="l">3: </span>
@@ -215,9 +190,7 @@ to add a nuget dependency (<code>Yaaf.FSharp.Scripting</code>) to your final pac
 </code></pre></td>
 </tr>
 </table>
-
 <p>And some extensions for System.Type to get the FSharp type name</p>
-
 <table class="pre"><tr><td class="lines"><pre class="fssnip"><span class="l"> 1: </span>
 <span class="l"> 2: </span>
 <span class="l"> 3: </span>
@@ -260,7 +233,6 @@ to add a nuget dependency (<code>Yaaf.FSharp.Scripting</code>) to your final pac
 </code></pre></td>
 </tr>
 </table>
-
 <p><a href="https://matthid.github.io/Yaaf.FSharp.Scripting/IntroExamples.html">Examples and configuration overview</a></p>
 
 <div class="tip" id="fs1">namespace Microsoft.FSharp</div>

@@ -38,40 +38,48 @@
         <div class="span9" id="main">
           
 <h1><a name="Working-with-IFsiSessions" class="anchor" href="#Working-with-IFsiSessions">Working with IFsiSessions</a></h1>
-
 <h2><a name="Creating-sessions" class="anchor" href="#Creating-sessions">Creating sessions</a></h2>
-
-<p><code>ScriptHost.CreateNew()</code> and <code>ScriptHost.Create()</code> provide several optional parameters 
+<p><code>ScriptHost.CreateNew()</code> and <code>ScriptHost.Create()</code> provide several optional parameters
 to configure the scripting environment:</p>
-
 <ul>
-<li><code>fsiObj: obj</code>: 
+<li>
+<code>fsiObj: obj</code>: 
 The optional "fsi" object to use (defaults to using the one defined in <code>FSharp.Compiler.Service.dll</code>)
 You should have the same members as <a href="https://github.com/Microsoft/visualfsharp/blob/fsharp4/src/fsharp/fsiaux.fsi#L19">https://github.com/Microsoft/visualfsharp/blob/fsharp4/src/fsharp/fsiaux.fsi#L19</a> .
-All your members are called via reflection.</li>
-<li><code>reportGlobal: bool</code>:
+All your members are called via reflection.
+</li>
+<li>
+<code>reportGlobal: bool</code>:
 When true all error messages and outputs contain the complete output (instead of only the output of the last command).
 This only affects error messages.
-Defaults to <code>false</code></li>
-<li><code>outWriter: TextWriter</code>:
-A custom TextWriter object where we additionally write the stdout of the executing code (for long running scripts).</li>
-<li><code>fsiOutWriter: TextWriter</code>:
-A custom TextWriter object where we additionally write the fsi stdout (for long running scripts).</li>
-<li><code>errWriter: TextWriter</code>:
-A custom TextWriter object where we additionally write the stderr of the executing code (for long running scripts).</li>
-<li><code>fsiErrWriter: TextWriter</code>:
-A custom TextWriter object where we additionally write the fsi stderr (for long running scripts).</li>
-<li><code>preventStdOut: bool</code>:
+Defaults to <code>false</code>
+</li>
+<li>
+<code>outWriter: TextWriter</code>:
+A custom TextWriter object where we additionally write the stdout of the executing code (for long running scripts).
+</li>
+<li>
+<code>fsiOutWriter: TextWriter</code>:
+A custom TextWriter object where we additionally write the fsi stdout (for long running scripts).
+</li>
+<li>
+<code>errWriter: TextWriter</code>:
+A custom TextWriter object where we additionally write the stderr of the executing code (for long running scripts).
+</li>
+<li>
+<code>fsiErrWriter: TextWriter</code>:
+A custom TextWriter object where we additionally write the fsi stderr (for long running scripts).
+</li>
+<li>
+<code>preventStdOut: bool</code>:
 A value indicating whether we should completly block the executing script from writing to the current stdout and stderr.
-Defaults to <code>false</code>.</li>
+Defaults to <code>false</code>.
+</li>
 </ul>
-
 <p>You should use <code>preventStdOut = true</code> if you want to control the script output yourself.
 You can work with either the live output or with the return values.
 Return values will be constant no matter the configuration options!</p>
-
 <h3><a name="Example-usage-Live-Output" class="anchor" href="#Example-usage-Live-Output">Example usage ("Live Output"):</a></h3>
-
 <table class="pre"><tr><td class="lines"><pre class="fssnip"><span class="l"> 1: </span>
 <span class="l"> 2: </span>
 <span class="l"> 3: </span>
@@ -102,13 +110,9 @@ Return values will be constant no matter the configuration options!</p>
 </code></pre></td>
 </tr>
 </table>
-
 <p>The standard output is:</p>
-
 <table class="pre"><tr><td><pre><code>Script stdout: Some test</code></pre></td></tr></table>
-
 <h3><a name="Example-usage-Return-values" class="anchor" href="#Example-usage-Return-values">Example usage ("Return values"):</a></h3>
-
 <table class="pre"><tr><td class="lines"><pre class="fssnip"><span class="l">1: </span>
 <span class="l">2: </span>
 <span class="l">3: </span>
@@ -131,13 +135,9 @@ Return values will be constant no matter the configuration options!</p>
 </code></pre></td>
 </tr>
 </table>
-
 <p>The standard output is:</p>
-
 <table class="pre"><tr><td><pre><code>And We have: direct result</code></pre></td></tr></table>
-
 <p>The value v is:</p>
-
 <table class="pre"><tr><td><pre><code>{Output = {FsiOutput = "val it : unit = ()
 ";
            ScriptOutput = "direct result
@@ -148,11 +148,8 @@ val it : unit = ()
  Error = {FsiOutput = "";
           ScriptOutput = "";
           Merged = "";};}</code></pre></td></tr></table>
-
 <h3><a name="Example-usage-Use-both" class="anchor" href="#Example-usage-Use-both">Example usage ("Use both"):</a></h3>
-
 <p>Note that you can use both systems at the same time as well (the return values are always available).</p>
-
 <table class="pre"><tr><td class="lines"><pre class="fssnip"><span class="l">1: </span>
 <span class="l">2: </span>
 </pre></td>
@@ -161,16 +158,12 @@ val it : unit = ()
 </code></pre></td>
 </tr>
 </table>
-
 <p>The standard output is:</p>
-
 <table class="pre"><tr><td><pre><code>Script stdout: both is possible
 Script stdout: 
 
 The returned result: both is possible</code></pre></td></tr></table>
-
 <p>The value b is:</p>
-
 <table class="pre"><tr><td><pre><code>{Output = {FsiOutput = "val it : unit = ()
 ";
            ScriptOutput = "both is possible
