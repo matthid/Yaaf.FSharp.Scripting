@@ -114,10 +114,12 @@ module internal CompilerServiceExtensions =
           yield System.AppDomain.CurrentDomain.BaseDirectory
           yield referenceAssemblyDirectory defaultFrameworkVersion
           yield System.Runtime.InteropServices.RuntimeEnvironment.GetRuntimeDirectory()
+#else
+          yield System.AppContext.BaseDirectory
 #endif
           yield! libDirs
+          yield System.IO.Directory.GetCurrentDirectory()
 #if !NETSTANDARD1_5
-          yield Environment.CurrentDirectory
           // Prefer the currently loaded version
           yield fsCore "4.0" loadedFsCoreVersion
           yield fsCore4400Dir
@@ -498,7 +500,7 @@ module internal StringHelpers =
   [<RequireQualifiedAccess>]
   module String = 
     /// Returns a new string by connecting the given strings with the given separator.
-    let concatEscape esc sep (strings:seq<_>) = 
+    let concatEscape (esc:char) sep (strings:seq<_>) = 
       Assert.notNull "strings" strings
       let sb = StringBuilder()
       
@@ -823,6 +825,7 @@ type internal DebugMode =
 #endif
   | Full
   | PdbOnly
+  | Portable
   | NoDebug
 
 #if YAAF_FSHARP_SCRIPTING_PUBLIC
@@ -938,6 +941,9 @@ type internal FsiOptions =
       | _, StartsWith "--debug:" "pdbonly"
       | _, StartsWith "-g:" "pdbonly" ->
         { parsed with Debug = Some DebugMode.PdbOnly }, state
+      | _, StartsWith "--debug:" "portable"
+      | _, StartsWith "-g:" "portable" ->
+        { parsed with Debug = Some DebugMode.Portable }, state
       | _, StartsWith "--debug:" "full"
       | _, StartsWith "-g:" "full"
       | _, FsiBoolArg "--debug" true
@@ -1054,6 +1060,7 @@ type internal FsiOptions =
       yield! maybeArgMap x.Debug (function
         | Full -> "--debug:full"
         | PdbOnly -> "--debug:pdbonly"
+        | Portable -> "--debug:portable"
         | NoDebug -> "--debug-")
       yield! x.Defines
              |> Seq.map (sprintf "--define:%s")
@@ -1301,6 +1308,7 @@ module internal Helper =
       // We just compile ourself a forwarder to fix that.
       //session.Reference (typeof<Microsoft.FSharp.Compiler.Interactive.Shell.Settings.InteractiveSettings>.Assembly.Location)
       //session.Let "fsi" fsi
+#if !NETSTANDARD1_5 // Currently this is broken on netcore
       session.Let "__rawfsi" (box fsi)
       session.EvalInteraction """
 module __ReflectHelper =
@@ -1391,6 +1399,7 @@ module __ReflectHelper =
     member self.AddPrintTransformer(printer : 'T -> obj) =
       callInstanceMethod1 fsiObj [|typeof<'T>|] "AddPrintTransformer" printer
 let fsi = __ReflectHelper.ForwardingInteractiveSettings(__rawfsi)"""
+#endif
       session
 
 open System.IO
