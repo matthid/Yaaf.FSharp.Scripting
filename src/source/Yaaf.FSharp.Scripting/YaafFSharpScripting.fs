@@ -687,6 +687,17 @@ module internal Extensions =
       member x.EvalInteraction s = x.EvalInteractionWithOutput s |> ignore
       member x.TryEvalExpression s = x.TryEvalExpressionWithOutput s |> snd
       member x.EvalScript s = x.EvalScriptWithOutput s |> ignore
+      /// See https://github.com/Microsoft/visualfsharp/issues/1392
+      member x.EvalScriptAsInteractionWithOutput s =
+          // See https://github.com/fsharp/FSharp.Compiler.Service/issues/621
+          let scriptContents = 
+            sprintf "#line 1 @\"%s\"\n" s + 
+            System.IO.File.ReadAllText s + 
+            "\n()"
+          x.EvalInteraction scriptContents
+      /// See https://github.com/Microsoft/visualfsharp/issues/1392
+      member x.EvalScriptAsInteraction s =
+          x.EvalScriptAsInteractionWithOutput s |> ignore
 
       member x.EvalExpressionWithOutput<'a> text =
         match x.TryEvalExpressionWithOutput text with
