@@ -1,3 +1,7 @@
+### 1.7.0
+
+ * Add EvalScriptAsInteractionWithOutput and EvalScriptAsInteraction, see https://github.com/Microsoft/visualfsharp/issues/1392
+
 ### 1.6.1
 
  * On CoreCLR we can use the current directory and AppContext.BaseDirectory to resolve assemblies.
