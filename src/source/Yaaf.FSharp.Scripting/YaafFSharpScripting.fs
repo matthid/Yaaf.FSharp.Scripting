@@ -1180,7 +1180,7 @@ module internal Helper =
     override __.Dispose (r) =
       base.Dispose r
       if r then doAll (fun t -> t.Dispose())
-    override __.Encoding = l.Head.Encoding
+    override __.Encoding = Encoding.UTF8
     static member Create l = new CombineTextWriter (l) :> TextWriter
   type OutStreamHelper (saveGlobal, liveOutWriter : _ option, liveFsiWriter : _ option) =
     let globalFsiOut = new StringBuilder()

@@ -1,3 +1,7 @@
+### 1.7.1
+
+ * Fix FAKE Chinese text bug, see https://github.com/matthid/Yaaf.FSharp.Scripting/pull/8
+
 ### 1.7.0
 
  * Add EvalScriptAsInteractionWithOutput and EvalScriptAsInteraction, see https://github.com/Microsoft/visualfsharp/issues/1392
