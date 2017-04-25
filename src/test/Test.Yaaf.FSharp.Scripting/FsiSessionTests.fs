@@ -75,7 +75,7 @@ let ``let with a given integer type works`` () =
 [<Test>]
 let ``test that we get the correct output`` () =
     let inter = fsiSession.EvalInteractionWithOutput "3 + 4"
-    test <@ fixNewLines inter.Output.FsiOutput = "val it : int = 7\n" @>
+    test <@ fixNewLines (inter.Output.FsiOutput.Trim()) = "val it : int = 7" @>
 
 [<Test>]
 let ``let with a given integer option type works`` () =

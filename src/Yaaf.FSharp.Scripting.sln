@@ -1,6 +1,6 @@
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 14
-VisualStudioVersion = 14.0.25123.0
+# Visual Studio 15
+VisualStudioVersion = 15.0.26403.0
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".paket", ".paket", "{63297B98-5CED-492C-A5B7-A5B4F73CF142}"
 	ProjectSection(SolutionItems) = preProject
@@ -76,14 +76,12 @@ Global
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
 		{2D4E0476-7D33-449B-B895-FF1CAF9DD712}.Debug|IncludeTest.ActiveCfg = Debug|IncludeTest
 		{2D4E0476-7D33-449B-B895-FF1CAF9DD712}.Debug|IncludeTest.Build.0 = Debug|IncludeTest
-		{2D4E0476-7D33-449B-B895-FF1CAF9DD712}.Debug|Net40.ActiveCfg = Debug|Net40
-		{2D4E0476-7D33-449B-B895-FF1CAF9DD712}.Debug|Net40.Build.0 = Debug|Net40
+		{2D4E0476-7D33-449B-B895-FF1CAF9DD712}.Debug|Net40.ActiveCfg = Debug|Net45
 		{2D4E0476-7D33-449B-B895-FF1CAF9DD712}.Debug|Net45.ActiveCfg = Debug|Net45
 		{2D4E0476-7D33-449B-B895-FF1CAF9DD712}.Debug|Net45.Build.0 = Debug|Net45
 		{2D4E0476-7D33-449B-B895-FF1CAF9DD712}.Release|IncludeTest.ActiveCfg = Release|IncludeTest
 		{2D4E0476-7D33-449B-B895-FF1CAF9DD712}.Release|IncludeTest.Build.0 = Release|IncludeTest
-		{2D4E0476-7D33-449B-B895-FF1CAF9DD712}.Release|Net40.ActiveCfg = Release|Net40
-		{2D4E0476-7D33-449B-B895-FF1CAF9DD712}.Release|Net40.Build.0 = Release|Net40
+		{2D4E0476-7D33-449B-B895-FF1CAF9DD712}.Release|Net40.ActiveCfg = Release|Net45
 		{2D4E0476-7D33-449B-B895-FF1CAF9DD712}.Release|Net45.ActiveCfg = Release|Net45
 		{2D4E0476-7D33-449B-B895-FF1CAF9DD712}.Release|Net45.Build.0 = Release|Net45
 		{ED6905ED-539D-43FA-A48D-15BF4D6A1F80}.Debug|IncludeTest.ActiveCfg = Debug|Net45

@@ -10,7 +10,6 @@
     <RootNamespace>Test.Yaaf.FSharp.Scripting</RootNamespace>
     <AssemblyName>Test.Yaaf.FSharp.Scripting</AssemblyName>
     <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
-    <TargetFSharpCoreVersion>4.3.1.0</TargetFSharpCoreVersion>
     <Name>Yaaf.FSharp.Scripting.Tests</Name>
     <TargetFrameworkProfile />
     <SolutionDir Condition="$(SolutionDir) == '' Or $(SolutionDir) == '*Undefined*'">..\..\</SolutionDir>

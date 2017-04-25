@@ -1,3 +1,7 @@
+### 2.0.0
+
+ * Update FCS to 12.0.5
+
 ### 1.7.1
 
  * Fix FAKE Chinese text bug, see https://github.com/matthid/Yaaf.FSharp.Scripting/pull/8

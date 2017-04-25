@@ -65,11 +65,7 @@ let buildConfig =
     EnableDebugSymbolConversion = false
     RestrictReleaseToWindows = false
     BuildTargets =
-     [ { BuildParams.WithSolution with
-          // The default build
-          PlatformName = "Net40"
-          SimpleBuildName = "net40" }
-       // Test if it actually compiles without YAAF_FSHARP_SCRIPTING_PUBLIC defined.
+     [ // Test if it actually compiles without YAAF_FSHARP_SCRIPTING_PUBLIC defined.
        { BuildParams.WithSolution with
           // The generated templates
           PlatformName = "IncludeTest"
