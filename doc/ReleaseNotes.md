@@ -1,3 +1,7 @@
+### 1.7.2
+
+ * Fix breaking change in FCS
+
 ### 1.7.1
 
  * Fix FAKE Chinese text bug, see https://github.com/matthid/Yaaf.FSharp.Scripting/pull/8
