@@ -175,7 +175,14 @@ module internal CompilerServiceExtensions =
       let getCheckerArguments frameworkVersion defaultReferences (fsCoreLib: _ option) dllFiles libDirs otherFlags =
           ignore frameworkVersion
           ignore defaultReferences
-          let base1 = Path.GetTempFileName()
+          let base1 =
+            try
+              let tempDir = Path.GetTempPath()
+              if not (Directory.Exists tempDir) then
+                  Directory.CreateDirectory tempDir |> ignore
+              Path.GetTempFileName()
+            with
+              exn -> raise (new Exception("Could not access TEMP", exn))
           let dllName = Path.ChangeExtension(base1, ".dll")
           let xmlName = Path.ChangeExtension(base1, ".xml")
           let fileName1 = Path.ChangeExtension(base1, ".fs")
