@@ -177,12 +177,9 @@ module internal CompilerServiceExtensions =
           ignore defaultReferences
           let base1 =
             try
-              let tempDir = Path.GetTempPath()
-              if not (Directory.Exists tempDir) then
-                  Directory.CreateDirectory tempDir |> ignore
               Path.GetTempFileName()
             with
-              exn -> raise (new Exception("Could not access TEMP", exn))
+              exn -> raise (new IOException("Could not create TEMP file in: " + Path.GetTempPath(), exn))
           let dllName = Path.ChangeExtension(base1, ".dll")
           let xmlName = Path.ChangeExtension(base1, ".xml")
           let fileName1 = Path.ChangeExtension(base1, ".fs")
