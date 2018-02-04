@@ -61,13 +61,22 @@ module internal CompilerServiceExtensions =
   open Microsoft.FSharp.Compiler.SourceCodeServices
   open System.IO
 
-  module internal FSharpAssemblyHelper =
+#if YAAF_FSHARP_SCRIPTING_PUBLIC
+  module FSharpCheckerFuncs =
+#else
+  module internal FSharpCheckerFuncs =
+#endif
       open System.IO
       let checker = FSharpChecker.Create()
 #if NET40
       let defaultFrameworkVersion = "4.0"
 #else
+#if NET45
       let defaultFrameworkVersion = "4.5"
+#else
+//#if NET461
+      let defaultFrameworkVersion = "4.6.1"
+#endif
 #endif
 
       let getLib dir nm =
@@ -261,7 +270,7 @@ module internal CompilerServiceExtensions =
             if not hasFsCoreLib then
               Some (findFSCore dllFiles libDirs)
             else None
-            
+
 #if !NETSTANDARD1_5
           let defaultReferences =
             getDefaultSystemReferences frameworkVersion
@@ -332,7 +341,7 @@ module internal CompilerServiceExtensions =
           // Filter FSharp.Core.dll when there is no sigdata and optdata
           |> Seq.filter (fun file ->
             if Path.GetFileName file =? "FSharp.Core.dll" then
-              FSharpAssemblyHelper.tryCheckFsCore file |> Option.isSome
+              FSharpCheckerFuncs.tryCheckFsCore file |> Option.isSome
             else true)
 
         // See https://github.com/tpetricek/FSharp.Formatting/commit/22ffb8ec3c743ceaf069893a46a7521667c6fc9d
@@ -348,27 +357,27 @@ module internal CompilerServiceExtensions =
             //|> Seq.filter (fun file -> blacklist |> List.exists ((=?) (Path.GetFileName file)) |> not),
             Seq.empty
           else dllFiles |> List.toSeq, libDirs |> Seq.map (fun l -> Path.GetFullPath (l))
-        let frameworkVersion = FSharpAssemblyHelper.defaultFrameworkVersion
-        FSharpAssemblyHelper.getProjectReferences frameworkVersion otherFlags (Some _libDirs) _dllFiles
-        |> FSharpAssemblyHelper.resolve dllFiles
+        let frameworkVersion = FSharpCheckerFuncs.defaultFrameworkVersion
+        FSharpCheckerFuncs.getProjectReferences frameworkVersion otherFlags (Some _libDirs) _dllFiles
+        |> FSharpCheckerFuncs.resolve dllFiles
 
       static member FromAssembly (assembly:Assembly) =
           let loc =
               if assembly.GetName().Name =? "FSharp.Core" then
-                  FSharpAssemblyHelper.findFSCore [assembly.Location] []
+                  FSharpCheckerFuncs.findFSCore [assembly.Location] []
               else
                   assembly.Location
           if isNull loc then None
           else
               let frameworkVersion =
-                  match FSharpAssemblyHelper.findAssemblyVersion assembly with
+                  match FSharpCheckerFuncs.findAssemblyVersion assembly with
                   | Some (_, ver) -> ver
-                  | _ -> FSharpAssemblyHelper.defaultFrameworkVersion
-              FSharpAssemblyHelper.getProjectReferenceFromFile frameworkVersion loc
+                  | _ -> FSharpCheckerFuncs.defaultFrameworkVersion
+              FSharpCheckerFuncs.getProjectReferenceFromFile frameworkVersion loc
 
       member x.FindType (t:Type) =
           x.Contents.Entities
-              |> Seq.collect FSharpAssemblyHelper.enumerateEntities
+              |> Seq.collect FSharpCheckerFuncs.enumerateEntities
               |> Seq.tryPick (fun entity ->
                   let namespaceName = t.NamespaceName.Replace("+", ".")
                   match entity.TryFullName with
@@ -928,7 +937,7 @@ type internal FsiOptions =
 #else
     let includes = []
 #endif
-    let fsCore = FSharpAssemblyHelper.findFSCore [] includes
+    let fsCore = FSharpCheckerFuncs.findFSCore [] includes
     Log.verbf "Using FSharp.Core: %s" fsCore
     { FsiOptions.Empty with
         LibDirs = includes
