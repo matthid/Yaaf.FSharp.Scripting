@@ -16,8 +16,8 @@ else
 fi
 
 function do_build {
-  nuget_packages="packages"
-  paket_packages="packages"
+  my_nuget_packages="packages"
+  my_paket_packages="packages"
 
   nuget_path="NuGet.CommandLine/tools/NuGet.exe"
   fake_path="FAKE/tools/FAKE.exe"
@@ -48,20 +48,20 @@ function do_build {
       exit $exit_code
     fi
     
-    fake=$paket_packages/$fake_path
-    nuget=$paket_packages/$nuget_path
+    fake=$my_paket_packages/$fake_path
+    nuget=$my_paket_packages/$nuget_path
   fi
   # Download NuGet (if not already available because of paket)
   if [ ! -f "$nuget" ];
   then
     if [ -f downloadNuget.fsx ];
     then
-      if [ ! -f "$nuget_packages/$nuget_path" ]; then
+      if [ ! -f "$my_nuget_packages/$nuget_path" ]; then
         echo "Bootstrap Nuget"
-        command -v "$FSI" >/dev/null 2>&1 || { echo >&2 "Please install fsharpi or download a NuGet.exe to $nuget_packages/$nuget_path"; exit 1; }
+        command -v "$FSI" >/dev/null 2>&1 || { echo >&2 "Please install fsharpi or download a NuGet.exe to $my_nuget_packages/$nuget_path"; exit 1; }
         "$FSI" downloadNuget.fsx
       fi
-      nuget="$nuget_packages/$nuget_path"
+      nuget="$my_nuget_packages/$nuget_path"
     fi
   fi
 
@@ -71,7 +71,7 @@ function do_build {
     if [ -f "$nuget" ];
     then
       echo "restore NuGet build dependencies."
-      $MONO $nuget "install" "packages.config" "-OutputDirectory" "$nuget_packages" "-ExcludeVersion"
+      $MONO $nuget "install" "packages.config" "-OutputDirectory" "$my_nuget_packages" "-ExcludeVersion"
     else
       echo "NuGet build dependencies file found but no NuGet.exe could be found, either add downloadNuget.fsx or add Nuget.Commandline as paket dependency!."
     fi
@@ -80,7 +80,7 @@ function do_build {
   # FAKE could be available as nuget dependency
   if [ ! -f "$fake" ];
   then
-    fake="$nuget_packages/$fake_path"
+    fake="$my_nuget_packages/$fake_path"
     if [ ! -f "$fake" ];
     then
       echo "Could not find FAKE in nuget or paket dependencies!"

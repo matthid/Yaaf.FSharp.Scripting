@@ -1,7 +1,7 @@
 @echo off
 REM cls
-set nuget_packages=packages
-set paket_packages=packages
+set my_nuget_packages=packages
+set my_paket_packages=packages
 
 set nuget_path=NuGet.CommandLine/tools/NuGet.exe
 set fake_path=FAKE/tools/FAKE.exe
@@ -31,18 +31,18 @@ if exist ".paket/paket.bootstrapper.exe" (
   .paket\paket.exe -v restore
   if %ERRORLEVEL% NEQ 0 exit /b %ERRORLEVEL%
 
-  set fake=%paket_packages%/%fake_path%
-  set nuget=%paket_packages%/%nuget_path%
+  set fake=%my_paket_packages%/%fake_path%
+  set nuget=%my_paket_packages%/%nuget_path%
 ) 
 REM Download NuGet (if not already available because of paket)
 if not exist %nuget% (
   if exist downloadNuget.fsx (
-    if not exist %nuget_packages%/%nuget_path% (
+    if not exist %my_nuget_packages%/%nuget_path% (
       echo Bootstrap Nuget
       "C:\Program Files (x86)\Microsoft SDKs\F#\3.1\Framework\v4.0\fsi.exe" downloadNuget.fsx
       if %ERRORLEVEL% NEQ 0 exit /b %ERRORLEVEL%
     )
-    set nuget=%nuget_packages%/%nuget_path%
+    set nuget=%my_nuget_packages%/%nuget_path%
   )
 )
 REM Restore Nuget build dependencies
@@ -58,7 +58,7 @@ if exist packages.config (
 
 REM FAKE could be available as nuget dependency
 if not exist %fake% (
-  set fake=%nuget_packages%/%fake_path%
+  set fake=%my_nuget_packages%/%fake_path%
   if not exist %fake% (
     echo Could not find FAKE in nuget or paket dependencies!
     exit /b 1
