@@ -15,20 +15,20 @@ if exist ".paket/paket.bootstrapper.exe" (
   REM Batch is just a useless shit
   if "%PAKET_UPDATE%" == "y" (
     echo Running paket update - as requested by PAKET_UPDATE=y
-    .paket\paket.exe update
+    .paket\paket.exe -v update
     if %ERRORLEVEL% NEQ 0 exit /b %ERRORLEVEL%
   )
   
   if "%PAKET_UPDATE%" == "true" (
     echo Running paket update - as requested by PAKET_UPDATE=y
-    .paket\paket.exe update
+    .paket\paket.exe -v update
     if %ERRORLEVEL% NEQ 0 exit /b %ERRORLEVEL%
   )
   
 
 
   echo restore paket packages
-  .paket\paket.exe restore
+  .paket\paket.exe -v restore
   if %ERRORLEVEL% NEQ 0 exit /b %ERRORLEVEL%
 
   set fake=%paket_packages%/%fake_path%
