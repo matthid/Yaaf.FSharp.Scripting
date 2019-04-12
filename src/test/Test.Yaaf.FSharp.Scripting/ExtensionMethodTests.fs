@@ -7,7 +7,7 @@ open System.IO
 open NUnit.Framework
 open Test.Yaaf.FSharp.Scripting.FsiUnquote
 open Yaaf.FSharp.Scripting
-open Microsoft.FSharp.Compiler.SourceCodeServices
+open FSharp.Compiler.SourceCodeServices
 
 let withNoWarnings f =
     let builder = new System.Text.StringBuilder()

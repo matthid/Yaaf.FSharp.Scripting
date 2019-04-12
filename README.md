@@ -111,7 +111,7 @@ The library also provides some nice members which are missing in FSharp.Compiler
 
 ```fsharp
 open Yaaf.FSharp.Scripting
-open Microsoft.FSharp.Compiler.SourceCodeServices
+open FSharp.Compiler.SourceCodeServices
 
 // A Assembly -> FSharpEntity mapping (extension) function
 let fsAssembly = FSharpAssembly.FromAssembly typeof<MyType>.Assembly
