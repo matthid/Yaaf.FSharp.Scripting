@@ -140,11 +140,8 @@ module internal CompilerServiceExtensions =
         ]
 
       let tryCheckFsCore fscorePath =
-        let lib = fscorePath
-        let opt = Path.ChangeExtension (lib, "optdata")
-        let sig' = Path.ChangeExtension(lib, "sigdata")
-        if [ lib; opt; sig' ] |> Seq.forall File.Exists then
-          Some lib
+        if File.Exists fscorePath then
+          Some fscorePath
         else None
 
       let findFSCore dllFiles libDirs =
@@ -156,8 +153,8 @@ module internal CompilerServiceExtensions =
         | Some s -> s
         | None ->
             let paths = Log.formatPaths tried
-            Log.critf "Could not find a FSharp.Core.dll (with bundled .optdata and .sigdata) in %s" paths
-            failwithf "Could not find a FSharp.Core.dll (with bundled .optdata and .sigdata) in %s" paths
+            Log.critf "Could not find a FSharp.Core.dll in %s" paths
+            failwithf "Could not find a FSharp.Core.dll in %s" paths
       let hasAssembly asm l =
         l |> Seq.exists (fun a -> Path.GetFileNameWithoutExtension a =? asm)
       let sysLibBlackList =
@@ -333,7 +330,6 @@ module internal CompilerServiceExtensions =
           |> Seq.map Path.GetFullPath
           // Filter files already referenced directly
           |> Seq.filter (fun file -> dllFiles |> Seq.map Path.GetFileName |> Seq.exists ((=?) (Path.GetFileName file)) |> not)
-          // Filter FSharp.Core.dll when there is no sigdata and optdata
           |> Seq.filter (fun file ->
             if Path.GetFileName file =? "FSharp.Core.dll" then
               FSharpAssemblyHelper.tryCheckFsCore file |> Option.isSome
@@ -941,7 +937,6 @@ type internal FsiOptions =
       ScriptArgs  = [] }
   static member Default =
 #if !NETSTANDARD1_5
-    // find a FSharp.Core.dll with optdata and sigdata
     let runtimeDir = System.Runtime.InteropServices.RuntimeEnvironment.GetRuntimeDirectory()
     let includes =
       if isMono then
